@@ -3,12 +3,12 @@ import { Btn, ErrorNotice } from '@kirocrew/app-sdk/ui'
 import {
   Activity, ArrowLeft, ClipboardList, FileText, Gauge, Landmark, MessageSquare, Play, RefreshCw, ShieldCheck,
 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import type { AssistantIntent } from '@sme-ui/AssistantDock'
 import {
-  API, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
+  AGENT_ORDER, API, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
   type CaseDetail,
 } from './model'
-import { useAssistantChat } from './assistantChat'
 import { AgentsTab, AuditTab, EvidenceTab, OverviewTab, ReviewTab } from './tabs'
 import { Kpi, Pill, tone } from '@sme-ui/ui'
 import { StateIcon } from './agentUi'
@@ -49,33 +49,69 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
-export default function CaseView({ caseId, onBack }: { caseId: string; onBack: () => void }) {
+export default function CaseView({
+  caseId, assistantOpen, syncTick, onBack, onToggleAssistant, onAskAssistant, onCaseMetaChange,
+}: {
+  caseId: string
+  assistantOpen: boolean
+  syncTick: number
+  onBack: () => void
+  onToggleAssistant: () => void
+  onAskAssistant: (prompt: string, mode?: AssistantIntent['mode']) => void
+  onCaseMetaChange: (meta: { customerName?: string; flow: string; hasIssues: boolean } | null) => void
+}) {
   const api = useAppApi()
   const [detail, setDetail] = useState<CaseDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const openAssistant = useAssistantChat(setError)
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('overview')
   const [focusEv, setFocusEv] = useState<string | null>(null)
   const [focusRv, setFocusRv] = useState<string | null>(null)
   const [focusAgent, setFocusAgent] = useState<string | null>(null)
+  const lastSyncRef = useRef(0)
+  const silentInFlightRef = useRef(false)
 
-  const load = useCallback(async () => {
-    setBusy(true)
+  const load = useCallback(async (silent = false) => {
+    if (silent && silentInFlightRef.current) return
+    if (silent) silentInFlightRef.current = true
+    else setBusy(true)
     try {
       setDetail(await api.get<CaseDetail>(`${API}/cases/${caseId}`))
       setError(null)
+      lastSyncRef.current = Date.now()
     } catch (e) {
-      setError(errMsg(e))
+      if (!silent) setError(errMsg(e))
     } finally {
-      setBusy(false)
+      if (silent) silentInFlightRef.current = false
+      else setBusy(false)
     }
   }, [api, caseId])
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    if (syncTick > 0) void load(true)
+  }, [syncTick, load])
+
+  useEffect(() => {
+    const syncIfStale = () => {
+      if (document.visibilityState === 'hidden') return
+      if (Date.now() - lastSyncRef.current >= 3000) void load(true)
+    }
+    window.addEventListener('focus', syncIfStale)
+    document.addEventListener('visibilitychange', syncIfStale)
+    return () => {
+      window.removeEventListener('focus', syncIfStale)
+      document.removeEventListener('visibilitychange', syncIfStale)
+    }
+  }, [load])
+
   const m = useMemo(() => (detail ? metrics(detail) : {}), [detail])
   const openReview = detail?.review.filter((r) => r.status === 'open') ?? []
+  const blockedCount = useMemo(
+    () => (detail ? AGENT_ORDER.filter((a) => agentState(detail.results[a]) === 'blocked').length : 0),
+    [detail],
+  )
   const notMet = m.policy?.rows.filter((r) => r.status === 'not_met').length
   const baseDscr = m.dscr?.scenarios.find((s) => s.stress_pct === 0)?.dscr ?? null
 
@@ -92,14 +128,23 @@ export default function CaseView({ caseId, onBack }: { caseId: string; onBack: (
       return false
     }
   }
-  const chatTitle = `Thẩm định ${detail?.case.customer?.name ?? caseId}`
-  const run = () => openAssistant(
-    `Chạy thẩm định hồ sơ ${caseId}, luồng ${detail?.case.flow ?? 'A'}.`, caseId, chatTitle)
-  const ask = () => openAssistant(`Giải thích kết quả thẩm định hồ sơ ${caseId}: `, caseId, chatTitle)
 
   const c = detail?.case
   const customer = c?.customer ?? {}
   const request = c?.request ?? {}
+  const customerName = customer.name ? String(customer.name) : undefined
+  const flow = c?.flow ?? 'A'
+  const hasIssues = openReview.length > 0 || blockedCount > 0
+
+  useEffect(() => {
+    onCaseMetaChange({ customerName, flow, hasIssues })
+  }, [customerName, flow, hasIssues, onCaseMetaChange])
+
+  const run = () => onAskAssistant(`Chạy thẩm định hồ sơ ${caseId}, luồng ${flow}.`, 'prefill')
+  const askAgent = (agentId: string, label: string) => onAskAssistant(
+    `Giải thích chi tiết kết quả, bằng chứng và điểm cần lưu ý của agent ${label} (${agentId}) trên hồ sơ ${caseId}.`,
+    'prefill',
+  )
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'overview', label: 'Tổng quan' },
     { key: 'agents', label: 'Kết quả agent', count: detail ? Object.keys(detail.results).length : undefined },
@@ -122,9 +167,16 @@ export default function CaseView({ caseId, onBack }: { caseId: string; onBack: (
             {c && <span className="sme-small sme-muted">Tạo {when(c.created_at)}</span>}
           </div>
         </div>
-        <div className="sme-row">
-          <Btn onClick={load} busy={busy} title="Tải lại dữ liệu"><RefreshCw size={14} /></Btn>
-          <Btn onClick={ask}><MessageSquare size={14} /> Hỏi trợ lý</Btn>
+        <div className="sme-row sme-wrap">
+          <Btn onClick={() => load()} busy={busy} title="Tải lại dữ liệu"><RefreshCw size={14} /></Btn>
+          <Btn
+            className={assistantOpen ? 'sme-toggle-on' : undefined}
+            aria-pressed={assistantOpen}
+            onClick={onToggleAssistant}
+            title={assistantOpen ? 'Thu gọn trợ lý thẩm định' : 'Mở trợ lý thẩm định bên phải'}
+          >
+            <MessageSquare size={14} /> Trợ lý thẩm định
+          </Btn>
           <Btn primary onClick={run}><Play size={14} /> Chạy thẩm định</Btn>
         </div>
       </div>
@@ -160,7 +212,8 @@ export default function CaseView({ caseId, onBack }: { caseId: string; onBack: (
                 ))}
               </div>
               {tab === 'overview' && <OverviewTab detail={detail} m={m} onEvidence={goEvidence} goAgents={() => setTab('agents')} />}
-              {tab === 'agents' && <AgentsTab detail={detail} openAgent={focusAgent} onEvidence={goEvidence} />}
+              {tab === 'agents' && <AgentsTab detail={detail} openAgent={focusAgent} onEvidence={goEvidence}
+                onRunAssessment={run} onAskAgent={askAgent} />}
               {tab === 'evidence' && <EvidenceTab detail={detail} focus={focusEv} />}
               {tab === 'review' && <ReviewTab detail={detail} focus={focusRv} onDecide={decide} onEvidence={goEvidence} />}
               {tab === 'audit' && <AuditTab detail={detail} />}

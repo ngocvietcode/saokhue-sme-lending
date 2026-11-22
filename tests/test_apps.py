@@ -67,9 +67,12 @@ class PackagingTest(unittest.TestCase):
                 if launch:
                     self.assertTrue(launch["keyPrefix"].startswith(manifest["name"] + "-"))
                     self.assertTrue(set(launch["agents"]) <= names, "chatLaunch names an agent's spec name")
-                if app.name == "sme-sales":
+                if app.name in ("sme-sales", "sme-lending"):
+                    expected = {f"/apps/{app.name}/api", "/api/chat", "/api/upload/file"}
+                    if app.name == "sme-lending":
+                        expected.add("/api/workflows")
                     self.assertLessEqual(
-                        {"/apps/sme-sales/api", "/api/chat", "/api/upload/file"},
+                        expected,
                         set(manifest.get("permissions", {}).get("api", [])),
                     )
 

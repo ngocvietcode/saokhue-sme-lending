@@ -1,11 +1,11 @@
 import { useAppApi } from '@kirocrew/app-sdk'
 import { Btn, ErrorNotice, PageHeader } from '@kirocrew/app-sdk/ui'
-import { AlertOctagon, ClipboardList, FolderOpen, Plus, RefreshCw, Search, ShieldAlert } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { AlertOctagon, ClipboardList, FolderOpen, MessageSquare, Plus, RefreshCw, Search, ShieldAlert } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { AssistantIntent, CreatedCaseBanner } from '@sme-ui/AssistantDock'
 import {
   AGENT_ORDER, API, PURPOSE, STATE_META, agentLabel, ago, errMsg, moneyShort, type CaseSummary,
 } from './model'
-import { useAssistantChat } from './assistantChat'
 import { Empty, Kpi, Pill, tone } from '@sme-ui/ui'
 
 type Filter = 'all' | 'review' | 'blocked'
@@ -53,28 +53,70 @@ function CaseCard({ c, onOpen }: { c: CaseSummary; onOpen: () => void }) {
   )
 }
 
-export default function CaseList({ onOpen }: { onOpen: (id: string) => void }) {
+export default function CaseList({
+  onOpen, assistantOpen, syncTick, onToggleAssistant, onAskAssistant, onCreatedCase,
+}: {
+  onOpen: (id: string) => void
+  assistantOpen: boolean
+  syncTick: number
+  onToggleAssistant: () => void
+  onAskAssistant: (prompt: string, mode?: AssistantIntent['mode']) => void
+  onCreatedCase: (created: CreatedCaseBanner) => void
+}) {
   const api = useAppApi()
   const [cases, setCases] = useState<CaseSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const openAssistant = useAssistantChat(setError)
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [busy, setBusy] = useState(false)
+  const lastSyncRef = useRef(0)
+  const silentInFlightRef = useRef(false)
+  const knownIdsRef = useRef<Set<string> | null>(null)
 
-  const load = useCallback(async () => {
-    setBusy(true)
+  const load = useCallback(async (silent = false) => {
+    if (silent && silentInFlightRef.current) return
+    if (silent) silentInFlightRef.current = true
+    else setBusy(true)
     try {
-      setCases((await api.get<{ cases: CaseSummary[] }>(`${API}/cases`)).cases)
+      const next = (await api.get<{ cases: CaseSummary[] }>(`${API}/cases`)).cases
+      if (knownIdsRef.current === null) {
+        knownIdsRef.current = new Set(next.map((c) => c.case_id))
+      } else {
+        const created = next.find((c) => !knownIdsRef.current!.has(c.case_id))
+        next.forEach((c) => knownIdsRef.current!.add(c.case_id))
+        if (created) {
+          onCreatedCase({ caseId: created.case_id, name: created.customer_name ?? created.case_id })
+        }
+      }
+      setCases(next)
       setError(null)
+      lastSyncRef.current = Date.now()
     } catch (e) {
-      setError(errMsg(e))
+      if (!silent) setError(errMsg(e))
     } finally {
-      setBusy(false)
+      if (silent) silentInFlightRef.current = false
+      else setBusy(false)
     }
-  }, [api])
+  }, [api, onCreatedCase])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    if (syncTick > 0) void load(true)
+  }, [syncTick, load])
+
+  useEffect(() => {
+    const syncIfStale = () => {
+      if (document.visibilityState === 'hidden') return
+      if (Date.now() - lastSyncRef.current >= 3000) void load(true)
+    }
+    window.addEventListener('focus', syncIfStale)
+    document.addEventListener('visibilitychange', syncIfStale)
+    return () => {
+      window.removeEventListener('focus', syncIfStale)
+      document.removeEventListener('visibilitychange', syncIfStale)
+    }
+  }, [load])
 
   const totals = useMemo(() => ({
     open: cases?.reduce((n, c) => n + c.review_open, 0) ?? 0,
@@ -92,8 +134,7 @@ export default function CaseList({ onOpen }: { onOpen: (id: string) => void }) {
     })
   }, [cases, q, filter])
 
-  const newCase = () =>
-    openAssistant('Tạo hồ sơ thẩm định SME mới.', `new-${Date.now()}`, 'Hồ sơ SME mới')
+  const newCase = () => onAskAssistant('Tạo hồ sơ thẩm định SME mới: ', 'new_intake')
 
   return (
     <>
@@ -102,7 +143,15 @@ export default function CaseList({ onOpen }: { onOpen: (id: string) => void }) {
         subtitle="Hồ sơ vay, kết quả các agent, bằng chứng và hàng đợi rà soát của cán bộ"
         actions={
           <div className="sme-row">
-            <Btn onClick={load} busy={busy}><RefreshCw size={14} /> Làm mới</Btn>
+            <Btn onClick={() => load()} busy={busy}><RefreshCw size={14} /> Làm mới</Btn>
+            <Btn
+              className={assistantOpen ? 'sme-toggle-on' : undefined}
+              aria-pressed={assistantOpen}
+              onClick={onToggleAssistant}
+              title={assistantOpen ? 'Thu gọn trợ lý thẩm định' : 'Mở trợ lý thẩm định bên phải'}
+            >
+              <MessageSquare size={14} /> Trợ lý thẩm định
+            </Btn>
             <Btn primary onClick={newCase}><Plus size={14} /> Hồ sơ mới</Btn>
           </div>
         }

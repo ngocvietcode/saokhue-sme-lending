@@ -1,5 +1,8 @@
-import * as sdk from '@kirocrew/app-sdk'
+import { useAppApi } from '@kirocrew/app-sdk'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  clampDockWidth, readDockOpen, readDockWidth, useAssistantSync, writeDockOpen, writeDockWidth,
+} from '@sme-ui/AssistantDock'
 import { ensureStyles } from '@sme-ui/styles'
 import CoachPanel, { type CoachIntent, type CreatedCaseBanner } from './CoachPanel'
 import DossierList from './DossierList'
@@ -13,48 +16,25 @@ ensureSalesStyles()
 const OPEN_KEY = 'sme-sales:coach-open'
 const WIDTH_KEY = 'sme-sales:coach-width'
 
-function readCoachOpen(): boolean {
-  try {
-    const v = localStorage.getItem(OPEN_KEY)
-    if (v === '1') return true
-    if (v === '0') return false
-  } catch { /* ignore */ }
-  return typeof window === 'undefined' ? true : window.innerWidth >= 1180
-}
-
-function readCoachWidth(): number {
-  try {
-    const raw = Number(localStorage.getItem(WIDTH_KEY))
-    if (Number.isFinite(raw) && raw >= 360 && raw <= 620) return Math.round(raw)
-  } catch { /* ignore */ }
-  return 420
-}
-
 type CaseMeta = {
   customerName?: string
   readOnly: boolean
   hasOpenItems: boolean
 }
 
-const noopAppEvents = (_event: string, _cb: (data: unknown) => void) => { /* older host fallback */ }
-
 export default function SmeSalesPage() {
-  const api = sdk.useAppApi()
-  const useAppEventsHook = (sdk as unknown as {
-    useAppEvents?: (event: string, cb: (data: unknown) => void) => void
-  }).useAppEvents ?? noopAppEvents
-
+  const api = useAppApi()
   const [caseId, setCaseId] = useState<string | null>(null)
   const [catalog, setCatalog] = useState<Catalog | null>(null)
-  const [coachOpen, setCoachOpenState] = useState<boolean>(readCoachOpen)
-  const [coachWidth, setCoachWidthState] = useState<number>(readCoachWidth)
+  const [coachOpen, setCoachOpenState] = useState<boolean>(() => readDockOpen(OPEN_KEY))
+  const [coachWidth, setCoachWidthState] = useState<number>(() => readDockWidth(WIDTH_KEY))
   const [coachIntent, setCoachIntent] = useState<CoachIntent | null>(null)
   const [caseMeta, setCaseMeta] = useState<CaseMeta | null>(null)
   const [createdCase, setCreatedCase] = useState<CreatedCaseBanner | null>(null)
-  const [syncTick, setSyncTick] = useState(0)
 
   const intentSeqRef = useRef(0)
   const quickDraftRef = useRef<(() => void) | null>(null)
+  const { syncTick } = useAssistantSync(coachOpen, 4000)
 
   useEffect(() => {
     // The catalog only labels things; the page still works if it fails to load.
@@ -64,32 +44,16 @@ export default function SmeSalesPage() {
   const setCoachOpen = useCallback((next: boolean | ((prev: boolean) => boolean)) => {
     setCoachOpenState((prev) => {
       const val = typeof next === 'function' ? next(prev) : next
-      try { localStorage.setItem(OPEN_KEY, val ? '1' : '0') } catch { /* ignore */ }
+      writeDockOpen(OPEN_KEY, val)
       return val
     })
   }, [])
 
   const setCoachWidth = useCallback((w: number) => {
-    const clamped = Math.min(620, Math.max(360, Math.round(w)))
+    const clamped = clampDockWidth(w)
     setCoachWidthState(clamped)
-    try { localStorage.setItem(WIDTH_KEY, String(clamped)) } catch { /* ignore */ }
+    writeDockWidth(WIDTH_KEY, clamped)
   }, [])
-
-  const bumpSync = useCallback(() => {
-    setSyncTick((t) => t + 1)
-  }, [])
-
-  useAppEventsHook('tool_result', bumpSync)
-  useAppEventsHook('chat_done', bumpSync)
-
-  useEffect(() => {
-    if (!coachOpen) return
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'hidden') return
-      setSyncTick((t) => t + 1)
-    }, 4000)
-    return () => window.clearInterval(timer)
-  }, [coachOpen])
 
   const askCoach = useCallback((prompt: string, mode: CoachIntent['mode'] = 'prefill') => {
     setCoachOpen(true)
@@ -136,8 +100,8 @@ export default function SmeSalesPage() {
 
   return (
     <div className="sme" style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, height: '100%' }}>
-      <div className="ss-workspace">
-        <div className="ss-main">
+      <div className="sme-workspace">
+        <div className="sme-main">
           {caseId ? (
             <DossierView
               caseId={caseId}

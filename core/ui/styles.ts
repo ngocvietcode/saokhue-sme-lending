@@ -169,6 +169,55 @@ const CSS = `
 .sme-item-ask { margin-top: 6px; padding: 6px 10px; border-radius: 8px; font-size: 12.5px;
   background: color-mix(in srgb, var(--accent) 7%, transparent); }
 .sme-group-title { font-size: 11.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 16px 0 2px; }
+
+/* Split workspace with collapsible right-hand assistant panel */
+.sme-workspace { display: flex; flex: 1; min-height: 0; height: 100%; overflow: hidden; position: relative; }
+.sme-main { flex: 1; min-width: 0; min-height: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden; container-type: inline-size; }
+@container (max-width: 1020px) {
+  .sme-detail { grid-template-columns: minmax(0, 1fr); }
+  .sme-aside { position: static; }
+}
+@container (max-width: 680px) {
+  .sme-hero { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+}
+
+.sme-toggle-on { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)) !important;
+  background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+  color: var(--text-strong, var(--text)) !important; font-weight: 600; }
+
+.sme-dock { position: relative; flex: none; height: 100%; min-height: 0; display: flex; flex-direction: column;
+  background: var(--card); border-left: 1px solid var(--border); }
+.sme-dock-resizer { position: absolute; left: -3px; top: 0; bottom: 0; width: 6px; cursor: col-resize; z-index: 5;
+  background: transparent; transition: background .15s; touch-action: none; }
+.sme-dock-resizer:hover, .sme-dock-resizer.dragging { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+
+.sme-dock-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 38px;
+  padding: 5px 8px 5px 12px; border-bottom: 1px solid var(--border); background: var(--card); flex: none; }
+.sme-dock-left { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.sme-dock-chips { display: flex; align-items: center; gap: 5px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.sme-dock-chips::-webkit-scrollbar { display: none; }
+.sme-icon-btn { width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 6px;
+  border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; flex: none; }
+.sme-icon-btn:hover { color: var(--text); background: var(--bg-hover, color-mix(in srgb, var(--muted) 12%, transparent));
+  border-color: var(--border); }
+
+.sme-dock-new-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid var(--border); font-size: 12px; flex: none;
+  background: color-mix(in srgb, var(--ok) 10%, var(--card)); }
+.sme-dock-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
+.sme-dock-fallback { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.sme-quick-chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--bg-elevated, var(--bg)); color: var(--text); font-size: 11.5px;
+  white-space: nowrap; cursor: pointer; flex: none; }
+.sme-quick-chip:hover { border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--card)); }
+
+@media (max-width: 920px) {
+  .sme-dock { position: absolute; right: 0; top: 0; bottom: 0; width: min(440px, 100%) !important;
+    z-index: 30; box-shadow: -8px 0 24px rgba(0, 0, 0, .14); }
+  .sme-dock-resizer { display: none; }
+}
 `
 
 export function ensureStyles(): void {

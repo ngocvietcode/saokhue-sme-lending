@@ -1,5 +1,5 @@
 import { Btn } from '@kirocrew/app-sdk/ui'
-import { ChevronRight, ClipboardCheck, FileSearch, History, Search } from 'lucide-react'
+import { ChevronRight, ClipboardCheck, FileSearch, History, MessageSquare, Play, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
   AGENT_ORDER, AUDIT_LABEL, CONFIDENCE, FACT_LABEL, POLICY_STATUS, RATIO_LABEL, REASON, REVIEW_STATUS, SEVERITY,
@@ -149,8 +149,8 @@ export function OverviewTab({ detail, m, onEvidence, goAgents }: {
 
 /* ---------- Kết quả agent ---------- */
 
-function AgentCard({ id, r, open, onToggle, onEvidence }: {
-  id: string; r: AgentResult; open: boolean; onToggle: () => void; onEvidence: (id: string) => void
+function AgentCard({ id, r, open, onToggle, onEvidence, onAsk }: {
+  id: string; r: AgentResult; open: boolean; onToggle: () => void; onEvidence: (id: string) => void; onAsk?: () => void
 }) {
   const counts = (['high', 'medium', 'low'] as const).map((s) => [s, r.findings.filter((f) => f.severity === s).length] as const)
   return (
@@ -187,14 +187,20 @@ function AgentCard({ id, r, open, onToggle, onEvidence }: {
             <div><div className="sme-section-title">Vấn đề mở</div>
               <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13 }}>{r.open_issues!.map((x, i) => <li key={i}>{x}</li>)}</ul></div>
           )}
+          {onAsk && (
+            <div className="sme-row" style={{ justifyContent: 'flex-end' }}>
+              <Btn onClick={onAsk}><MessageSquare size={13} /> Hỏi trợ lý về phần này</Btn>
+            </div>
+          )}
         </div>
       )}
     </div>
   )
 }
 
-export function AgentsTab({ detail, openAgent, onEvidence }: {
+export function AgentsTab({ detail, openAgent, onEvidence, onRunAssessment, onAskAgent }: {
   detail: CaseDetail; openAgent: string | null; onEvidence: (id: string) => void
+  onRunAssessment?: () => void; onAskAgent?: (agentId: string, label: string) => void
 }) {
   const ran = AGENT_ORDER.filter((a) => detail.results[a])
   const [open, setOpen] = useState<Set<string>>(() => new Set(openAgent ? [openAgent] : []))
@@ -203,7 +209,16 @@ export function AgentsTab({ detail, openAgent, onEvidence }: {
     setOpen((s) => new Set(s).add(openAgent))
     requestAnimationFrame(() => document.getElementById(`agent-${openAgent}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
   }, [openAgent])
-  if (!ran.length) return <Empty icon={<FileSearch size={30} />} title="Chưa có kết quả" hint="Chạy thẩm định để các agent ghi kết quả vào hồ sơ." />
+  if (!ran.length) {
+    return (
+      <Empty
+        icon={<FileSearch size={30} />}
+        title="Chưa có kết quả"
+        hint="Chạy thẩm định để các agent ghi kết quả vào hồ sơ."
+        action={onRunAssessment ? <Btn primary onClick={onRunAssessment}><Play size={13} /> Chạy thẩm định</Btn> : undefined}
+      />
+    )
+  }
   const toggle = (a: string) => setOpen((s) => { const n = new Set(s); n.has(a) ? n.delete(a) : n.add(a); return n })
   return (
     <div className="sme-stack">
@@ -212,7 +227,17 @@ export function AgentsTab({ detail, openAgent, onEvidence }: {
           {open.size === ran.length ? 'Thu gọn tất cả' : 'Mở tất cả'}
         </Btn>
       </div>
-      {ran.map((a) => <AgentCard key={a} id={a} r={detail.results[a]} open={open.has(a)} onToggle={() => toggle(a)} onEvidence={onEvidence} />)}
+      {ran.map((a) => (
+        <AgentCard
+          key={a}
+          id={a}
+          r={detail.results[a]}
+          open={open.has(a)}
+          onToggle={() => toggle(a)}
+          onEvidence={onEvidence}
+          onAsk={onAskAgent ? () => onAskAgent(a, agentLabel(a)) : undefined}
+        />
+      ))}
     </div>
   )
 }

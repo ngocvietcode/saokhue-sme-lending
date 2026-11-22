@@ -243,7 +243,7 @@ export default function DossierView({
         <div className="sme-row sme-wrap">
           <Btn onClick={() => load()} busy={busy} title="Tải lại dữ liệu"><RefreshCw size={14} /></Btn>
           <Btn
-            className={coachOpen ? 'ss-toggle-on' : undefined}
+            className={coachOpen ? 'sme-toggle-on' : undefined}
             aria-pressed={coachOpen}
             onClick={onToggleCoach}
             title={coachOpen ? 'Thu gọn trợ lý hồ sơ' : 'Mở trợ lý hồ sơ bên phải'}

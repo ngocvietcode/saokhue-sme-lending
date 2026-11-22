@@ -1,6 +1,6 @@
 {
   "name": "sme-lending",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "displayName": "Thẩm định tín dụng SME",
   "description": "Hệ thống Agent hỗ trợ thẩm định hồ sơ vay SME: chứng từ, tài chính, chính sách, rủi ro, TSBĐ, ngành và tổng hợp tờ trình, có kiểm chứng bằng chứng và cán bộ rà soát.",
   "author": "Sao Khue",
@@ -72,7 +72,7 @@
     "os": ["macos", "linux", "windows"]
   },
   "permissions": {
-    "api": ["/api/workflows", "/apps/sme-lending/api"],
+    "api": ["/api/workflows", "/apps/sme-lending/api", "/api/chat", "/api/upload/file"],
     "chatLaunch": {
       "keyPrefix": "sme-lending-chat-",
       "agents": ["sme-assistant"],
