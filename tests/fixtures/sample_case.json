@@ -1,0 +1,43 @@
+{
+  "_note": "HO SO HU CAU de chay thu. Moi so lieu la gia dinh, khong phai khach hang that.",
+  "flow": "A",
+  "customer": {
+    "cif": "DEMO0001",
+    "tax_id": "0100000001",
+    "name": "Công ty TNHH Mẫu Thử Nghiệm",
+    "industry_code": "4669",
+    "years_in_operation": 5,
+    "sample_cic": {"debt_group": 1, "total_outstanding": 2000000000, "lenders": 1, "overdue_last_12m": false},
+    "sample_exposure": {"outstanding": 2000000000, "limits": 3000000000, "annual_debt_service": 600000000}
+  },
+  "request": {
+    "amount": 5000000000,
+    "purpose": "working_capital",
+    "term_months": 12,
+    "annual_rate_pct": 9.0,
+    "repayment_method": "equal_principal",
+    "proposal": "ĐVKD đề xuất sản phẩm SME-WC, 5 tỷ đồng, 12 tháng, không TSBĐ"
+  },
+  "documents": [
+    {"id": "D1", "name": "dkkd.pdf", "type": "dkkd",
+     "sample_extract": {"company_name": "Công ty TNHH Mẫu Thử Nghiệm", "tax_id": "0100000001",
+                        "established": "2021-03-15", "legal_rep": "Nguyễn Văn Mẫu", "ocr_confidence": 0.98}},
+    {"id": "D2", "name": "bctc_2024_2025.pdf", "type": "bctc_2_ky",
+     "sample_extract": {"ocr_confidence": 0.95, "periods": [
+       {"period": "2024", "revenue": 38000000000, "cogs": 31000000000, "ebitda": 3100000000, "ebit": 2600000000,
+        "net_income": 1800000000, "interest_expense": 250000000, "total_assets": 21000000000,
+        "total_liabilities": 12000000000, "equity": 9000000000, "current_assets": 15000000000,
+        "current_liabilities": 10000000000, "receivables": 6000000000, "inventory": 5000000000,
+        "short_term_debt": 4000000000, "long_term_debt": 1000000000},
+       {"period": "2025", "revenue": 45000000000, "cogs": 36500000000, "ebitda": 3900000000, "ebit": 3300000000,
+        "net_income": 2300000000, "interest_expense": 300000000, "total_assets": 25000000000,
+        "total_liabilities": 14500000000, "equity": 10500000000, "current_assets": 18000000000,
+        "current_liabilities": 12000000000, "receivables": 7500000000, "inventory": 6000000000,
+        "short_term_debt": 5000000000, "long_term_debt": 1000000000}]}},
+    {"id": "D3", "name": "de_nghi_vay.pdf", "type": "de_nghi_vay",
+     "sample_extract": {"amount": 5000000000, "purpose": "Bổ sung vốn lưu động mua hàng", "term_months": 12,
+                        "ocr_confidence": 0.97}},
+    {"id": "D4", "name": "to_khai_vat_2025.pdf", "type": "to_khai_vat",
+     "sample_extract": {"year": 2025, "taxable_revenue": 44200000000, "ocr_confidence": 0.93}}
+  ]
+}

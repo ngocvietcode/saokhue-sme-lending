@@ -1,0 +1,77 @@
+{
+  "name": "sme-lending",
+  "version": "0.2.0",
+  "displayName": "Thẩm định tín dụng SME",
+  "description": "Hệ thống Agent hỗ trợ thẩm định hồ sơ vay SME: chứng từ, tài chính, chính sách, rủi ro, TSBĐ, ngành và tổng hợp tờ trình, có kiểm chứng bằng chứng và cán bộ rà soát.",
+  "author": "Sao Khue",
+  "license": "Proprietary",
+  "tags": ["lending", "sme", "credit", "banking"],
+  "highlights": [
+    "Workflow điều phối 9 Agent chuyên môn trên một hồ sơ, chạy song song khi không phụ thuộc nhau",
+    "Phép tính chỉ số tài chính, DSCR, LTV và kiểm tra điều kiện chính sách chạy bằng tool tất định, không do AI tự tính",
+    "Mọi kết luận gắn mã bằng chứng; kết quả không đạt kiểm chứng bị chặn và đưa vào hàng đợi cán bộ"
+  ],
+  "useCases": [
+    "Khi nhận hồ sơ SME mới, nhờ agent sme-assistant chạy workflow sme-credit-assessment để có gói đánh giá hợp nhất kèm Evidence Map",
+    "Khi cần xem lại riêng phần tài chính, gọi agent financial-analysis theo skill sme-financial-analysis trên hồ sơ đã có",
+    "Khi một kết quả bị Verification chặn, mở hàng đợi rà soát của hồ sơ để xác nhận hoặc yêu cầu bổ sung chứng từ"
+  ],
+  "configuration": [
+    "Thay các file mẫu trong knowledge/ bằng danh mục sản phẩm, checklist và chính sách có hiệu lực",
+    "Cấu hình adapter OCR EDA, NCLOS và CIC trong server/sme_core/integrations.py trước khi dùng dữ liệu thật"
+  ],
+  "agents": [
+    "agents/sme-assistant.json",
+    "agents/document-evidence.json",
+    "agents/product-match.json",
+    "agents/financial-analysis.json",
+    "agents/policy-exception.json",
+    "agents/risk-compliance.json",
+    "agents/collateral.json",
+    "agents/industry.json",
+    "agents/consolidation.json",
+    "agents/verifier.json"
+  ],
+  "skills": [
+    "skills/sme-assessment-run",
+    "skills/sme-document-evidence",
+    "skills/sme-product-match",
+    "skills/sme-financial-analysis",
+    "skills/sme-policy-exception",
+    "skills/sme-risk-compliance",
+    "skills/sme-collateral",
+    "skills/sme-industry",
+    "skills/sme-consolidation",
+    "skills/sme-verification"
+  ],
+  "mcpServers": {
+    "lending": {
+      "command": "python",
+      "args": ["server/server.py"]
+    }
+  },
+  "backend": {
+    "entryPoint": "backend/server.py",
+    "type": "python",
+    "port": "auto",
+    "healthCheck": "/health",
+    "signedPrincipal": true
+  },
+  "ui": {
+    "entry": "dist/index.mjs",
+    "pages": [
+      {
+        "route": "/apps/sme-lending",
+        "label": "Thẩm định SME",
+        "icon": "FileSearch"
+      }
+    ],
+    "loading": { "layout": "page" }
+  },
+  "platform": {
+    "os": ["macos", "linux", "windows"]
+  },
+  "permissions": {
+    "api": ["/api/workflows", "/apps/sme-lending/api"]
+  }
+}

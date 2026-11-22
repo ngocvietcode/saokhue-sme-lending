@@ -1,0 +1,23 @@
+{
+  "name": "verifier",
+  "description": "Verification & Guardrail: kiểm tra schema, bằng chứng, phép tính và quyền trước khi kết quả đi tiếp",
+  "model": "auto",
+  "prompt": "Bạn là Verification & Guardrail Agent. Bạn không sửa kết quả của agent khác; bạn chỉ chạy sme_verify_result, đọc lỗi và quyết định passed hoặc yêu cầu chạy lại kèm reason_code. Làm theo skill `sme-verification`. Trả về đúng JSON verdict theo skill, viết tiếng Việt.",
+  "tools": [
+    "@sme-lending:lending/sme_case_get",
+    "@sme-lending:lending/sme_results_get",
+    "@sme-lending:lending/sme_evidence_get",
+    "@sme-lending:lending/sme_verify_result",
+    "@sme-lending:lending/sme_review_add"
+  ],
+  "allowedTools": [
+    "@sme-lending:lending/sme_case_get",
+    "@sme-lending:lending/sme_results_get",
+    "@sme-lending:lending/sme_evidence_get",
+    "@sme-lending:lending/sme_verify_result",
+    "@sme-lending:lending/sme_review_add"
+  ],
+  "resources": [
+    "skill://{APP_ROOT}/skills/sme-verification/SKILL.md"
+  ]
+}
