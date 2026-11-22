@@ -128,12 +128,106 @@ class RequirementStateTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 svc.draft_save(cid, "zalo", "", "Nhờ anh gửi giấy tờ.", ["doc:nope"], agent="x")
 
-    def test_only_listed_fields_are_editable(self):
+    def test_fields_are_free_form_but_well_formed(self):
         with tempfile.TemporaryDirectory() as tmp:
             svc = _svc(tmp)
             cid = svc.case_create({}, {}, [], "A")["case_id"]
-            with self.assertRaises(ValueError):
-                svc.store.update_case(cid, {"request": {"approved": True}}, actor="sale")
+            for bad in ({"request": {"Bad Key": 1}}, {"customer": {"owners": ["a", "b"]}},
+                        {"labels": {"other.x": "X"}}):
+                with self.assertRaises(ValueError):
+                    svc.store.update_case(cid, bad, actor="sale")
+            svc.store.update_case(cid, {"customer": {"name": "B", "so_lao_dong": 42},
+                                        "labels": {"customer.so_lao_dong": "Số lao động"}}, actor="agent:x")
+            prof = {p["path"]: p for p in svc.overview(cid)["profile"]}
+            self.assertEqual(prof["customer.so_lao_dong"]["label"], "Số lao động")
+            self.assertEqual(prof["customer.name"]["label"], "Tên khách hàng")
+            svc.store.update_case(cid, {"customer": {"so_lao_dong": None}}, actor="agent:x")
+            self.assertNotIn("customer.so_lao_dong", {p["path"] for p in svc.overview(cid)["profile"]})
+
+
+class ChatIntakeTest(unittest.TestCase):
+    def test_import_only_from_upload_folders(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            (home / "uploads").mkdir()
+            (home / "uploads" / "dkkd.pdf").write_bytes(b"%PDF-1.4")
+            (home / "secret.pdf").write_bytes(b"%PDF")
+            (home / "uploads" / "run.exe").write_bytes(b"MZ")
+            svc = SalesService(home / "apps" / "sme-sales" / "data", ROOT / "core" / "knowledge", data_home=home)
+            cid = svc.case_create({}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            roots = svc.import_roots()
+            doc = svc.store.import_file(cid, str(home / "uploads" / "dkkd.pdf"), roots=roots, doc_type="dkkd",
+                                        summary="ĐKKD thay đổi lần 3", actor="agent:dossier-coach")
+            self.assertEqual((doc["type"], doc["summary"]), ("dkkd", "ĐKKD thay đổi lần 3"))
+            self.assertEqual(svc.store.document_path(cid, doc["id"]).read_bytes(), b"%PDF-1.4")
+            for path in (home / "secret.pdf", home / "uploads" / "run.exe", home / "uploads" / "nope.pdf",
+                         home / "uploads" / ".." / "secret.pdf"):
+                with self.assertRaises(ValueError, msg=str(path)):
+                    svc.store.import_file(cid, str(path), roots=roots, actor="agent:x")
+
+
+class ExtractionTest(unittest.TestCase):
+    def test_a_document_asks_for_its_fields_until_filled_or_not_stated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create({"name": "A", "tax_id": "1"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            doc = svc.store.add_document(cid, name="dkkd.pdf", doc_type="dkkd", issued_date="2026-09-10",
+                                         content_b64=None, actor="agent:x")
+            todo = {m["path"]: m["label"] for m in svc.extract_next(cid, doc["id"])}
+            self.assertEqual(todo["customer.address"], "Địa chỉ trụ sở")
+            self.assertNotIn("customer.name", todo)
+            act = next(a for a in svc.overview(cid)["actions"] if a["kind"] == "extract")
+            self.assertIn("Người đại diện theo pháp luật", act["detail"][0])
+            svc.store.update_case(cid, {"customer": {"address": "Hà Nội", "legal_rep": "Ông B",
+                                                     "charter_capital": 5e9, "established": "2019-03-15"}}, actor="x")
+            svc.store.update_document(cid, doc["id"], {"not_stated": ["customer.industry_code"]}, actor="x")
+            self.assertEqual(svc.extract_next(cid, doc["id"]), [])
+            self.assertNotIn("extract", [a["kind"] for a in svc.overview(cid)["actions"]])
+            labels = {p["path"]: p["label"] for p in svc.overview(cid)["profile"]}
+            self.assertEqual(labels["customer.charter_capital"], "Vốn điều lệ")
+
+    def test_overview_rows_carry_what_the_list_shows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create({"name": "A"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            row = svc.list_dossiers()[0]
+        self.assertTrue({"actions", "items_open", "profile", "documents"} <= set(row))
+        self.assertEqual(row["case_id"], cid)
+        self.assertTrue(all("title" in i for i in row["items_open"]))
+
+
+class ActionsTest(unittest.TestCase):
+    def test_new_dossier_asks_for_documents_first(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create({"name": "A"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            kinds = [a["kind"] for a in svc.overview(cid)["actions"]]
+        self.assertEqual(kinds[:3], ["first_upload", "request_docs", "fill_info"])
+
+    def test_ready_puts_submit_first_and_overdue_reminds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = _full_case(svc)
+            acts = svc.overview(cid)["actions"]
+            self.assertEqual(acts[0]["kind"], "submit")
+            svc.store.update_document(cid, "D3", {"issued_date": "2024-01-01"}, actor="sale")
+            svc.store.set_requirement(cid, "expired:bctc_2_ky", "requested", "", actor="sale", due_date="2026-11-10")
+            acts = svc.overview(cid)["actions"]
+            self.assertEqual(acts[0]["kind"], "remind")
+            self.assertEqual(acts[0]["keys"], ["expired:bctc_2_ky"])
+            rows = svc.list_dossiers()
+            self.assertEqual(rows[0]["overdue"], 1)
+            self.assertEqual(svc.today(rows)["overdue"], [cid])
+
+    def test_group_progress_counts_waived_as_done(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create({"name": "A", "tax_id": "1"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            svc.overview(cid)
+            svc.store.set_requirement(cid, "doc:dieu_le", "waived", "lý do", actor="sale")
+            legal = next(g for g in svc.overview(cid)["groups"] if g["group"] == "phap_ly")
+        self.assertEqual(legal["done"], 3)  # name, tax id, waived articles
+        self.assertEqual(legal["blocked"], 2)  # registration certificate, years in operation
 
     def test_sample_fixture_gets_a_score(self):
         fixture = json.loads((ROOT / "tests" / "fixtures" / "sample_case.json").read_text(encoding="utf-8"))
@@ -144,6 +238,81 @@ class RequirementStateTest(unittest.TestCase):
         self.assertEqual(row["case_id"], cid)
         self.assertTrue(0 < row["score"] < 100)
         self.assertGreater(row["open_items"], 0)
+
+
+class ValidationAndLifecycleTest(unittest.TestCase):
+    def test_invalid_dates_numbers_product_and_doc_type_are_guarded(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            (home / "uploads").mkdir()
+            (home / "uploads" / "a.pdf").write_bytes(b"%PDF")
+            svc = SalesService(home / "apps" / "sme-sales" / "data", ROOT / "core" / "knowledge", data_home=home)
+            svc.store.clock = lambda: TODAY + "T08:00:00+00:00"
+
+            with self.assertRaises(ValueError):
+                svc.create_dossier({"name": "Cty"}, {"amount": "5 tỷ"})
+            self.assertEqual(svc.store.list_cases(), [], "failed create_dossier must not leave an orphan case")
+
+            cid = svc.create_dossier({"name": "Cty", "established": "2022-01-10"},
+                                     {"product_code": "SME_WC", "amount": "5000000000"})["case_id"]
+            ov = svc.overview(cid)
+            self.assertFalse(ov["readiness"]["ready"])
+            self.assertIn("field:request.product_code_valid", ov["readiness"]["blocking_open"])
+
+            svc.store.update_case(cid, {"request": {"product_code": "SME-LC", "purpose": "fixed_asset"}}, actor="agent:x")
+            ov_lc = svc.overview(cid)
+            self.assertTrue(any(p["id"] == "C2" for p in ov_lc["policy_checks"]))
+            items = {i["key"]: i for i in ov_lc["items"]}
+            self.assertEqual(items["fact:years_in_operation"]["status"], "ok", "derived from customer.established")
+            self.assertEqual(items["policy:purpose"]["status"], "open")
+
+            with self.assertRaises(ValueError):
+                svc.import_document(cid, str(home / "uploads" / "a.pdf"), doc_type="bctc_sai")
+            with self.assertRaises(ValueError):
+                svc.import_document(cid, str(home / "uploads" / "a.pdf"), doc_type="dkkd", issued_date="15/10/2026")
+            doc = svc.import_document(cid, str(home / "uploads" / "a.pdf"), doc_type="dkkd",
+                                      issued_date="2026-10-01", summary="ĐKKD")["document"]
+            with self.assertRaises(ValueError):
+                svc.classify_document(cid, doc["id"], doc_type="unknown_type")
+
+    def test_draft_author_whitespace_promise_and_due_date_refresh(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create({"name": "A"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            svc.overview(cid)
+            with self.assertRaises(ValueError):
+                svc.draft_save(cid, "zalo", "", "Hồ sơ chắc chắn\nđược duyệt nha anh.", ["doc:dkkd"], agent="dossier-coach")
+            draft = svc.draft_save(cid, "email", "Xin bổ sung", "Kính gửi anh chị...", ["doc:dkkd"], agent="dossier-coach")
+            self.assertEqual(draft["author"], "agent:dossier-coach")
+
+            svc.store.clock = lambda: "2026-11-22T09:00:00+00:00"
+            svc.store.mark_draft_sent(cid, draft["id"], actor="sale", due_date="2026-11-24")
+            items = {i["key"]: i for i in svc.overview(cid)["items"]}
+            self.assertEqual(items["doc:dkkd"]["status"], "requested")
+            self.assertEqual(items["doc:dkkd"]["due_date"], "2026-11-24")
+
+            # Follow-up draft refreshes requested_at and due_date on already-requested items
+            draft2 = svc.draft_save(cid, "zalo", "", "Nhắc nhẹ...", ["doc:dkkd"], agent="dossier-coach")
+            svc.store.clock = lambda: "2026-11-26T09:00:00+00:00"
+            svc.store.mark_draft_sent(cid, draft2["id"], actor="sale", due_date="2026-11-29")
+            items2 = {i["key"]: i for i in svc.overview(cid)["items"]}
+            self.assertEqual(items2["doc:dkkd"]["requested_at"], "2026-11-26T09:00:00+00:00")
+            self.assertEqual(items2["doc:dkkd"]["due_date"], "2026-11-29")
+
+            # Reopening clears due_date
+            svc.store.set_requirement(cid, "doc:dkkd", "open", "", actor="sale")
+            items3 = {i["key"]: i for i in svc.overview(cid)["items"]}
+            self.assertNotIn("due_date", items3["doc:dkkd"])
+
+            # Submitted case locks updates until reopened
+            svc.store.mark_submitted(cid, actor="sale", note="nộp")
+            with self.assertRaises(ValueError):
+                svc.store.update_case(cid, {"customer": {"tax_id": "0101"}}, actor="agent:x")
+            with self.assertRaises(ValueError):
+                svc.draft_save(cid, "zalo", "", "ok", ["doc:dkkd"], agent="dossier-coach")
+            svc.store.reopen_case(cid, actor="sale", note="Bổ sung theo yêu cầu Thẩm định")
+            svc.store.update_case(cid, {"customer": {"tax_id": "0101234567"}}, actor="agent:x")
+            self.assertEqual(svc.store.get_case(cid)["customer"]["tax_id"], "0101234567")
 
 
 if __name__ == "__main__":

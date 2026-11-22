@@ -19,9 +19,12 @@ _OPS = {
 class Knowledge:
     def __init__(self, root: Path):
         self.root = Path(root)
+        self._cache: dict[str, Any] = {}
 
     def _load(self, name: str) -> dict[str, Any]:
-        return json.loads((self.root / name).read_text(encoding="utf-8"))
+        if name not in self._cache:
+            self._cache[name] = json.loads((self.root / name).read_text(encoding="utf-8"))
+        return self._cache[name]
 
     def products(self) -> dict[str, Any]:
         return self._load("products.json")
@@ -70,8 +73,16 @@ class Knowledge:
             elif facts[fact] is None:
                 row["status"] = "na"
             else:
-                row["actual"] = facts[fact]
-                row["status"] = "met" if _OPS[c["op"]](float(facts[fact]), float(c["value"])) else "not_met"
+                val = facts[fact]
+                if isinstance(val, bool):
+                    row["status"] = "missing"
+                else:
+                    try:
+                        fval = float(val)
+                        row["actual"] = val
+                        row["status"] = "met" if _OPS[c["op"]](fval, float(c["value"])) else "not_met"
+                    except (ValueError, TypeError):
+                        row["status"] = "missing"
             matrix.append(row)
         return {
             "product_code": product_code,

@@ -48,12 +48,12 @@ class ReplayCache:
         self._lock = threading.Lock()
         self._max = max_entries
 
-    def accept(self, request_id: str, now: float) -> bool:
+    def accept(self, request_id: str, now: float, issued_at: float | None = None) -> bool:
         with self._lock:
             self._seen = {k: v for k, v in self._seen.items() if v > now}
             if request_id in self._seen or len(self._seen) >= self._max:
                 return False
-            self._seen[request_id] = now + FRESH_SECONDS
+            self._seen[request_id] = max(now, issued_at if issued_at is not None else now) + FRESH_SECONDS
             return True
 
 
@@ -69,20 +69,20 @@ def verify_principal(header: str, *, method: str, target: str, body: bytes, secr
         return None
     if not isinstance(claim, dict) or set(claim) != _PRINCIPAL_FIELDS:
         return None
-    if claim["version"] != 1 or claim["kind"] not in _PRINCIPAL_KINDS:
+    if type(claim["version"]) is not int or claim["version"] != 1 or claim["kind"] not in _PRINCIPAL_KINDS:
         return None
     if not isinstance(claim["requestId"], str) or not re.fullmatch(r"[0-9a-f]{32}", claim["requestId"]):
         return None
     owner = claim["ownerId"]
     if not isinstance(owner, str) or (claim["kind"] == "owner-session") != bool(owner):
         return None
-    if not isinstance(claim["issuedAt"], int) or abs(now - claim["issuedAt"]) > FRESH_SECONDS:
+    if type(claim["issuedAt"]) is not int or abs(now - claim["issuedAt"]) > FRESH_SECONDS:
         return None
     lines = ["kirocrew-proxy-principal-v1", str(claim["issuedAt"]), method, target, _sha256(body), encoded]
     expected = hmac.new(secret.encode(), "\n".join(lines).encode(), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected, sig):
         return None
-    if not replays.accept(claim["requestId"], now):
+    if not replays.accept(claim["requestId"], now, float(claim["issuedAt"])):
         return None
     return claim
 
@@ -117,7 +117,14 @@ def make_handler(api: Any, routes: list[Route], secret: str, replays: ReplayCach
                 return
             path = self.path.split("?", 1)[0]
             route = next(((r, r[1].match(path)) for r in routes if r[0] == method and r[1].match(path)), None)
-            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                self._send(400, {"error": "bad_content_length"})
+                return
+            if length < 0:
+                self._send(400, {"error": "bad_content_length"})
+                return
             limit = route[0][3] if route else 64 * 1024
             if length > limit:
                 self._send(413, {"error": "body_too_large"})

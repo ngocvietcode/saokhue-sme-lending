@@ -4,9 +4,9 @@ Registered by Sao Khue as `sme-sales:sales`; agents reference its tools as
 `@sme-sales:sales/<tool>`. All logic lives in `sme_core` (a generated copy of
 core/sme_core; see tools/sync_core.py).
 
-What an agent may NOT do here, by design: waive a requirement, mark a draft as
-sent, or mark a case submitted. Those go through the app backend, which only
-accepts them from the signed-in dashboard user.
+By design, agent tools cannot waive requirements, mark drafts sent, remove
+files, submit, or unlock a submitted dossier: those decisions go through the
+app backend for the signed-in dashboard user only.
 
 Data directory: $SME_SALES_DATA, else `<app root>/data`.
 """
@@ -41,18 +41,41 @@ def _safe(fn, *args: Any, **kwargs: Any) -> Any:
 
 
 @mcp.tool()
+def sme_cases_find(query: str = "") -> Any:
+    """Existing dossiers whose customer name, tax id or case id contains `query` (all when empty). Check this
+    before creating a dossier, so one customer's documents do not split across two dossiers."""
+    return _safe(svc.find_dossiers, query)
+
+
+@mcp.tool()
 def sme_case_create(customer: dict, request: dict, flow: str = "A") -> Any:
-    """Create a dossier. customer: {name, tax_id, cif, industry_code}; request: {product_code, amount, purpose,
-    term_months, proposal}; flow: "A" or "B". Documents are added on the app page. Returns the case_id."""
-    return _safe(svc.case_create, customer, request, [], flow)
+    """Create a dossier from what the Sale said in chat. customer and request are free-form single values with
+    snake_case keys; the gap rules expect customer.name, customer.tax_id, customer.industry_code and
+    request.product_code, amount, purpose (working_capital, fixed_asset, expansion, trade_finance),
+    term_months. flow: "A" or "B". Returns the case with its case_id and the opening gap list."""
+    def create() -> Any:
+        case = svc.create_dossier(customer, request, flow, actor=f"agent:{AGENT}")
+        return svc.gap_analysis(case["case_id"])
+    return _safe(create)
 
 
 @mcp.tool()
 def sme_case_get(case_id: str) -> Any:
-    """Read a dossier: customer, request, facts, documents (id, name, type, issued_date)."""
+    """Read a dossier: customer, request, facts, documents (id, name, type, issued_date, local_path,
+    extract_missing)."""
     def get() -> Any:
         case = svc.store.get_case(case_id)
-        return {k: v for k, v in case.items() if k not in ("results", "review_open")}
+        out = {k: v for k, v in case.items() if k not in ("results", "review_open")}
+        docs = []
+        for d in out.get("documents") or []:
+            item = dict(d)
+            p = svc.store.document_path(case_id, d["id"])
+            if p and p.is_file():
+                item["local_path"] = str(p)
+            item["extract_missing"] = svc.extract_next(case_id, d["id"])
+            docs.append(item)
+        out["documents"] = docs
+        return out
     return _safe(get)
 
 
@@ -66,22 +89,43 @@ def sme_dossier_gaps(case_id: str) -> Any:
 
 @mcp.tool()
 def sme_case_update(case_id: str, customer: dict | None = None, request: dict | None = None,
-                    facts: dict | None = None) -> Any:
-    """Fill dossier fields read from the customer's documents (customer: name, tax_id, cif, industry_code,
-    address, legal_rep, established; request: product_code, amount, purpose, term_months, proposal; facts:
-    years_in_operation, equity_contribution_pct). Only values a document states; cite it in your reply."""
-    patch = {k: v for k, v in (("customer", customer), ("request", request), ("facts", facts)) if v}
-    return _safe(svc.store.update_case, case_id, patch, actor=f"agent:{AGENT}")
+                    facts: dict | None = None, labels: dict | None = None, flow: str = "") -> Any:
+    """Set dossier fields the Sale told you or a document states. Keys are free-form snake_case, values single
+    (text, number, date); null removes a field. flow can switch between "A" and "B". Facts the rules use:
+    years_in_operation, equity_contribution_pct. labels maps "section.key" to a Vietnamese display label for a
+    key the catalogue does not name (e.g. {"customer.so_lao_dong": "Số lao động"}). Never invent a value."""
+    patch: dict[str, Any] = {
+        k: v for k, v in (("customer", customer), ("request", request), ("facts", facts), ("labels", labels)) if v
+    }
+    if flow:
+        patch["flow"] = flow
+    def update() -> Any:
+        svc.store.update_case(case_id, patch, actor=f"agent:{AGENT}")
+        return svc.gap_analysis(case_id)
+    return _safe(update)
 
 
 @mcp.tool()
-def sme_document_classify(case_id: str, document_id: str, doc_type: str, issued_date: str = "") -> Any:
-    """Set a document's type (a key of sme_documents_catalog types) and issue date (YYYY-MM-DD) as read from
-    its content. The Sale can correct it on the page."""
-    patch: dict[str, Any] = {"type": doc_type}
-    if issued_date:
-        patch["issued_date"] = issued_date
-    return _safe(svc.store.update_document, case_id, document_id, patch, actor=f"agent:{AGENT}")
+def sme_document_import(case_id: str, path: str, doc_type: str = "", issued_date: str = "",
+                        summary: str = "") -> Any:
+    """Add a file the Sale attached in chat (the path after `[attached_file N]`) to the dossier. Read the file
+    first, then pass doc_type (a key of sme_documents_catalog types, empty if none fits), issued_date
+    (YYYY-MM-DD) and a one-line summary of what it shows. Only chat upload folders are accepted.
+    The result's `extract_next` lists the fields this document type should give that the dossier still
+    lacks: right after, call sme_case_update with every one the document states, and sme_document_classify
+    with not_stated for the ones it does not."""
+    return _safe(svc.import_document, case_id, path, doc_type=doc_type, issued_date=issued_date,
+                 summary=summary, actor=f"agent:{AGENT}")
+
+
+@mcp.tool()
+def sme_document_classify(case_id: str, document_id: str, doc_type: str = "", issued_date: str = "",
+                          summary: str = "", not_stated: list[str] | None = None) -> Any:
+    """Set an existing document's type (a key of sme_documents_catalog types), issue date (YYYY-MM-DD),
+    one-line summary, and not_stated: field paths from extract_next that this document does not state (so
+    they stop being asked for). Returns the document and its remaining extract_next."""
+    return _safe(svc.classify_document, case_id, document_id, doc_type=doc_type, issued_date=issued_date,
+                 summary=summary, not_stated=not_stated, actor=f"agent:{AGENT}")
 
 
 @mcp.tool()

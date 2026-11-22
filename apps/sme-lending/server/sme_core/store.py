@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import tempfile
 import time
 import uuid
@@ -91,13 +92,22 @@ class CaseStore:
                 lock.mkdir()
                 break
             except FileExistsError:
+                try:
+                    if time.time() - lock.stat().st_mtime > 60.0:
+                        shutil.rmtree(lock, ignore_errors=True)
+                        continue
+                except OSError:
+                    pass
                 if time.monotonic() > deadline:
                     raise TimeoutError(f"case is locked: {case_dir.name}")
                 time.sleep(0.05)
         try:
             yield
         finally:
-            lock.rmdir()
+            try:
+                lock.rmdir()
+            except FileNotFoundError:
+                pass
 
     def _audit(self, case_dir: Path, action: str, detail: dict[str, Any]) -> None:
         line = json.dumps({"ts": self.clock(), "action": action, **detail}, ensure_ascii=False)

@@ -1,31 +1,44 @@
 {
   "name": "sme-sales",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "displayName": "Hoàn thiện hồ sơ SME",
-  "description": "Trợ lý cho Sale/RM rà soát bộ hồ sơ vay SME của khách hàng, chỉ ra chỗ còn thiếu, soạn yêu cầu bổ sung gửi khách và kiểm tra hồ sơ đã đủ để nộp Thẩm định chưa.",
+  "description": "Sale dựng bộ hồ sơ vay SME ngay trong chat: kể về khách hàng, đính kèm chứng từ; trợ lý đọc, ghi nhận và chỉ ra việc cần làm. Trang theo dõi cho thấy tổng thể, mục bị chặn và hồ sơ nào đủ để nộp Thẩm định.",
   "author": "Sao Khue",
   "license": "Proprietary",
-  "tags": ["lending", "sme", "sales", "banking"],
+  "tags": [
+    "lending",
+    "sme",
+    "sales",
+    "banking"
+  ],
   "highlights": [
-    "Danh sách còn thiếu tính bằng quy tắc tất định từ checklist sản phẩm, hiệu lực chứng từ và điều kiện chính sách: Sale và Thẩm định thấy cùng một danh sách",
-    "Điểm hoàn thiện và kiểm tra sẵn sàng nộp; mục bỏ qua phải có lý do và đi kèm hồ sơ",
-    "Agent dossier-coach soạn thư xin bổ sung theo đúng mục còn thiếu, không bao giờ hứa kết quả; Sale tự gửi"
+    "Bắt đầu hồ sơ từ chat: Sale kể về khách và đính kèm file, agent dossier-coach đọc chứng từ, phân loại và ghi thông tin, không cần nhập liệu trên trang",
+    "Danh sách còn thiếu tính bằng quy tắc tất định (checklist sản phẩm, hiệu lực chứng từ, điều kiện chính sách); thông tin hồ sơ linh động theo từng bộ",
+    "Trang theo dõi theo hướng việc cần làm: việc hôm nay, mục bị chặn, khách quá hạn, hồ sơ đủ để nộp"
   ],
   "useCases": [
-    "Khi khách gửi bộ hồ sơ đầu tiên, tải chứng từ lên trang Hoàn thiện hồ sơ SME để biết ngay còn thiếu gì và điểm hoàn thiện bao nhiêu",
-    "Khi cần xin khách bổ sung, nhờ agent dossier-coach soạn thư theo các mục đã chọn, sửa rồi tự gửi qua email hoặc Zalo",
-    "Trước khi nộp Thẩm định, mở kiểm tra sẵn sàng nộp để chắc không còn mục chặn"
+    "Khi khách gửi bộ hồ sơ đầu tiên, mở dossier-coach trong chat, kể về khách và đính kèm file để có ngay điểm hoàn thiện và việc cần làm",
+    "Khi còn thiếu chứng từ, bấm Nhờ trợ lý soạn thư trên trang Hoàn thiện hồ sơ, sửa rồi tự gửi khách và bấm Tôi đã gửi",
+    "Đầu ngày, mở trang Hoàn thiện hồ sơ để xem hồ sơ nào đủ để nộp, khách nào quá hạn, hồ sơ nào còn bị chặn"
   ],
   "configuration": [
     "Thay knowledge/documents.json, checklists.json và policies.json bằng quy định có hiệu lực (đang là dữ liệu mẫu)",
-    "Nộp hồ sơ lên hệ thống trung tâm chưa tích hợp: đánh dấu Đã nộp sau khi nộp thủ công"
+    "File đính kèm được nhận từ thư mục upload của Sao Khuê; thêm thư mục khác qua biến SME_SALES_IMPORT_DIRS",
+    "Nộp lên hệ thống trung tâm chưa tích hợp: nộp thủ công rồi xác nhận trên trang"
   ],
-  "agents": ["agents/dossier-coach.json"],
-  "skills": ["skills/sme-dossier-coach", "skills/sme-customer-request"],
+  "agents": [
+    "agents/dossier-coach.json"
+  ],
+  "skills": [
+    "skills/sme-dossier-coach",
+    "skills/sme-customer-request"
+  ],
   "mcpServers": {
     "sales": {
       "command": "python",
-      "args": ["server/server.py"]
+      "args": [
+        "server/server.py"
+      ]
     }
   },
   "backend": {
@@ -44,16 +57,28 @@
         "icon": "ClipboardCheck"
       }
     ],
-    "loading": { "layout": "page" }
+    "loading": {
+      "layout": "page"
+    }
   },
   "platform": {
-    "os": ["macos", "linux", "windows"]
+    "os": [
+      "macos",
+      "linux",
+      "windows"
+    ]
   },
   "permissions": {
-    "api": ["/apps/sme-sales/api"],
+    "api": [
+      "/apps/sme-sales/api",
+      "/api/chat",
+      "/api/upload/file"
+    ],
     "chatLaunch": {
       "keyPrefix": "sme-sales-chat-",
-      "agents": ["dossier-coach"],
+      "agents": [
+        "dossier-coach"
+      ],
       "folder": "Hoàn thiện hồ sơ SME"
     }
   }

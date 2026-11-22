@@ -1,175 +1,248 @@
 import { useAppApi } from '@kirocrew/app-sdk'
 import { Btn, ErrorNotice, PageHeader } from '@kirocrew/app-sdk/ui'
-import { CheckCircle2, ClipboardCheck, Clock, FolderOpen, Plus, RefreshCw, Search, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Empty, Kpi, Pill } from '@sme-ui/ui'
-import { API, PURPOSE, STAGE, ago, errMsg, moneyShort, type Catalog, type DossierRow, type Stage } from './model'
-import { Score, StagePill } from './parts'
+import { ClipboardCheck, Clock, FolderOpen, MessageSquare, Plus, RefreshCw, Search, ShieldAlert } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Empty, Kpi, Pill, tone } from '@sme-ui/ui'
+import type { CreatedCaseBanner } from './CoachPanel'
+import {
+  API, PURPOSE, ago, errMsg, moneyShort, type Catalog, type DossierRow, type Today,
+} from './model'
+import { DetailTable, dossierStatus, groupTotals } from './Overview'
+import { groupTone } from './parts'
 
-type Filter = 'all' | Stage
+type Filter = 'all' | 'action' | 'waiting' | 'overdue' | 'ready' | 'submitted'
+type ViewMode = 'cards' | 'table'
 
-function Row({ c, onOpen }: { c: DossierRow; onOpen: () => void }) {
-  return (
-    <button type="button" className="sme-card" style={{ textAlign: 'left', cursor: 'pointer', width: '100%' }} onClick={onOpen}>
-      <div className="sme-between sme-wrap" style={{ gap: 12 }}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="sme-strong">{c.customer_name || 'Chưa có tên khách hàng'}</div>
-          <div className="sme-small sme-muted sme-mono">{c.case_id}</div>
-        </div>
-        <StagePill stage={c.stage} />
-      </div>
-      <div className="sme-row sme-wrap sme-small" style={{ gap: 10, marginTop: 8 }}>
-        <span className="sme-strong">{moneyShort(c.amount)}</span>
-        {c.term_months ? <span>{c.term_months} tháng</span> : null}
-        {c.purpose ? <span>{PURPOSE[c.purpose] ?? c.purpose}</span> : null}
-        <span className="sme-muted">Luồng {c.flow}</span>
-      </div>
-      <div style={{ marginTop: 10 }}><Score value={c.score} /></div>
-      <div className="sme-row sme-wrap" style={{ gap: 6, marginTop: 8 }}>
-        {c.blocking_open > 0 && <Pill t="danger">{c.blocking_open} mục chặn nộp</Pill>}
-        {c.requested > 0 && <Pill t="info">{c.requested} đang chờ khách</Pill>}
-        {c.ready && c.stage !== 'submitted' && <Pill t="ok"><CheckCircle2 size={12} /> Đủ để nộp</Pill>}
-        <span className="sme-small sme-muted" style={{ marginLeft: 'auto' }}>Cập nhật {ago(c.updated_at)}</span>
-      </div>
-    </button>
-  )
+const VIEW_KEY = 'sme-sales:view'
+const readView = (): ViewMode => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'cards'
+  } catch { return 'cards' }
 }
 
-function NewDossier({ catalog, onCancel, onCreated }: {
-  catalog: Catalog | null; onCancel: () => void; onCreated: (id: string) => void
-}) {
-  const api = useAppApi()
-  const [f, setF] = useState({ name: '', tax_id: '', product_code: '', amount: '', purpose: 'working_capital', term_months: '', flow: 'A' })
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const set = (k: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [k]: e.target.value })
-  const create = async () => {
-    setBusy(true)
-    try {
-      const request: Record<string, unknown> = { purpose: f.purpose }
-      if (f.product_code) request.product_code = f.product_code
-      if (f.amount) request.amount = Number(f.amount)
-      if (f.term_months) request.term_months = Number(f.term_months)
-      const customer: Record<string, unknown> = { name: f.name.trim() }
-      if (f.tax_id.trim()) customer.tax_id = f.tax_id.trim()
-      const res = await api.post<{ case_id: string }>(`${API}/cases`, { customer, request, flow: f.flow })
-      onCreated(res.case_id)
-    } catch (e) {
-      setError(errMsg(e))
-    } finally {
-      setBusy(false)
-    }
-  }
+function DossierCard({ r, onOpen }: { r: DossierRow; onOpen: () => void }) {
+  const st = dossierStatus(r)
+  const { done, total } = groupTotals(r)
   return (
-    <div className="sme-card" style={{ marginBottom: 16 }}>
-      <div className="sme-between" style={{ marginBottom: 12 }}>
-        <div className="sme-h3">Hồ sơ mới</div>
-        <Btn onClick={onCancel} title="Đóng"><X size={14} /></Btn>
+    <div className="sme-card hover" role="button" tabIndex={0} onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen() } }}>
+      <div className="sme-between" style={{ alignItems: 'flex-start' }}>
+        <div style={{ minWidth: 0 }}>
+          <div className="sme-h2" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {r.customer_name || 'Chưa có tên doanh nghiệp'}
+          </div>
+          <div className="sme-mono sme-muted" style={{ marginTop: 2 }}>
+            {r.case_id}{r.tax_id ? ` · MST ${r.tax_id}` : ''}
+          </div>
+        </div>
+        <Pill t={st.t}>{st.label}</Pill>
       </div>
-      {error && <div style={{ marginBottom: 12 }}><ErrorNotice title="Không tạo được hồ sơ">{error}</ErrorNotice></div>}
-      <div className="sme-form">
-        <label className="sme-field">Tên khách hàng *<input className="sme-input" value={f.name} onChange={set('name')} /></label>
-        <label className="sme-field">Mã số thuế<input className="sme-input" value={f.tax_id} onChange={set('tax_id')} /></label>
-        <label className="sme-field">Sản phẩm
-          <select className="sme-input" value={f.product_code} onChange={set('product_code')}>
-            <option value="">Chưa chọn</option>
-            {catalog?.products.products.map((p) => <option key={p.code} value={p.code}>{p.code} · {p.name}</option>)}
-          </select>
-        </label>
-        <label className="sme-field">Số tiền vay (đồng)<input className="sme-input" inputMode="numeric" value={f.amount} onChange={set('amount')} /></label>
-        <label className="sme-field">Mục đích
-          <select className="sme-input" value={f.purpose} onChange={set('purpose')}>
-            {Object.entries(PURPOSE).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-          </select>
-        </label>
-        <label className="sme-field">Kỳ hạn (tháng)<input className="sme-input" inputMode="numeric" value={f.term_months} onChange={set('term_months')} /></label>
-        <label className="sme-field">Luồng
-          <select className="sme-input" value={f.flow} onChange={set('flow')}>
-            <option value="A">Luồng A</option><option value="B">Luồng B</option>
-          </select>
-        </label>
+      <div className="sme-row" style={{ marginTop: 12, alignItems: 'baseline', gap: 10 }}>
+        <span className="sme-case-amount">{moneyShort(r.amount)}</span>
+        <span className="sme-muted sme-small">
+          {[r.product_code, r.term_months ? `${r.term_months} tháng` : null, r.purpose ? PURPOSE[r.purpose] ?? r.purpose : null]
+            .filter(Boolean).join(' · ')}
+        </span>
       </div>
-      <div className="sme-row" style={{ justifyContent: 'flex-end', marginTop: 14 }}>
-        <Btn onClick={onCancel}>Huỷ</Btn>
-        <Btn primary busy={busy} disabled={!f.name.trim()} onClick={create}><Plus size={14} /> Tạo hồ sơ</Btn>
+      <div className="sme-pipe" aria-label={`${done}/${total} hạng mục đạt`}>
+        {r.groups.map((g) => {
+          const gt = groupTone(g)
+          return (
+            <span key={g.group} className={gt === 'muted' ? 'none' : tone(gt)}
+              title={`${g.label}: ${g.done}/${g.total} hạng mục`} />
+          )
+        })}
+      </div>
+      <div className="sme-between sme-small sme-muted">
+        <span className="sme-row" style={{ gap: 6 }}>
+          <span className="sme-chip">Luồng {r.flow}</span>
+          <span className="sme-mono">{done}/{total} mục</span>
+          {(r.policy_breaches ?? 0) > 0 && <Pill t="danger">{r.policy_breaches} lệch chuẩn</Pill>}
+        </span>
+        <span title={r.updated_at}>Cập nhật {ago(r.updated_at)}</span>
       </div>
     </div>
   )
 }
 
-export default function DossierList({ onOpen, catalog }: { onOpen: (id: string) => void; catalog: Catalog | null }) {
+export default function DossierList({
+  onOpen, catalog: _catalog, coachOpen, syncTick, onToggleCoach, onAskCoach, onCreatedCase,
+}: {
+  onOpen: (id: string) => void
+  catalog: Catalog | null
+  coachOpen: boolean
+  syncTick: number
+  onToggleCoach: () => void
+  onAskCoach: (prompt: string, mode?: 'prefill' | 'new_intake' | 'attach') => void
+  onCreatedCase: (created: CreatedCaseBanner) => void
+}) {
   const api = useAppApi()
   const [rows, setRows] = useState<DossierRow[] | null>(null)
+  const [today, setToday] = useState<Today | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [filter, setFilter] = useState<Filter>('all')
   const [q, setQ] = useState('')
-  const [creating, setCreating] = useState(false)
+  const [view, setViewState] = useState<ViewMode>(readView)
+  const lastSyncRef = useRef(0)
+  const silentInFlightRef = useRef(false)
+  const knownIdsRef = useRef<Set<string> | null>(null)
 
-  const load = useCallback(async () => {
-    setBusy(true)
+  const setView = (v: ViewMode) => {
+    setViewState(v)
+    try { localStorage.setItem(VIEW_KEY, v) } catch { /* viewer convenience */ }
+  }
+
+  const load = useCallback(async (silent = false) => {
+    if (silent && silentInFlightRef.current) return
+    if (silent) silentInFlightRef.current = true
+    else setBusy(true)
     try {
-      setRows((await api.get<{ cases: DossierRow[] }>(`${API}/cases`)).cases)
+      const res = await api.get<{ cases: DossierRow[]; today: Today }>(`${API}/cases`)
+      if (knownIdsRef.current === null) {
+        knownIdsRef.current = new Set(res.cases.map((r) => r.case_id))
+      } else {
+        const created = res.cases.find((r) => !knownIdsRef.current!.has(r.case_id))
+        res.cases.forEach((r) => knownIdsRef.current!.add(r.case_id))
+        if (created) {
+          onCreatedCase({ caseId: created.case_id, name: created.customer_name || created.case_id })
+        }
+      }
+      setRows(res.cases)
+      setToday(res.today)
       setError(null)
+      lastSyncRef.current = Date.now()
     } catch (e) {
-      setError(errMsg(e))
+      if (!silent) setError(errMsg(e))
     } finally {
-      setBusy(false)
+      if (silent) silentInFlightRef.current = false
+      else setBusy(false)
     }
-  }, [api])
+  }, [api, onCreatedCase])
+
   useEffect(() => { load() }, [load])
 
-  const count = (s: Stage) => rows?.filter((r) => r.stage === s).length ?? 0
+  useEffect(() => {
+    if (syncTick > 0) void load(true)
+  }, [syncTick, load])
+
+  useEffect(() => {
+    const syncIfStale = () => {
+      if (document.visibilityState === 'hidden') return
+      if (Date.now() - lastSyncRef.current >= 3000) void load(true)
+    }
+    window.addEventListener('focus', syncIfStale)
+    document.addEventListener('visibilitychange', syncIfStale)
+    return () => {
+      window.removeEventListener('focus', syncIfStale)
+      document.removeEventListener('visibilitychange', syncIfStale)
+    }
+  }, [load])
+
+  const stats = useMemo(() => {
+    const list = rows ?? []
+    const live = list.filter((r) => r.stage !== 'submitted')
+    const submitted = list.length - live.length
+    const ready = live.filter((r) => r.ready).length
+    const actionNeeded = live.filter((r) => (r.actionable_blocking ?? r.blocking_open) > 0 || (r.unclassified_docs ?? 0) > 0).length
+    const actionableItems = live.reduce((n, r) => n + (r.actionable_blocking ?? r.blocking_open), 0)
+    const waitingCases = live.filter((r) => r.requested > 0 && r.overdue === 0).length
+    const overdueCases = live.filter((r) => r.overdue > 0).length
+    return { live: live.length, submitted, ready, actionNeeded, actionableItems, waitingCases, overdueCases }
+  }, [rows])
+
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase()
-    return (rows ?? []).filter((r) => (filter === 'all' || r.stage === filter)
-      && (!needle || [r.customer_name, r.case_id].some((v) => v?.toLowerCase().includes(needle))))
+    return (rows ?? []).filter((r) => {
+      if (filter === 'submitted' && r.stage !== 'submitted') return false
+      if (filter !== 'submitted' && filter !== 'all' && r.stage === 'submitted') return false
+      if (filter === 'action' && (r.actionable_blocking ?? r.blocking_open) === 0 && (r.unclassified_docs ?? 0) === 0) return false
+      if (filter === 'waiting' && r.requested === 0) return false
+      if (filter === 'overdue' && r.overdue === 0) return false
+      if (filter === 'ready' && !r.ready) return false
+      if (!needle) return true
+      return [r.customer_name, r.case_id, r.tax_id, r.product_code].some((v) => v?.toLowerCase().includes(needle))
+    })
   }, [rows, filter, q])
+
+  const newDossier = () => onAskCoach('Tạo hồ sơ mới cho khách hàng: ', 'new_intake')
 
   return (
     <>
       <PageHeader
-        title="Hoàn thiện hồ sơ"
-        subtitle="Bộ hồ sơ khách hàng đang chuẩn bị, còn thiếu gì và đã đủ để nộp Thẩm định chưa"
+        title="Hoàn thiện hồ sơ Tín dụng SME"
+        subtitle="Quản lý danh mục hồ sơ ĐVKD, kiểm soát chứng từ bắt buộc, đối chiếu điều kiện sơ bộ và bàn giao Thẩm định"
         actions={
           <div className="sme-row">
-            <Btn onClick={load} busy={busy}><RefreshCw size={14} /> Làm mới</Btn>
-            <Btn primary onClick={() => setCreating(true)}><Plus size={14} /> Hồ sơ mới</Btn>
+            <Btn onClick={() => load()} busy={busy}><RefreshCw size={14} /> Làm mới</Btn>
+            <Btn
+              className={coachOpen ? 'ss-toggle-on' : undefined}
+              aria-pressed={coachOpen}
+              onClick={onToggleCoach}
+              title={coachOpen ? 'Thu gọn trợ lý hồ sơ' : 'Mở trợ lý hồ sơ bên phải'}
+            >
+              <MessageSquare size={14} /> Trợ lý hồ sơ
+            </Btn>
+            <Btn primary onClick={newDossier}><Plus size={14} /> Hồ sơ mới</Btn>
           </div>
         }
       />
       <div className="sme-scroll">
         {error && <div style={{ marginBottom: 16 }}><ErrorNotice title="Không tải được danh sách hồ sơ">{error}</ErrorNotice></div>}
-        {creating && <NewDossier catalog={catalog} onCancel={() => setCreating(false)}
-          onCreated={(id) => { setCreating(false); onOpen(id) }} />}
+
         <div className="sme-kpis">
-          <Kpi icon={<FolderOpen size={18} />} label="Đang chuẩn bị" value={rows ? count('draft') + count('collecting') : '…'} />
-          <Kpi t="warn" icon={<Clock size={18} />} label="Mục chờ khách" value={rows ? rows.reduce((n, r) => n + r.requested, 0) : '…'} />
-          <Kpi t="ok" icon={<ClipboardCheck size={18} />} label="Sẵn sàng nộp" value={rows ? count('ready') : '…'} />
-          <Kpi t="info" icon={<CheckCircle2 size={18} />} label="Đã nộp" value={rows ? count('submitted') : '…'} />
+          <Kpi icon={<FolderOpen size={18} />} label="Hồ sơ đang thu thập" value={rows ? stats.live : '…'}
+            hint={rows ? `${stats.submitted} hồ sơ đã bàn giao` : undefined} />
+          <Kpi t={stats.ready ? 'ok' : 'muted'} icon={<ClipboardCheck size={18} />} label="Đủ điều kiện trình"
+            value={rows ? stats.ready : '…'} hint="Hoàn tất mục bắt buộc" />
+          <Kpi t={stats.actionNeeded ? 'warn' : 'ok'} icon={<ShieldAlert size={18} />} label="Cần ĐVKD xử lý"
+            value={rows ? stats.actionNeeded : '…'}
+            hint={rows ? `${stats.actionableItems} mục chặn chưa yêu cầu` : undefined} />
+          <Kpi t={stats.overdueCases ? 'danger' : stats.waitingCases ? 'info' : 'muted'} icon={<Clock size={18} />}
+            label="Chờ khách hàng" value={today ? today.waiting : '…'}
+            hint={rows ? (stats.overdueCases ? `${stats.overdueCases} hồ sơ quá hạn cam kết` : `${stats.waitingCases} hồ sơ đang theo dõi`) : undefined} />
         </div>
+
         <div className="sme-between sme-wrap" style={{ marginBottom: 12 }}>
-          <div className="sme-filters" role="tablist" aria-label="Lọc theo giai đoạn">
-            {(['all', 'draft', 'collecting', 'ready', 'submitted'] as Filter[]).map((k) => (
+          <div className="sme-filters" role="tablist" aria-label="Lọc hồ sơ">
+            {([['all', 'Tất cả'], ['action', 'Cần xử lý'], ['waiting', 'Chờ khách'], ['overdue', 'Quá hạn'],
+              ['ready', 'Đủ điều kiện'], ['submitted', 'Đã bàn giao']] as [Filter, string][]).map(([k, l]) => (
               <button key={k} type="button" role="tab" aria-selected={filter === k}
-                className={`sme-filter ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>
-                {k === 'all' ? 'Tất cả' : STAGE[k].label}{k !== 'all' && rows ? ` (${count(k)})` : ''}
-              </button>
+                className={`sme-filter ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>
             ))}
           </div>
-          <label className="sme-search">
-            <Search size={14} className="sme-muted" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm khách hàng hoặc mã hồ sơ" />
-          </label>
+          <div className="sme-row sme-wrap">
+            <div className="sme-filters" role="tablist" aria-label="Chế độ hiển thị">
+              <button type="button" role="tab" aria-selected={view === 'cards'}
+                className={`sme-filter ${view === 'cards' ? 'on' : ''}`} onClick={() => setView('cards')}>Thẻ hồ sơ</button>
+              <button type="button" role="tab" aria-selected={view === 'table'}
+                className={`sme-filter ${view === 'table' ? 'on' : ''}`} onClick={() => setView('table')}>Bảng danh mục</button>
+            </div>
+            <label className="sme-search">
+              <Search size={14} className="sme-muted" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm doanh nghiệp, MST, mã hồ sơ, sản phẩm" />
+            </label>
+          </div>
         </div>
-        {rows && rows.length === 0 && !creating && (
-          <Empty icon={<FolderOpen size={32} />} title="Chưa có hồ sơ nào" hint="Tạo hồ sơ rồi tải chứng từ khách gửi lên để xem còn thiếu gì."
-            action={<Btn primary onClick={() => setCreating(true)}><Plus size={14} /> Tạo hồ sơ đầu tiên</Btn>} />
+
+        {rows === null && !error && (
+          <div className="sme-cases">{[0, 1, 2].map((i) => (
+            <div key={i} className="sme-card sme-stack"><div className="sme-skel" style={{ width: '60%' }} />
+              <div className="sme-skel" style={{ width: '40%' }} /><div className="sme-skel" /></div>
+          ))}</div>
+        )}
+        {rows && rows.length === 0 && (
+          <Empty icon={<FolderOpen size={32} />} title="Chưa có hồ sơ nào"
+            hint="Khởi tạo hồ sơ với trợ lý trong chat: cung cấp thông tin khách hàng và đính kèm chứng từ."
+            action={<Btn primary onClick={newDossier}><Plus size={14} /> Tạo hồ sơ đầu tiên</Btn>} />
         )}
         {rows && rows.length > 0 && shown.length === 0 && (
           <Empty icon={<Search size={28} />} title="Không có hồ sơ phù hợp" hint="Thử bỏ bộ lọc hoặc đổi từ khoá." />
         )}
-        {shown.length > 0 && <div className="sme-cases">{shown.map((r) => <Row key={r.case_id} c={r} onOpen={() => onOpen(r.case_id)} />)}</div>}
+        {shown.length > 0 && view === 'cards' && (
+          <div className="sme-cases">{shown.map((r) => <DossierCard key={r.case_id} r={r} onOpen={() => onOpen(r.case_id)} />)}</div>
+        )}
+        {shown.length > 0 && view === 'table' && <DetailTable rows={shown} onOpen={onOpen} />}
       </div>
     </>
   )

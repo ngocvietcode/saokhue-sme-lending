@@ -27,6 +27,19 @@
         {"id": "C5", "fact": "equity_contribution_pct", "op": ">=", "value": 30, "clause": "Mẫu - Điều 7.1"},
         {"id": "C6", "fact": "cic_debt_group", "op": "<=", "value": 1, "clause": "Mẫu - Điều 9.1"}
       ]
+    },
+    {
+      "product_code": "SME-LC",
+      "version": "sample-0.1",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "conditions": [
+        {"id": "C1", "fact": "years_in_operation", "op": ">=", "value": 2, "clause": "Mẫu - Điều 5.1"},
+        {"id": "C2", "fact": "loan_amount", "op": "<=", "value": 15000000000, "clause": "Mẫu - Điều 6.2"},
+        {"id": "C3", "fact": "term_months", "op": "<=", "value": 12, "clause": "Mẫu - Điều 6.3"},
+        {"id": "C4", "fact": "ltv_pct", "op": "<=", "value": 70, "clause": "Mẫu - Điều 10.2"},
+        {"id": "C5", "fact": "cic_debt_group", "op": "<=", "value": 1, "clause": "Mẫu - Điều 9.1"}
+      ]
     }
   ],
   "collateral": {

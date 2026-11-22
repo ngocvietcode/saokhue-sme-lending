@@ -38,9 +38,7 @@ Mỗi mục có `key` cố định, mức **chặn nộp** hoặc **nên có**, 
 **thay thế** được chấp nhận. Điểm hoàn thiện tính theo trọng số (mục chặn nộp = 2). Hồ sơ **sẵn sàng
 nộp** khi không còn mục chặn nộp; mục **bỏ qua** phải có lý do và đi kèm hồ sơ.
 
-Trang có 5 tab: **Còn thiếu** (nhóm theo pháp lý, nhu cầu, tài chính, TSBĐ, ngành; chọn mục để soạn
-thư; đánh dấu đã xin khách; bỏ qua có lý do), **Chứng từ** (tải lên, phân loại, ngày lập), **Thông tin**,
-**Thư khách hàng** (bản nháp, sao chép, đánh dấu đã gửi), **Nhật ký**.
+Trang chính gồm 3 góc nhìn (Bảng tiến độ Kanban, Danh sách chi tiết, Tất cả việc cần làm) và bộ lọc "Hôm nay" (Sẵn sàng nộp, Quá hạn / Cần nhắc, Cần Sale xử lý, Đang chờ khách). Trong từng hồ sơ, cột chính có 3 tab **Checklist** (chọn nhiều mục để soạn Email/Zalo/Kịch bản gọi hoặc đánh dấu đã xin kèm hạn hẹn), **Chứng từ** (xem/tải file, kiểm tra hiệu lực, gỡ file nhầm) và **Thư khách hàng**; cột phải hiển thị điều kiện chính sách sơ bộ, thông tin hồ sơ và nhật ký hoạt động. Sau khi nộp, hồ sơ chuyển sang chế độ chỉ đọc và có thể mở lại khi có lý do.
 
 Agent `dossier-coach` đọc chứng từ, phân loại, điền thông tin chứng từ ghi rõ, giải thích chỗ thiếu
 và soạn thư. Nó **không** được bỏ qua mục, gửi thư hay đánh dấu đã nộp: các việc đó chỉ đi qua backend,

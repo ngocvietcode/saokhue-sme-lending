@@ -7,6 +7,7 @@ what lets a deterministic check, not a model, catch a wrong number.
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from typing import Any, Callable
 
@@ -23,13 +24,14 @@ PROHIBITED_PHRASES = (
 
 # A message to a customer never promises an outcome or terms Sales cannot give.
 CUSTOMER_PROMISES = PROHIBITED_PHRASES + (
-    "chắc chắn được duyệt", "chắc chắn được vay", "đảm bảo được vay", "đảm bảo được duyệt",
-    "cam kết giải ngân", "cam kết cho vay", "đã được duyệt", "sẽ được duyệt", "100% được",
+    "chắc chắn được duyệt", "chắc chắn được vay", "chắc chắn duyệt", "đảm bảo được vay",
+    "đảm bảo được duyệt", "đảm bảo giải ngân", "cam kết giải ngân", "cam kết cho vay",
+    "cam kết duyệt", "đã được duyệt", "sẽ được duyệt", "100% được", "bao đậu",
 )
 
 
 def _norm(text: str) -> str:
-    return unicodedata.normalize("NFC", text).lower()
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFC", text).lower()).strip()
 
 
 def customer_promises(text: str) -> list[str]:

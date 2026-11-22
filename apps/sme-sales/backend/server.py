@@ -1,9 +1,11 @@
 """HTTP backend for the "Hoàn thiện hồ sơ" (Sales) dashboard page.
 
-Reads are open to any signed request. Every write needs a principal of kind
-`owner-session`, the signed-in dashboard user: waiving a requirement, uploading
-a document, marking a message sent or a case submitted are the Sale's acts,
-never an agent's (the gateway signs agents and MCP tools as `agent-tool`).
+The page tracks and pushes; it takes no data entry. Dossiers, fields and
+documents arrive through the dossier coach in chat (MCP tools). What stays here
+are the Sale's own decisions, each needing a principal of kind `owner-session`
+(the signed-in dashboard user; agents and MCP tools are signed `agent-tool`):
+marking an item requested from the customer, waiving it with a reason,
+reopening it, marking a draft sent, and marking the dossier submitted.
 """
 
 from __future__ import annotations
@@ -23,19 +25,18 @@ from sme_core.appserver import ReplayCache, owner_only  # noqa: E402
 from sme_core.sales import SalesService  # noqa: E402
 
 SMALL = 64 * 1024
-UPLOAD = 14 * 1024 * 1024  # a 10 MB file, base64-encoded, plus its JSON envelope
 _CASE = r"(SME-[0-9]{8}-[0-9a-f]{8})"
+_DOC = r"(D[0-9]+)"
 ROUTES: list[appserver.Route] = [
     ("GET", re.compile(r"^/api/catalog$"), "catalog", SMALL),
     ("GET", re.compile(r"^/api/cases$"), "list_cases", SMALL),
-    ("POST", re.compile(r"^/api/cases$"), "create_case", SMALL),
     ("GET", re.compile(rf"^/api/cases/{_CASE}$"), "get_case", SMALL),
-    ("POST", re.compile(rf"^/api/cases/{_CASE}/fields$"), "update_fields", SMALL),
-    ("POST", re.compile(rf"^/api/cases/{_CASE}/documents$"), "upload_document", UPLOAD),
-    ("POST", re.compile(rf"^/api/cases/{_CASE}/documents/(D[0-9]+)$"), "update_document", SMALL),
+    ("GET", re.compile(rf"^/api/cases/{_CASE}/documents/{_DOC}/file$"), "document_file", SMALL),
     ("POST", re.compile(rf"^/api/cases/{_CASE}/requirements$"), "set_requirement", SMALL),
+    ("POST", re.compile(rf"^/api/cases/{_CASE}/documents/{_DOC}/remove$"), "remove_document", SMALL),
     ("POST", re.compile(rf"^/api/cases/{_CASE}/drafts/(M[0-9]{{3}})/sent$"), "draft_sent", SMALL),
     ("POST", re.compile(rf"^/api/cases/{_CASE}/submitted$"), "mark_submitted", SMALL),
+    ("POST", re.compile(rf"^/api/cases/{_CASE}/reopen$"), "reopen_case", SMALL),
 ]
 
 
@@ -55,7 +56,8 @@ class Api:
         return 200, {"documents": self.svc.documents_catalog(), "products": self.svc.knowledge_products()}
 
     def list_cases(self, _body: dict, _claim: dict | None) -> tuple[int, Any]:
-        return 200, {"cases": self.svc.list_dossiers()}
+        rows = self.svc.list_dossiers()
+        return 200, {"cases": rows, "today": self.svc.today(rows)}
 
     def get_case(self, _body: dict, _claim: dict | None, case_id: str) -> tuple[int, Any]:
         store = self.svc.store
@@ -67,56 +69,48 @@ class Api:
             "audit": store.read_audit(case_id),
         }
 
-    # -- writes (signed-in user only) ---------------------------------------
-    def create_case(self, body: dict, claim: dict | None) -> tuple[int, Any]:
-        if refused := owner_only(claim):
-            return refused
-        customer = body.get("customer") or {}
-        request = body.get("request") or {}
-        if not isinstance(customer, dict) or not isinstance(request, dict):
-            raise ValueError("customer and request must be objects")
-        case = self.svc.case_create({}, {}, [], _text(body, "flow") or "A")
-        self.svc.store.update_case(case["case_id"], {"customer": customer, "request": request},
-                                   actor=claim["ownerId"])
-        self.svc.overview(case["case_id"])  # record the opening gaps, so each item has an opened_at
-        return 200, {"case_id": case["case_id"]}
+    def document_file(self, _body: dict, _claim: dict | None, case_id: str, doc_id: str) -> tuple[int, Any]:
+        return 200, self.svc.store.document_file(case_id, doc_id)
 
-    def update_fields(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
-        if refused := owner_only(claim):
-            return refused
-        patch = {k: body[k] for k in ("customer", "request", "facts") if isinstance(body.get(k), dict)}
-        self.svc.store.update_case(case_id, patch, actor=claim["ownerId"])
-        return 200, {"overview": self.svc.overview(case_id)}
-
-    def upload_document(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
-        if refused := owner_only(claim):
-            return refused
-        name = _text(body, "name").strip()
-        if not name:
-            raise ValueError("a document needs a name")
-        doc = self.svc.store.add_document(case_id, name=name, doc_type=_text(body, "type"),
-                                          issued_date=_text(body, "issued_date") or None,
-                                          content_b64=_text(body, "content_b64") or None, actor=claim["ownerId"])
-        return 200, {"document": doc, "overview": self.svc.overview(case_id)}
-
-    def update_document(self, body: dict, claim: dict | None, case_id: str, doc_id: str) -> tuple[int, Any]:
-        if refused := owner_only(claim):
-            return refused
-        patch = {k: _text(body, k) for k in ("type", "issued_date", "name") if k in body}
-        doc = self.svc.store.update_document(case_id, doc_id, patch, actor=claim["ownerId"])
-        return 200, {"document": doc, "overview": self.svc.overview(case_id)}
-
+    # -- the Sale's decisions (signed-in user only) --------------------------
     def set_requirement(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
         if refused := owner_only(claim):
             return refused
-        self.svc.store.set_requirement(case_id, _text(body, "key"), _text(body, "status"), _text(body, "note"),
-                                       actor=claim["ownerId"], due_date=_text(body, "due_date") or None)
+        raw_keys = body.get("keys")
+        if raw_keys is not None:
+            if not isinstance(raw_keys, list) or not raw_keys or not all(isinstance(k, str) and k for k in raw_keys):
+                raise ValueError("keys must be a non-empty list of requirement keys")
+            keys = list(dict.fromkeys(raw_keys))
+        else:
+            k = _text(body, "key")
+            if not k:
+                raise ValueError("missing requirement key")
+            keys = [k]
+        known = {i["key"] for i in self.svc.overview(case_id)["items"]}
+        unknown = [k for k in keys if k not in known]
+        if unknown:
+            raise ValueError(f"unknown requirement key: {', '.join(unknown)}")
+        status = _text(body, "status")
+        note = _text(body, "note")
+        due_date = "" if body.get("due_date") == "" else (_text(body, "due_date") or None)
+        for k in keys:
+            self.svc.store.set_requirement(case_id, k, status, note, actor=claim["ownerId"], due_date=due_date)
         return 200, {"overview": self.svc.overview(case_id)}
 
-    def draft_sent(self, _body: dict, claim: dict | None, case_id: str, draft_id: str) -> tuple[int, Any]:
+    def remove_document(self, body: dict, claim: dict | None, case_id: str, doc_id: str) -> tuple[int, Any]:
         if refused := owner_only(claim):
             return refused
-        draft = self.svc.store.mark_draft_sent(case_id, draft_id, actor=claim["ownerId"])
+        self.svc.store.remove_document(case_id, doc_id, actor=claim["ownerId"], note=_text(body, "note"))
+        return 200, {
+            "overview": self.svc.overview(case_id),
+            "documents": self.svc.store.get_case(case_id).get("documents", []),
+        }
+
+    def draft_sent(self, body: dict, claim: dict | None, case_id: str, draft_id: str) -> tuple[int, Any]:
+        if refused := owner_only(claim):
+            return refused
+        due_date = _text(body, "due_date") or None
+        draft = self.svc.store.mark_draft_sent(case_id, draft_id, actor=claim["ownerId"], due_date=due_date)
         return 200, {"draft": draft, "overview": self.svc.overview(case_id)}
 
     def mark_submitted(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
@@ -128,6 +122,12 @@ class Api:
         if not ov["readiness"]["ready"] and not note.strip():
             raise ValueError("the dossier still has blocking items; give a reason to submit anyway")
         self.svc.store.mark_submitted(case_id, claim["ownerId"], note)
+        return 200, {"overview": self.svc.overview(case_id)}
+
+    def reopen_case(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
+        if refused := owner_only(claim):
+            return refused
+        self.svc.store.reopen_case(case_id, claim["ownerId"], _text(body, "note"))
         return 200, {"overview": self.svc.overview(case_id)}
 
 

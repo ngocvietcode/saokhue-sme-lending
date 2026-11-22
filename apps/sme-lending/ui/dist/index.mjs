@@ -1,4 +1,4 @@
-import { jsxs as s, jsx as e, Fragment as ue } from "react/jsx-runtime";
+import { jsxs as n, jsx as e, Fragment as ue } from "react/jsx-runtime";
 import { useCallback as ee, useState as b, useEffect as F, useMemo as j } from "react";
 import { useChatLauncher as Oe, useAppApi as ge } from "@kirocrew/app-sdk";
 import { PageHeader as Re, Btn as $, ErrorNotice as be } from "@kirocrew/app-sdk/ui";
@@ -8,10 +8,16 @@ const ye = {
   fixed_asset: "Đầu tư TSCĐ",
   expansion: "Mở rộng",
   trade_finance: "Tài trợ thương mại"
-}, V = new Intl.NumberFormat("vi-VN"), nt = (t) => typeof t == "number" ? V.format(t) + " đ" : "—", P = (t) => typeof t != "number" ? "—" : Math.abs(t) >= 1e9 ? V.format(Math.round(t / 1e7) / 100) + " tỷ" : Math.abs(t) >= 1e6 ? V.format(Math.round(t / 1e4) / 100) + " triệu" : V.format(t) + " đ", C = (t, n = 2) => typeof t == "number" ? t.toLocaleString("vi-VN", { maximumFractionDigits: n }) : "—", M = (t) => typeof t == "number" ? (t * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "%" : "—", D = (t) => t ? new Date(t).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }) : "—", st = (t) => {
+}, V = new Intl.NumberFormat("vi-VN"), nt = (t) => typeof t == "number" ? V.format(t) + " đ" : "—", P = (t) => typeof t != "number" ? "—" : Math.abs(t) >= 1e9 ? V.format(Math.round(t / 1e7) / 100) + " tỷ" : Math.abs(t) >= 1e6 ? V.format(Math.round(t / 1e4) / 100) + " triệu" : V.format(t) + " đ", C = (t, s = 2) => typeof t == "number" ? t.toLocaleString("vi-VN", { maximumFractionDigits: s }) : "—", M = (t) => typeof t == "number" ? (t * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "%" : "—", D = (t) => {
   if (!t) return "—";
-  const n = Math.round((Date.now() - new Date(t).getTime()) / 1e3);
-  return n < 60 ? "vừa xong" : n < 3600 ? `${Math.floor(n / 60)} phút trước` : n < 86400 ? `${Math.floor(n / 3600)} giờ trước` : `${Math.floor(n / 86400)} ngày trước`;
+  const s = new Date(t);
+  return Number.isNaN(s.getTime()) ? "—" : s.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+}, st = (t) => {
+  if (!t) return "—";
+  const s = new Date(t).getTime();
+  if (Number.isNaN(s)) return "—";
+  const a = Math.round((Date.now() - s) / 1e3);
+  return a < 60 ? "vừa xong" : a < 3600 ? `${Math.floor(a / 60)} phút trước` : a < 86400 ? `${Math.floor(a / 3600)} giờ trước` : `${Math.floor(a / 86400)} ngày trước`;
 }, pe = (t) => typeof t == "string" ? t : JSON.stringify(t, null, 2), J = (t) => t instanceof Error ? t.message : String(t), Z = "/apps/sme-lending/api", we = [
   { name: "Chứng từ", agents: ["document-evidence"] },
   { name: "Sản phẩm", agents: ["product-match"] },
@@ -56,25 +62,25 @@ const ye = {
   verification: "Kiểm chứng",
   review_add: "Thêm mục rà soát",
   review_decide: "Cán bộ quyết định"
-}, lt = (t) => [...t].sort((n, a) => {
+}, lt = (t) => [...t].sort((s, a) => {
   var i, r;
-  return (((i = R[n.severity]) == null ? void 0 : i.rank) ?? 9) - (((r = R[a.severity]) == null ? void 0 : r.rank) ?? 9);
+  return (((i = R[s.severity]) == null ? void 0 : i.rank) ?? 9) - (((r = R[a.severity]) == null ? void 0 : r.rank) ?? 9);
 });
 function ne(t) {
   return t ? t.verification ? t.verification.passed ? "passed" : "blocked" : "unverified" : "none";
 }
-function O(t, n, a) {
+function O(t, s, a) {
   var i, r;
-  return (r = (i = t.results[n]) == null ? void 0 : i.calculations) == null ? void 0 : r.find((o) => o.kind === a);
+  return (r = (i = t.results[s]) == null ? void 0 : i.calculations) == null ? void 0 : r.find((o) => o.kind === a);
 }
 function ot(t) {
   var c, h, m, v, d;
-  const n = {}, a = O(t, "policy-exception", "policy_check") ?? O(t, "risk-compliance", "policy_check");
-  (c = a == null ? void 0 : a.outputs) != null && c.matrix && (n.policy = { version: a.outputs.policy_version, product: a.outputs.product_code, rows: a.outputs.matrix });
+  const s = {}, a = O(t, "policy-exception", "policy_check") ?? O(t, "risk-compliance", "policy_check");
+  (c = a == null ? void 0 : a.outputs) != null && c.matrix && (s.policy = { version: a.outputs.policy_version, product: a.outputs.product_code, rows: a.outputs.matrix });
   const i = O(t, "financial-analysis", "repayment_capacity");
   if ((h = i == null ? void 0 : i.outputs) != null && h.scenarios) {
-    const x = (m = n.policy) == null ? void 0 : m.rows.find((l) => l.fact === "dscr");
-    n.dscr = {
+    const x = (m = s.policy) == null ? void 0 : m.rows.find((l) => l.fact === "dscr");
+    s.dscr = {
       scenarios: i.outputs.scenarios,
       threshold: typeof (x == null ? void 0 : x.threshold) == "number" ? x.threshold : void 0,
       debtService: i.outputs.total_debt_service_annual,
@@ -82,11 +88,11 @@ function ot(t) {
     };
   }
   const r = O(t, "collateral", "collateral_ltv");
-  r != null && r.outputs && (n.ltv = { ltv: r.outputs.ltv_pct ?? null, cap: r.outputs.max_ltv_pct ?? null, eligible: r.outputs.eligible_value });
+  r != null && r.outputs && (s.ltv = { ltv: r.outputs.ltv_pct ?? null, cap: r.outputs.max_ltv_pct ?? null, eligible: r.outputs.eligible_value });
   const o = O(t, "financial-analysis", "fin_ratios");
-  (d = o == null ? void 0 : o.outputs) != null && d.periods && (n.ratios = o.outputs.periods);
+  (d = o == null ? void 0 : o.outputs) != null && d.periods && (s.ratios = o.outputs.periods);
   const p = O(t, "consolidation", "genform");
-  return p != null && p.outputs && (n.genform = p.outputs), n;
+  return p != null && p.outputs && (s.genform = p.outputs), s;
 }
 const X = {
   gross_margin: { label: "Biên lợi nhuận gộp", fmt: M },
@@ -114,7 +120,7 @@ const X = {
   missing: { label: "Thiếu dữ liệu", tone: "warn" },
   na: { label: "Không áp dụng", tone: "muted" }
 }, mt = (t) => t.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 100);
-function ht(t, n, a) {
+function ht(t, s, a) {
   const i = Oe();
   return ee(
     async (r, o, p) => {
@@ -124,70 +130,70 @@ function ht(t, n, a) {
         return;
       }
       try {
-        const m = await h({ slotKey: n + mt(o), agent: t, title: p });
+        const m = await h({ slotKey: s + mt(o), agent: t, title: p });
         c({ slotKey: m, autoSend: !1, message: r });
       } catch (m) {
         a == null || a(`Không mở được chat với trợ lý: ${m instanceof Error ? m.message : String(m)}`);
       }
     },
-    [i, t, n, a]
+    [i, t, s, a]
   );
 }
 const pt = "sme-assistant", ke = (t) => ht(pt, "sme-lending-chat-", t), S = (t) => `t-${t}`;
-function k({ t, children: n, title: a }) {
-  return /* @__PURE__ */ e("span", { className: `sme-pill ${S(t)}`, title: a, children: n });
+function k({ t, children: s, title: a }) {
+  return /* @__PURE__ */ e("span", { className: `sme-pill ${S(t)}`, title: a, children: s });
 }
-function B({ icon: t, label: n, value: a, hint: i, t: r = "accent" }) {
-  return /* @__PURE__ */ s("div", { className: `sme-kpi ${S(r)}`, children: [
+function B({ icon: t, label: s, value: a, hint: i, t: r = "accent" }) {
+  return /* @__PURE__ */ n("div", { className: `sme-kpi ${S(r)}`, children: [
     /* @__PURE__ */ e("div", { className: "sme-kpi-icon", children: t }),
-    /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-      /* @__PURE__ */ e("div", { className: "sme-kpi-label", children: n }),
+    /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+      /* @__PURE__ */ e("div", { className: "sme-kpi-label", children: s }),
       /* @__PURE__ */ e("div", { className: "sme-kpi-value", children: a }),
       i && /* @__PURE__ */ e("div", { className: "sme-kpi-hint", children: i })
     ] })
   ] });
 }
-function L({ icon: t, title: n, hint: a, action: i }) {
-  return /* @__PURE__ */ s("div", { className: "sme-empty", children: [
+function L({ icon: t, title: s, hint: a, action: i }) {
+  return /* @__PURE__ */ n("div", { className: "sme-empty", children: [
     t,
-    /* @__PURE__ */ e("div", { className: "sme-strong", children: n }),
+    /* @__PURE__ */ e("div", { className: "sme-strong", children: s }),
     a && /* @__PURE__ */ e("div", { className: "sme-small", style: { marginTop: 4 }, children: a }),
     i && /* @__PURE__ */ e("div", { style: { marginTop: 12 }, children: i })
   ] });
 }
-function _e({ t = "warn", children: n }) {
-  return /* @__PURE__ */ s("div", { className: `sme-banner ${S(t)}`, children: [
+function _e({ t = "warn", children: s }) {
+  return /* @__PURE__ */ n("div", { className: `sme-banner ${S(t)}`, children: [
     /* @__PURE__ */ e(qe, { size: 15 }),
-    /* @__PURE__ */ e("div", { children: n })
+    /* @__PURE__ */ e("div", { children: s })
   ] });
 }
-function Ce({ refs: t, onOpen: n }) {
-  return t != null && t.length ? /* @__PURE__ */ e("span", { className: "sme-row sme-wrap", style: { gap: 4, display: "inline-flex", marginLeft: 4 }, children: t.map((a) => /* @__PURE__ */ e("button", { type: "button", className: "sme-ref", title: "Xem bằng chứng", onClick: () => n(a), children: a }, a)) }) : null;
+function Ce({ refs: t, onOpen: s }) {
+  return t != null && t.length ? /* @__PURE__ */ e("span", { className: "sme-row sme-wrap", style: { gap: 4, display: "inline-flex", marginLeft: 4 }, children: t.map((a) => /* @__PURE__ */ e("button", { type: "button", className: "sme-ref", title: "Xem bằng chứng", onClick: () => s(a), children: a }, a)) }) : null;
 }
-function ut({ c: t, onOpen: n }) {
+function ut({ c: t, onOpen: s }) {
   const a = t.agents ?? {}, i = Object.keys(a).length;
-  return /* @__PURE__ */ s(
+  return /* @__PURE__ */ n(
     "div",
     {
       className: "sme-card hover",
       role: "button",
       tabIndex: 0,
-      onClick: n,
+      onClick: s,
       onKeyDown: (r) => {
-        (r.key === "Enter" || r.key === " ") && (r.preventDefault(), n());
+        (r.key === "Enter" || r.key === " ") && (r.preventDefault(), s());
       },
       children: [
-        /* @__PURE__ */ s("div", { className: "sme-between", style: { alignItems: "flex-start" }, children: [
-          /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-between", style: { alignItems: "flex-start" }, children: [
+          /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
             /* @__PURE__ */ e("div", { className: "sme-h2", style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: t.customer_name ?? "Chưa có tên khách hàng" }),
             /* @__PURE__ */ e("div", { className: "sme-mono sme-muted", style: { marginTop: 2 }, children: t.case_id })
           ] }),
-          t.review_open > 0 ? /* @__PURE__ */ s(k, { t: "warn", children: [
+          t.review_open > 0 ? /* @__PURE__ */ n(k, { t: "warn", children: [
             t.review_open,
             " chờ rà soát"
           ] }) : i > 0 ? /* @__PURE__ */ e(k, { t: "ok", children: "Đã rà soát" }) : /* @__PURE__ */ e(k, { t: "muted", children: "Mới" })
         ] }),
-        /* @__PURE__ */ s("div", { className: "sme-row", style: { marginTop: 12, alignItems: "baseline", gap: 10 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-row", style: { marginTop: 12, alignItems: "baseline", gap: 10 }, children: [
           /* @__PURE__ */ e("span", { className: "sme-case-amount", children: P(t.amount) }),
           /* @__PURE__ */ e("span", { className: "sme-muted sme-small", children: [t.term_months ? `${t.term_months} tháng` : null, t.purpose ? ye[t.purpose] ?? t.purpose : null].filter(Boolean).join(" · ") })
         ] }),
@@ -202,22 +208,22 @@ function ut({ c: t, onOpen: n }) {
             r
           );
         }) }),
-        /* @__PURE__ */ s("div", { className: "sme-between sme-small sme-muted", children: [
-          /* @__PURE__ */ s("span", { className: "sme-row", style: { gap: 6 }, children: [
-            /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+        /* @__PURE__ */ n("div", { className: "sme-between sme-small sme-muted", children: [
+          /* @__PURE__ */ n("span", { className: "sme-row", style: { gap: 6 }, children: [
+            /* @__PURE__ */ n("span", { className: "sme-chip", children: [
               "Luồng ",
               t.flow
             ] }),
-            (t.high_findings ?? 0) > 0 && /* @__PURE__ */ s(k, { t: "danger", children: [
+            (t.high_findings ?? 0) > 0 && /* @__PURE__ */ n(k, { t: "danger", children: [
               t.high_findings,
               " cảnh báo cao"
             ] }),
-            t.agents_blocked > 0 && /* @__PURE__ */ s(k, { t: "danger", children: [
+            t.agents_blocked > 0 && /* @__PURE__ */ n(k, { t: "danger", children: [
               t.agents_blocked,
               " bị chặn"
             ] })
           ] }),
-          /* @__PURE__ */ s("span", { title: t.updated_at, children: [
+          /* @__PURE__ */ n("span", { title: t.updated_at, children: [
             "Cập nhật ",
             st(t.updated_at)
           ] })
@@ -227,16 +233,16 @@ function ut({ c: t, onOpen: n }) {
   );
 }
 function gt({ onOpen: t }) {
-  const n = ge(), [a, i] = b(null), [r, o] = b(null), p = ke(o), [c, h] = b(""), [m, v] = b("all"), [d, x] = b(!1), l = ee(async () => {
+  const s = ge(), [a, i] = b(null), [r, o] = b(null), p = ke(o), [c, h] = b(""), [m, v] = b("all"), [d, x] = b(!1), l = ee(async () => {
     x(!0);
     try {
-      i((await n.get(`${Z}/cases`)).cases), o(null);
+      i((await s.get(`${Z}/cases`)).cases), o(null);
     } catch (g) {
       o(J(g));
     } finally {
       x(!1);
     }
-  }, [n]);
+  }, [s]);
   F(() => {
     l();
   }, [l]);
@@ -248,27 +254,27 @@ function gt({ onOpen: t }) {
     const g = c.trim().toLowerCase();
     return (a ?? []).filter((f) => m === "review" && f.review_open === 0 || m === "blocked" && f.agents_blocked === 0 ? !1 : g ? [f.customer_name, f.case_id, f.industry_code].some((w) => w == null ? void 0 : w.toLowerCase().includes(g)) : !0);
   }, [a, c, m]), A = () => p("Tạo hồ sơ thẩm định SME mới.", `new-${Date.now()}`, "Hồ sơ SME mới");
-  return /* @__PURE__ */ s(ue, { children: [
+  return /* @__PURE__ */ n(ue, { children: [
     /* @__PURE__ */ e(
       Re,
       {
         title: "Thẩm định SME",
         subtitle: "Hồ sơ vay, kết quả các agent, bằng chứng và hàng đợi rà soát của cán bộ",
-        actions: /* @__PURE__ */ s("div", { className: "sme-row", children: [
-          /* @__PURE__ */ s($, { onClick: l, busy: d, children: [
+        actions: /* @__PURE__ */ n("div", { className: "sme-row", children: [
+          /* @__PURE__ */ n($, { onClick: l, busy: d, children: [
             /* @__PURE__ */ e(ve, { size: 14 }),
             " Làm mới"
           ] }),
-          /* @__PURE__ */ s($, { primary: !0, onClick: A, children: [
+          /* @__PURE__ */ n($, { primary: !0, onClick: A, children: [
             /* @__PURE__ */ e(de, { size: 14 }),
             " Hồ sơ mới"
           ] })
         ] })
       }
     ),
-    /* @__PURE__ */ s("div", { className: "sme-scroll", children: [
+    /* @__PURE__ */ n("div", { className: "sme-scroll", children: [
       r && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(be, { title: "Không tải được danh sách hồ sơ", children: r }) }),
-      /* @__PURE__ */ s("div", { className: "sme-kpis", children: [
+      /* @__PURE__ */ n("div", { className: "sme-kpis", children: [
         /* @__PURE__ */ e(B, { icon: /* @__PURE__ */ e(me, { size: 18 }), label: "Hồ sơ", value: (a == null ? void 0 : a.length) ?? "…" }),
         /* @__PURE__ */ e(
           B,
@@ -292,7 +298,7 @@ function gt({ onOpen: t }) {
           }
         )
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", style: { marginBottom: 12 }, children: [
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", style: { marginBottom: 12 }, children: [
         /* @__PURE__ */ e("div", { className: "sme-filters", role: "tablist", "aria-label": "Lọc hồ sơ", children: [["all", "Tất cả"], ["review", "Chờ rà soát"], ["blocked", "Bị chặn"]].map(([g, f]) => /* @__PURE__ */ e(
           "button",
           {
@@ -305,12 +311,12 @@ function gt({ onOpen: t }) {
           },
           g
         )) }),
-        /* @__PURE__ */ s("label", { className: "sme-search", children: [
+        /* @__PURE__ */ n("label", { className: "sme-search", children: [
           /* @__PURE__ */ e(H, { size: 14, className: "sme-muted" }),
           /* @__PURE__ */ e("input", { value: c, onChange: (g) => h(g.target.value), placeholder: "Tìm khách hàng, mã hồ sơ, mã ngành" })
         ] })
       ] }),
-      a === null && !r && /* @__PURE__ */ e("div", { className: "sme-cases", children: [0, 1, 2].map((g) => /* @__PURE__ */ s("div", { className: "sme-card sme-stack", children: [
+      a === null && !r && /* @__PURE__ */ e("div", { className: "sme-cases", children: [0, 1, 2].map((g) => /* @__PURE__ */ n("div", { className: "sme-card sme-stack", children: [
         /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "60%" } }),
         /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "40%" } }),
         /* @__PURE__ */ e("div", { className: "sme-skel" })
@@ -321,7 +327,7 @@ function gt({ onOpen: t }) {
           icon: /* @__PURE__ */ e(me, { size: 32 }),
           title: "Chưa có hồ sơ nào",
           hint: "Trợ lý thẩm định SME sẽ hỏi thông tin khách hàng và tạo hồ sơ cho bạn.",
-          action: /* @__PURE__ */ s($, { primary: !0, onClick: A, children: [
+          action: /* @__PURE__ */ n($, { primary: !0, onClick: A, children: [
             /* @__PURE__ */ e(de, { size: 14 }),
             " Tạo hồ sơ đầu tiên"
           ] })
@@ -332,54 +338,54 @@ function gt({ onOpen: t }) {
     ] })
   ] });
 }
-function Te({ state: t, size: n = 13 }) {
-  return t === "passed" ? /* @__PURE__ */ e(Ve, { size: n }) : t === "blocked" ? /* @__PURE__ */ e(je, { size: n }) : t === "unverified" ? /* @__PURE__ */ e(He, { size: n }) : /* @__PURE__ */ e(Pe, { size: n });
+function Te({ state: t, size: s = 13 }) {
+  return t === "passed" ? /* @__PURE__ */ e(Ve, { size: s }) : t === "blocked" ? /* @__PURE__ */ e(je, { size: s }) : t === "unverified" ? /* @__PURE__ */ e(He, { size: s }) : /* @__PURE__ */ e(Pe, { size: s });
 }
 function Se({ state: t }) {
-  const n = q[t];
-  return /* @__PURE__ */ s(k, { t: n.tone, children: [
+  const s = q[t];
+  return /* @__PURE__ */ n(k, { t: s.tone, children: [
     /* @__PURE__ */ e(Te, { state: t, size: 12 }),
-    n.label
+    s.label
   ] });
 }
-function ze({ f: t, onEvidence: n }) {
+function ze({ f: t, onEvidence: s }) {
   const a = R[t.severity] ?? R.info;
-  return /* @__PURE__ */ s("div", { className: `sme-finding ${S(a.tone)}`, children: [
+  return /* @__PURE__ */ n("div", { className: `sme-finding ${S(a.tone)}`, children: [
     /* @__PURE__ */ e("div", { className: "bar" }),
-    /* @__PURE__ */ s("div", { children: [
-      /* @__PURE__ */ s("div", { className: "sme-finding-topic sme-row", style: { gap: 6 }, children: [
+    /* @__PURE__ */ n("div", { children: [
+      /* @__PURE__ */ n("div", { className: "sme-finding-topic sme-row", style: { gap: 6 }, children: [
         /* @__PURE__ */ e(k, { t: a.tone, children: a.label }),
         /* @__PURE__ */ e("span", { children: t.topic.replace(/_/g, " ") })
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-finding-text", children: [
+      /* @__PURE__ */ n("div", { className: "sme-finding-text", children: [
         t.statement,
-        /* @__PURE__ */ e(Ce, { refs: t.evidence_refs, onOpen: n })
+        /* @__PURE__ */ e(Ce, { refs: t.evidence_refs, onOpen: s })
       ] })
     ] })
   ] });
 }
 function bt({ m: t }) {
-  const n = Math.max(1.6, (t.threshold ?? 0) * 1.3, ...t.scenarios.map((a) => a.dscr ?? 0));
-  return /* @__PURE__ */ s("div", { className: "sme-card", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 12 }, children: [
+  const s = Math.max(1.6, (t.threshold ?? 0) * 1.3, ...t.scenarios.map((a) => a.dscr ?? 0));
+  return /* @__PURE__ */ n("div", { className: "sme-card", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 12 }, children: [
       /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Khả năng trả nợ (DSCR)" }),
-      t.threshold !== void 0 && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+      t.threshold !== void 0 && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
         "Ngưỡng chính sách ≥ ",
         C(t.threshold)
       ] })
     ] }),
     /* @__PURE__ */ e("div", { className: "sme-bars", children: t.scenarios.map((a) => {
       const i = t.threshold === void 0 || (a.dscr ?? 0) >= t.threshold;
-      return /* @__PURE__ */ s("div", { className: `sme-bar-row ${S(i ? "ok" : "danger")}`, children: [
+      return /* @__PURE__ */ n("div", { className: `sme-bar-row ${S(i ? "ok" : "danger")}`, children: [
         /* @__PURE__ */ e("span", { className: "sme-muted", children: a.stress_pct ? `Stress −${a.stress_pct}%` : "Cơ sở" }),
-        /* @__PURE__ */ s("div", { className: "sme-bar-track", children: [
-          /* @__PURE__ */ e("div", { className: "sme-bar-fill", style: { width: `${Math.min(100, (a.dscr ?? 0) / n * 100)}%` } }),
-          t.threshold !== void 0 && /* @__PURE__ */ e("div", { className: "sme-bar-mark", style: { left: `${t.threshold / n * 100}%` } })
+        /* @__PURE__ */ n("div", { className: "sme-bar-track", children: [
+          /* @__PURE__ */ e("div", { className: "sme-bar-fill", style: { width: `${Math.min(100, (a.dscr ?? 0) / s * 100)}%` } }),
+          t.threshold !== void 0 && /* @__PURE__ */ e("div", { className: "sme-bar-mark", style: { left: `${t.threshold / s * 100}%` } })
         ] }),
         /* @__PURE__ */ e("span", { className: "sme-num sme-strong", children: C(a.dscr) })
       ] }, a.stress_pct);
     }) }),
-    (t.cash !== void 0 || t.debtService !== void 0) && /* @__PURE__ */ s("div", { className: "sme-small sme-muted", style: { marginTop: 10 }, children: [
+    (t.cash !== void 0 || t.debtService !== void 0) && /* @__PURE__ */ n("div", { className: "sme-small sme-muted", style: { marginTop: 10 }, children: [
       "Dòng tiền trả nợ ",
       P(t.cash),
       " / năm · Nghĩa vụ trả nợ ",
@@ -389,56 +395,56 @@ function bt({ m: t }) {
   ] });
 }
 function vt({ m: t }) {
-  return /* @__PURE__ */ s("div", { className: "sme-card", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
-      /* @__PURE__ */ s("h3", { className: "sme-h3", children: [
+  return /* @__PURE__ */ n("div", { className: "sme-card", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
+      /* @__PURE__ */ n("h3", { className: "sme-h3", children: [
         "Điều kiện chính sách ",
         t.product
       ] }),
-      t.version && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+      t.version && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
         "Phiên bản ",
         t.version
       ] })
     ] }),
-    /* @__PURE__ */ s("table", { className: "sme-table", children: [
-      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("table", { className: "sme-table", children: [
+      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
         /* @__PURE__ */ e("th", { children: "Điều kiện" }),
         /* @__PURE__ */ e("th", { className: "sme-num", children: "Yêu cầu" }),
         /* @__PURE__ */ e("th", { className: "sme-num", children: "Thực tế" }),
         /* @__PURE__ */ e("th", { children: "Kết quả" })
       ] }) }),
-      /* @__PURE__ */ e("tbody", { children: t.rows.map((n) => {
-        const a = dt[n.status] ?? { label: n.status, tone: "muted" }, i = (r) => n.fact === "loan_amount" ? P(r) : typeof r == "number" ? C(r) : "—";
-        return /* @__PURE__ */ s("tr", { children: [
-          /* @__PURE__ */ s("td", { children: [
-            ct[n.fact] ?? n.fact,
-            /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: n.clause })
+      /* @__PURE__ */ e("tbody", { children: t.rows.map((s) => {
+        const a = dt[s.status] ?? { label: s.status, tone: "muted" }, i = (r) => s.fact === "loan_amount" ? P(r) : typeof r == "number" ? C(r) : "—";
+        return /* @__PURE__ */ n("tr", { children: [
+          /* @__PURE__ */ n("td", { children: [
+            ct[s.fact] ?? s.fact,
+            /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: s.clause })
           ] }),
-          /* @__PURE__ */ s("td", { className: "sme-num", children: [
-            n.op,
+          /* @__PURE__ */ n("td", { className: "sme-num", children: [
+            s.op,
             " ",
-            i(n.threshold)
+            i(s.threshold)
           ] }),
-          /* @__PURE__ */ e("td", { className: "sme-num", children: i(n.actual) }),
+          /* @__PURE__ */ e("td", { className: "sme-num", children: i(s.actual) }),
           /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(k, { t: a.tone, children: a.label }) })
-        ] }, n.id);
+        ] }, s.id);
       }) })
     ] })
   ] });
 }
 function ft({ periods: t }) {
-  const n = Object.keys(X).filter((a) => t.some((i) => {
+  const s = Object.keys(X).filter((a) => t.some((i) => {
     var r;
     return ((r = i.ratios) == null ? void 0 : r[a]) != null;
   }));
-  return n.length ? /* @__PURE__ */ s("div", { className: "sme-card", children: [
+  return s.length ? /* @__PURE__ */ n("div", { className: "sme-card", children: [
     /* @__PURE__ */ e("h3", { className: "sme-h3", style: { marginBottom: 8 }, children: "Chỉ số tài chính" }),
-    /* @__PURE__ */ s("table", { className: "sme-table", children: [
-      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("table", { className: "sme-table", children: [
+      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
         /* @__PURE__ */ e("th", { children: "Chỉ số" }),
         t.map((a) => /* @__PURE__ */ e("th", { className: "sme-num", children: a.period }, a.period))
       ] }) }),
-      /* @__PURE__ */ e("tbody", { children: n.map((a) => /* @__PURE__ */ s("tr", { children: [
+      /* @__PURE__ */ e("tbody", { children: s.map((a) => /* @__PURE__ */ n("tr", { children: [
         /* @__PURE__ */ e("td", { children: X[a].label }),
         t.map((i) => {
           var r;
@@ -448,23 +454,23 @@ function ft({ periods: t }) {
     ] })
   ] }) : null;
 }
-function xt({ detail: t, m: n, onEvidence: a, goAgents: i }) {
+function xt({ detail: t, m: s, onEvidence: a, goAgents: i }) {
   const r = t.results.consolidation, o = G.flatMap((c) => {
     var h;
     return (((h = t.results[c]) == null ? void 0 : h.findings) ?? []).filter((m) => m.severity === "high").map((m) => ({ ...m, agent: c }));
   }), p = Object.values(t.evidence).some((c) => /MẪU|sample/i.test(String(c.source)));
-  return /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    p && /* @__PURE__ */ s(_e, { children: [
+  return /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    p && /* @__PURE__ */ n(_e, { children: [
       "Hồ sơ đang dùng ",
       /* @__PURE__ */ e("b", { children: "dữ liệu mẫu" }),
       " (OCR, CIC hoặc NCLOS chưa nối hệ thống thật). Không dùng kết quả này cho quyết định tín dụng."
     ] }),
-    /* @__PURE__ */ s("div", { className: "sme-card", children: [
-      /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
+    /* @__PURE__ */ n("div", { className: "sme-card", children: [
+      /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
         /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Tóm tắt thẩm định" }),
         r ? /* @__PURE__ */ e(Se, { state: ne(r) }) : /* @__PURE__ */ e(k, { t: "muted", children: "Chưa tổng hợp" })
       ] }),
-      r ? /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: r.summary }) : /* @__PURE__ */ s("p", { className: "sme-muted", style: { margin: 0 }, children: [
+      r ? /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: r.summary }) : /* @__PURE__ */ n("p", { className: "sme-muted", style: { margin: 0 }, children: [
         "Agent Tổng hợp chưa chạy. Kết quả từng agent xem ở tab ",
         /* @__PURE__ */ e(
           "button",
@@ -478,43 +484,43 @@ function xt({ detail: t, m: n, onEvidence: a, goAgents: i }) {
         "."
       ] })
     ] }),
-    o.length > 0 && /* @__PURE__ */ s("div", { className: "sme-card", children: [
-      /* @__PURE__ */ s("h3", { className: "sme-h3", style: { marginBottom: 4 }, children: [
+    o.length > 0 && /* @__PURE__ */ n("div", { className: "sme-card", children: [
+      /* @__PURE__ */ n("h3", { className: "sme-h3", style: { marginBottom: 4 }, children: [
         "Cảnh báo mức cao (",
         o.length,
         ")"
       ] }),
-      o.map((c) => /* @__PURE__ */ s("div", { children: [
+      o.map((c) => /* @__PURE__ */ n("div", { children: [
         /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { marginTop: 8 }, children: E(c.agent) }),
         /* @__PURE__ */ e(ze, { f: c, onEvidence: a })
       ] }, c.agent + c.id))
     ] }),
-    n.dscr && /* @__PURE__ */ e(bt, { m: n.dscr }),
-    n.policy && /* @__PURE__ */ e(vt, { m: n.policy }),
-    n.ratios && /* @__PURE__ */ e(ft, { periods: n.ratios })
+    s.dscr && /* @__PURE__ */ e(bt, { m: s.dscr }),
+    s.policy && /* @__PURE__ */ e(vt, { m: s.policy }),
+    s.ratios && /* @__PURE__ */ e(ft, { periods: s.ratios })
   ] });
 }
-function yt({ id: t, r: n, open: a, onToggle: i, onEvidence: r }) {
+function yt({ id: t, r: s, open: a, onToggle: i, onEvidence: r }) {
   var p, c;
-  const o = ["high", "medium", "low"].map((h) => [h, n.findings.filter((m) => m.severity === h).length]);
-  return /* @__PURE__ */ s("div", { className: "sme-card", id: `agent-${t}`, children: [
-    /* @__PURE__ */ s("button", { type: "button", className: `sme-acc-head ${a ? "open" : ""}`, onClick: i, "aria-expanded": a, children: [
+  const o = ["high", "medium", "low"].map((h) => [h, s.findings.filter((m) => m.severity === h).length]);
+  return /* @__PURE__ */ n("div", { className: "sme-card", id: `agent-${t}`, children: [
+    /* @__PURE__ */ n("button", { type: "button", className: `sme-acc-head ${a ? "open" : ""}`, onClick: i, "aria-expanded": a, children: [
       /* @__PURE__ */ e(We, { size: 16, className: "chev" }),
-      /* @__PURE__ */ s("div", { style: { flex: 1, minWidth: 0 }, children: [
-        /* @__PURE__ */ s("div", { className: "sme-between", children: [
+      /* @__PURE__ */ n("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-between", children: [
           /* @__PURE__ */ e("span", { className: "sme-h3", children: E(t) }),
-          /* @__PURE__ */ e(Se, { state: ne(n) })
+          /* @__PURE__ */ e(Se, { state: ne(s) })
         ] }),
-        /* @__PURE__ */ s("div", { className: "sme-row sme-small sme-muted", style: { marginTop: 4 }, children: [
-          /* @__PURE__ */ s("span", { children: [
+        /* @__PURE__ */ n("div", { className: "sme-row sme-small sme-muted", style: { marginTop: 4 }, children: [
+          /* @__PURE__ */ n("span", { children: [
             "v",
-            n._version,
+            s._version,
             " · độ tin cậy ",
-            at[n.confidence] ?? n.confidence,
+            at[s.confidence] ?? s.confidence,
             " · ",
-            D(n._saved_at)
+            D(s._saved_at)
           ] }),
-          /* @__PURE__ */ e("span", { className: "sme-sev-counts", children: o.filter(([, h]) => h > 0).map(([h, m]) => /* @__PURE__ */ s(k, { t: R[h].tone, children: [
+          /* @__PURE__ */ e("span", { className: "sme-sev-counts", children: o.filter(([, h]) => h > 0).map(([h, m]) => /* @__PURE__ */ n(k, { t: R[h].tone, children: [
             m,
             " ",
             R[h].label.toLowerCase()
@@ -522,64 +528,64 @@ function yt({ id: t, r: n, open: a, onToggle: i, onEvidence: r }) {
         ] })
       ] })
     ] }),
-    a && /* @__PURE__ */ s("div", { className: "sme-acc-body sme-stack", children: [
-      /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: n.summary }),
-      n.verification && !n.verification.passed && /* @__PURE__ */ s(_e, { t: "danger", children: [
+    a && /* @__PURE__ */ n("div", { className: "sme-acc-body sme-stack", children: [
+      /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: s.summary }),
+      s.verification && !s.verification.passed && /* @__PURE__ */ n(_e, { t: "danger", children: [
         /* @__PURE__ */ e("b", { children: "Lý do bị chặn:" }),
-        /* @__PURE__ */ e("ul", { style: { margin: "4px 0 0", paddingLeft: 18 }, children: n.verification.errors.slice(0, 8).map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
+        /* @__PURE__ */ e("ul", { style: { margin: "4px 0 0", paddingLeft: 18 }, children: s.verification.errors.slice(0, 8).map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
       ] }),
-      n.findings.length > 0 && /* @__PURE__ */ e("div", { children: lt(n.findings).map((h) => /* @__PURE__ */ e(ze, { f: h, onEvidence: r }, h.id)) }),
-      (((p = n.missing_information) == null ? void 0 : p.length) ?? 0) > 0 && /* @__PURE__ */ s("div", { children: [
+      s.findings.length > 0 && /* @__PURE__ */ e("div", { children: lt(s.findings).map((h) => /* @__PURE__ */ e(ze, { f: h, onEvidence: r }, h.id)) }),
+      (((p = s.missing_information) == null ? void 0 : p.length) ?? 0) > 0 && /* @__PURE__ */ n("div", { children: [
         /* @__PURE__ */ e("div", { className: "sme-section-title", children: "Còn thiếu" }),
-        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: n.missing_information.map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
+        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: s.missing_information.map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
       ] }),
-      (((c = n.open_issues) == null ? void 0 : c.length) ?? 0) > 0 && /* @__PURE__ */ s("div", { children: [
+      (((c = s.open_issues) == null ? void 0 : c.length) ?? 0) > 0 && /* @__PURE__ */ n("div", { children: [
         /* @__PURE__ */ e("div", { className: "sme-section-title", children: "Vấn đề mở" }),
-        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: n.open_issues.map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
+        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: s.open_issues.map((h, m) => /* @__PURE__ */ e("li", { children: h }, m)) })
       ] })
     ] })
   ] });
 }
-function wt({ detail: t, openAgent: n, onEvidence: a }) {
-  const i = G.filter((c) => t.results[c]), [r, o] = b(() => new Set(n ? [n] : []));
+function wt({ detail: t, openAgent: s, onEvidence: a }) {
+  const i = G.filter((c) => t.results[c]), [r, o] = b(() => new Set(s ? [s] : []));
   if (F(() => {
-    n && (o((c) => new Set(c).add(n)), requestAnimationFrame(() => {
+    s && (o((c) => new Set(c).add(s)), requestAnimationFrame(() => {
       var c;
-      return (c = document.getElementById(`agent-${n}`)) == null ? void 0 : c.scrollIntoView({ block: "start", behavior: "smooth" });
+      return (c = document.getElementById(`agent-${s}`)) == null ? void 0 : c.scrollIntoView({ block: "start", behavior: "smooth" });
     }));
-  }, [n]), !i.length) return /* @__PURE__ */ e(L, { icon: /* @__PURE__ */ e(xe, { size: 30 }), title: "Chưa có kết quả", hint: "Chạy thẩm định để các agent ghi kết quả vào hồ sơ." });
+  }, [s]), !i.length) return /* @__PURE__ */ e(L, { icon: /* @__PURE__ */ e(xe, { size: 30 }), title: "Chưa có kết quả", hint: "Chạy thẩm định để các agent ghi kết quả vào hồ sơ." });
   const p = (c) => o((h) => {
     const m = new Set(h);
     return m.has(c) ? m.delete(c) : m.add(c), m;
   });
-  return /* @__PURE__ */ s("div", { className: "sme-stack", children: [
+  return /* @__PURE__ */ n("div", { className: "sme-stack", children: [
     /* @__PURE__ */ e("div", { className: "sme-row", style: { justifyContent: "flex-end" }, children: /* @__PURE__ */ e($, { onClick: () => o(r.size === i.length ? /* @__PURE__ */ new Set() : new Set(i)), children: r.size === i.length ? "Thu gọn tất cả" : "Mở tất cả" }) }),
     i.map((c) => /* @__PURE__ */ e(yt, { id: c, r: t.results[c], open: r.has(c), onToggle: () => p(c), onEvidence: a }, c))
   ] });
 }
-function Nt({ detail: t, focus: n }) {
-  const a = Object.values(t.evidence), [i, r] = b(""), [o, p] = b("all"), [c, h] = b(n);
+function Nt({ detail: t, focus: s }) {
+  const a = Object.values(t.evidence), [i, r] = b(""), [o, p] = b("all"), [c, h] = b(s);
   F(() => {
-    n && (h(n), r(""), p("all"), requestAnimationFrame(() => {
+    s && (h(s), r(""), p("all"), requestAnimationFrame(() => {
       var d;
-      return (d = document.getElementById(`ev-${n}`)) == null ? void 0 : d.scrollIntoView({ block: "center", behavior: "smooth" });
+      return (d = document.getElementById(`ev-${s}`)) == null ? void 0 : d.scrollIntoView({ block: "center", behavior: "smooth" });
     }));
-  }, [n]);
+  }, [s]);
   const m = j(() => Array.from(new Set(a.map((d) => d.added_by))), [a]), v = a.filter((d) => (o === "all" || d.added_by === o) && (!i.trim() || `${d.id} ${d.source} ${pe(d.value)}`.toLowerCase().includes(i.trim().toLowerCase())));
-  return a.length ? /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", children: [
-      /* @__PURE__ */ s("div", { className: "sme-filters", children: [
+  return a.length ? /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", children: [
+      /* @__PURE__ */ n("div", { className: "sme-filters", children: [
         /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${o === "all" ? "on" : ""}`, onClick: () => p("all"), children: "Tất cả" }),
         m.map((d) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${o === d ? "on" : ""}`, onClick: () => p(d), children: E(d) }, d))
       ] }),
-      /* @__PURE__ */ s("label", { className: "sme-search", children: [
+      /* @__PURE__ */ n("label", { className: "sme-search", children: [
         /* @__PURE__ */ e(H, { size: 14, className: "sme-muted" }),
         /* @__PURE__ */ e("input", { value: i, onChange: (d) => r(d.target.value), placeholder: "Tìm mã, nguồn, giá trị" })
       ] })
     ] }),
-    /* @__PURE__ */ s("div", { className: "sme-card tight", children: [
-      /* @__PURE__ */ s("table", { className: "sme-table", children: [
-        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("div", { className: "sme-card tight", children: [
+      /* @__PURE__ */ n("table", { className: "sme-table", children: [
+        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
           /* @__PURE__ */ e("th", { style: { width: 64 }, children: "Mã" }),
           /* @__PURE__ */ e("th", { children: "Nguồn" }),
           /* @__PURE__ */ e("th", { children: "Giá trị" }),
@@ -587,20 +593,20 @@ function Nt({ detail: t, focus: n }) {
         ] }) }),
         /* @__PURE__ */ e("tbody", { children: v.map((d) => {
           const x = pe(d.value), l = c === d.id;
-          return /* @__PURE__ */ s(
+          return /* @__PURE__ */ n(
             "tr",
             {
               id: `ev-${d.id}`,
-              className: `click ${n === d.id ? "focus" : ""}`,
+              className: `click ${s === d.id ? "focus" : ""}`,
               onClick: () => h(l ? null : d.id),
               children: [
                 /* @__PURE__ */ e("td", { className: "sme-mono", children: d.id }),
                 /* @__PURE__ */ e("td", { children: d.source }),
-                /* @__PURE__ */ s("td", { children: [
+                /* @__PURE__ */ n("td", { children: [
                   /* @__PURE__ */ e("span", { className: "sme-mono", style: { wordBreak: "break-word" }, children: x.length > 90 && !l ? x.slice(0, 88) + "…" : l ? "" : x }),
                   l && /* @__PURE__ */ e("pre", { className: "sme-pre", children: x })
                 ] }),
-                /* @__PURE__ */ s("td", { className: "sme-muted sme-small", children: [
+                /* @__PURE__ */ n("td", { className: "sme-muted sme-small", children: [
                   E(d.added_by),
                   /* @__PURE__ */ e("div", { children: D(d.added_at) })
                 ] })
@@ -614,14 +620,14 @@ function Nt({ detail: t, focus: n }) {
     ] })
   ] }) : /* @__PURE__ */ e(L, { icon: /* @__PURE__ */ e(xe, { size: 30 }), title: "Chưa có bằng chứng" });
 }
-function kt({ detail: t, focus: n, onDecide: a, onEvidence: i }) {
+function kt({ detail: t, focus: s, onDecide: a, onEvidence: i }) {
   const [r, o] = b("open"), [p, c] = b({}), [h, m] = b(null);
   F(() => {
-    n && (o("all"), requestAnimationFrame(() => {
+    s && (o("all"), requestAnimationFrame(() => {
       var l;
-      return (l = document.getElementById(`rv-${n}`)) == null ? void 0 : l.scrollIntoView({ block: "center", behavior: "smooth" });
+      return (l = document.getElementById(`rv-${s}`)) == null ? void 0 : l.scrollIntoView({ block: "center", behavior: "smooth" });
     }));
-  }, [n]);
+  }, [s]);
   const v = t.review.filter((l) => l.status === "open").length, d = t.review.filter((l) => r === "all" || r === "open" == (l.status === "open")), x = async (l, y) => {
     m(l + y);
     try {
@@ -630,36 +636,36 @@ function kt({ detail: t, focus: n, onDecide: a, onEvidence: i }) {
       m(null);
     }
   };
-  return t.review.length ? /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", children: [
+  return t.review.length ? /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", children: [
       /* @__PURE__ */ e("div", { className: "sme-filters", children: [["open", `Chờ xử lý (${v})`], ["done", `Đã xử lý (${t.review.length - v})`], ["all", "Tất cả"]].map(([l, y]) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${r === l ? "on" : ""}`, onClick: () => o(l), children: y }, l)) }),
       /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: "Quyết định chỉ dành cho cán bộ; agent không đóng được mục rà soát." })
     ] }),
     d.length === 0 && /* @__PURE__ */ e(L, { icon: /* @__PURE__ */ e(he, { size: 30 }), title: r === "open" ? "Đã xử lý hết các mục" : "Không có mục nào" }),
     d.map((l) => {
       const y = te[l.reason_code] ?? { label: l.reason_code, tone: "muted" }, _ = Ne[l.status] ?? { label: l.status, tone: "muted" }, A = p[l.id] ?? "";
-      return /* @__PURE__ */ s(
+      return /* @__PURE__ */ n(
         "div",
         {
           id: `rv-${l.id}`,
           className: `sme-card sme-review ${S(y.tone)}`,
-          style: n === l.id ? { boxShadow: "0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent)" } : void 0,
+          style: s === l.id ? { boxShadow: "0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent)" } : void 0,
           children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", children: [
-              /* @__PURE__ */ s("span", { className: "sme-row", children: [
+            /* @__PURE__ */ n("div", { className: "sme-between", children: [
+              /* @__PURE__ */ n("span", { className: "sme-row", children: [
                 /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: l.id }),
                 /* @__PURE__ */ e(k, { t: y.tone, children: y.label })
               ] }),
               /* @__PURE__ */ e(k, { t: _.tone, children: _.label })
             ] }),
             /* @__PURE__ */ e("p", { style: { margin: "10px 0 6px", fontSize: 13.5, lineHeight: 1.55 }, children: l.detail }),
-            /* @__PURE__ */ s("div", { className: "sme-small sme-muted", children: [
+            /* @__PURE__ */ n("div", { className: "sme-small sme-muted", children: [
               E(l.source_agent),
               " · ",
               D(l.created_at),
               /* @__PURE__ */ e(Ce, { refs: l.evidence_refs, onOpen: i })
             ] }),
-            l.status === "open" ? /* @__PURE__ */ s("div", { style: { marginTop: 12 }, children: [
+            l.status === "open" ? /* @__PURE__ */ n("div", { style: { marginTop: 12 }, children: [
               /* @__PURE__ */ e(
                 "textarea",
                 {
@@ -669,11 +675,11 @@ function kt({ detail: t, focus: n, onDecide: a, onEvidence: i }) {
                   onChange: (g) => c({ ...p, [l.id]: g.target.value })
                 }
               ),
-              /* @__PURE__ */ s("div", { className: "sme-row", style: { marginTop: 8, justifyContent: "flex-end" }, children: [
+              /* @__PURE__ */ n("div", { className: "sme-row", style: { marginTop: 8, justifyContent: "flex-end" }, children: [
                 /* @__PURE__ */ e($, { disabled: !A.trim(), busy: h === l.id + "needs_info", onClick: () => x(l.id, "needs_info"), children: "Yêu cầu bổ sung" }),
                 /* @__PURE__ */ e($, { primary: !0, disabled: !A.trim(), busy: h === l.id + "confirmed", onClick: () => x(l.id, "confirmed"), children: "Xác nhận" })
               ] })
-            ] }) : /* @__PURE__ */ s("div", { className: `sme-decision ${S(_.tone)}`, children: [
+            ] }) : /* @__PURE__ */ n("div", { className: `sme-decision ${S(_.tone)}`, children: [
               /* @__PURE__ */ e("b", { children: _.label }),
               " bởi ",
               l.decided_by,
@@ -690,7 +696,7 @@ function kt({ detail: t, focus: n, onDecide: a, onEvidence: i }) {
 }
 function _t({ detail: t }) {
   if (!t.audit.length) return /* @__PURE__ */ e(L, { icon: /* @__PURE__ */ e(Ge, { size: 30 }), title: "Chưa có nhật ký" });
-  const n = (i) => i.action === "verification" ? i.passed ? "ok" : "danger" : i.action === "review_decide" ? "accent" : i.action === "review_add" ? "warn" : "muted", a = (i) => {
+  const s = (i) => i.action === "verification" ? i.passed ? "ok" : "danger" : i.action === "review_decide" ? "accent" : i.action === "review_add" ? "warn" : "muted", a = (i) => {
     var o, p;
     const r = i.agent ? E(i.agent) : i.actor ?? "";
     switch (i.action) {
@@ -710,20 +716,20 @@ function _t({ detail: t }) {
         return r;
     }
   };
-  return /* @__PURE__ */ e("div", { className: "sme-card", children: /* @__PURE__ */ e("div", { className: "sme-tl", children: [...t.audit].reverse().map((i, r) => /* @__PURE__ */ s("div", { className: `sme-tl-item ${S(n(i))}`, children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", children: [
+  return /* @__PURE__ */ e("div", { className: "sme-card", children: /* @__PURE__ */ e("div", { className: "sme-tl", children: [...t.audit].reverse().map((i, r) => /* @__PURE__ */ n("div", { className: `sme-tl-item ${S(s(i))}`, children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", children: [
       /* @__PURE__ */ e("span", { className: "sme-strong", style: { fontSize: 13 }, children: rt[i.action] ?? i.action }),
       /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: D(i.ts) })
     ] }),
     /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: a(i) })
   ] }, r)) }) });
 }
-function Ct({ detail: t, flow: n, onAgent: a }) {
-  return /* @__PURE__ */ e("div", { className: "sme-card tight", children: /* @__PURE__ */ e("div", { className: "sme-steps", children: we.map((i) => /* @__PURE__ */ s("div", { className: "sme-phase", children: [
+function Ct({ detail: t, flow: s, onAgent: a }) {
+  return /* @__PURE__ */ e("div", { className: "sme-card tight", children: /* @__PURE__ */ e("div", { className: "sme-steps", children: we.map((i) => /* @__PURE__ */ n("div", { className: "sme-phase", children: [
     /* @__PURE__ */ e("span", { className: "sme-phase-name", children: i.name }),
     i.agents.map((r) => {
-      const o = r === "industry" && n !== "B" && !t.results[r], p = o ? "none" : ne(t.results[r]);
-      return /* @__PURE__ */ s(
+      const o = r === "industry" && s !== "B" && !t.results[r], p = o ? "none" : ne(t.results[r]);
+      return /* @__PURE__ */ n(
         "button",
         {
           type: "button",
@@ -733,7 +739,7 @@ function Ct({ detail: t, flow: n, onAgent: a }) {
           onClick: () => a(r),
           children: [
             /* @__PURE__ */ e("span", { className: "dot", children: /* @__PURE__ */ e(Te, { state: p, size: 12 }) }),
-            /* @__PURE__ */ s("span", { children: [
+            /* @__PURE__ */ n("span", { children: [
               E(r),
               o ? " (luồng B)" : ""
             ] })
@@ -744,13 +750,13 @@ function Ct({ detail: t, flow: n, onAgent: a }) {
     })
   ] }, i.name)) }) });
 }
-function Q({ label: t, children: n }) {
-  return /* @__PURE__ */ s("div", { className: "sme-between sme-small", style: { padding: "5px 0" }, children: [
+function Q({ label: t, children: s }) {
+  return /* @__PURE__ */ n("div", { className: "sme-between sme-small", style: { padding: "5px 0" }, children: [
     /* @__PURE__ */ e("span", { className: "sme-muted", children: t }),
-    /* @__PURE__ */ e("span", { style: { textAlign: "right" }, children: n })
+    /* @__PURE__ */ e("span", { style: { textAlign: "right" }, children: s })
   ] });
 }
-function Tt({ caseId: t, onBack: n }) {
+function Tt({ caseId: t, onBack: s }) {
   var ie, ae, re, le, oe, ce;
   const a = ge(), [i, r] = b(null), [o, p] = b(null), c = ke(p), [h, m] = b(!1), [v, d] = b("overview"), [x, l] = b(null), [y, _] = b(null), [A, g] = b(null), f = ee(async () => {
     m(!0);
@@ -788,51 +794,51 @@ function Tt({ caseId: t, onBack: n }) {
     { key: "review", label: "Rà soát", count: z.length || void 0 },
     { key: "audit", label: "Audit" }
   ];
-  return /* @__PURE__ */ s("div", { className: "sme-scroll", style: { paddingTop: 16 }, children: [
-    /* @__PURE__ */ s("div", { className: "sme-hero", children: [
-      /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-        /* @__PURE__ */ s("button", { type: "button", className: "sme-back", onClick: n, children: [
+  return /* @__PURE__ */ n("div", { className: "sme-scroll", style: { paddingTop: 16 }, children: [
+    /* @__PURE__ */ n("div", { className: "sme-hero", children: [
+      /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+        /* @__PURE__ */ n("button", { type: "button", className: "sme-back", onClick: s, children: [
           /* @__PURE__ */ e(Ue, { size: 14 }),
           " Tất cả hồ sơ"
         ] }),
         /* @__PURE__ */ e("h1", { className: "sme-title", children: String(K.name ?? t) }),
-        /* @__PURE__ */ s("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
           /* @__PURE__ */ e("span", { className: "sme-chip sme-mono", children: t }),
-          N && /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+          N && /* @__PURE__ */ n("span", { className: "sme-chip", children: [
             "Luồng ",
             N.flow
           ] }),
-          K.industry_code && /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+          K.industry_code && /* @__PURE__ */ n("span", { className: "sme-chip", children: [
             "Ngành ",
             String(K.industry_code)
           ] }),
           T.purpose && /* @__PURE__ */ e("span", { className: "sme-chip", children: ye[T.purpose] ?? T.purpose }),
-          N && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+          N && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
             "Tạo ",
             D(N.created_at)
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-row", children: [
+      /* @__PURE__ */ n("div", { className: "sme-row", children: [
         /* @__PURE__ */ e($, { onClick: f, busy: h, title: "Tải lại dữ liệu", children: /* @__PURE__ */ e(ve, { size: 14 }) }),
-        /* @__PURE__ */ s($, { onClick: Le, children: [
+        /* @__PURE__ */ n($, { onClick: Le, children: [
           /* @__PURE__ */ e(Ye, { size: 14 }),
           " Hỏi trợ lý"
         ] }),
-        /* @__PURE__ */ s($, { primary: !0, onClick: Ee, children: [
+        /* @__PURE__ */ n($, { primary: !0, onClick: Ee, children: [
           /* @__PURE__ */ e(Xe, { size: 14 }),
           " Chạy thẩm định"
         ] })
       ] })
     ] }),
     o && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(be, { title: "Có lỗi khi làm việc với hồ sơ", children: o }) }),
-    !i && !o && /* @__PURE__ */ s("div", { className: "sme-card sme-stack", children: [
+    !i && !o && /* @__PURE__ */ n("div", { className: "sme-card sme-stack", children: [
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "50%" } }),
       /* @__PURE__ */ e("div", { className: "sme-skel" }),
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "70%" } })
     ] }),
-    i && N && /* @__PURE__ */ s(ue, { children: [
-      /* @__PURE__ */ s("div", { className: "sme-kpis", style: { marginBottom: 12 }, children: [
+    i && N && /* @__PURE__ */ n(ue, { children: [
+      /* @__PURE__ */ n("div", { className: "sme-kpis", style: { marginBottom: 12 }, children: [
         /* @__PURE__ */ e(
           B,
           {
@@ -874,9 +880,9 @@ function Tt({ caseId: t, onBack: n }) {
         )
       ] }),
       /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(Ct, { detail: i, flow: N.flow, onAgent: Ae }) }),
-      /* @__PURE__ */ s("div", { className: "sme-detail", children: [
-        /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-          /* @__PURE__ */ e("div", { className: "sme-tabs", role: "tablist", children: De.map((u) => /* @__PURE__ */ s(
+      /* @__PURE__ */ n("div", { className: "sme-detail", children: [
+        /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+          /* @__PURE__ */ e("div", { className: "sme-tabs", role: "tablist", children: De.map((u) => /* @__PURE__ */ n(
             "button",
             {
               type: "button",
@@ -897,19 +903,19 @@ function Tt({ caseId: t, onBack: n }) {
           v === "review" && /* @__PURE__ */ e(kt, { detail: i, focus: y, onDecide: Be, onEvidence: Y }),
           v === "audit" && /* @__PURE__ */ e(_t, { detail: i })
         ] }),
-        /* @__PURE__ */ s("aside", { className: "sme-aside", children: [
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 4 }, children: [
+        /* @__PURE__ */ n("aside", { className: "sme-aside", children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
+            /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 4 }, children: [
               /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Cần xử lý" }),
               /* @__PURE__ */ e(k, { t: z.length ? "warn" : "ok", children: z.length })
             ] }),
             z.length === 0 && /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { padding: "8px 0" }, children: "Không còn mục chờ rà soát." }),
             z.slice(0, 6).map((u) => {
               const I = te[u.reason_code] ?? { label: u.reason_code, tone: "muted" };
-              return /* @__PURE__ */ s("button", { type: "button", className: "sme-todo", onClick: () => $e(u.id), children: [
+              return /* @__PURE__ */ n("button", { type: "button", className: "sme-todo", onClick: () => $e(u.id), children: [
                 /* @__PURE__ */ e(k, { t: I.tone, children: u.id }),
-                /* @__PURE__ */ s("span", { className: "sme-todo-text", children: [
-                  /* @__PURE__ */ s("b", { children: [
+                /* @__PURE__ */ n("span", { className: "sme-todo-text", children: [
+                  /* @__PURE__ */ n("b", { children: [
                     I.label,
                     "."
                   ] }),
@@ -918,34 +924,34 @@ function Tt({ caseId: t, onBack: n }) {
                 ] })
               ] }, u.id);
             }),
-            z.length > 6 && /* @__PURE__ */ s("button", { type: "button", className: "sme-ref", style: { marginTop: 6 }, onClick: () => d("review"), children: [
+            z.length > 6 && /* @__PURE__ */ n("button", { type: "button", className: "sme-ref", style: { marginTop: 6 }, onClick: () => d("review"), children: [
               "Xem thêm ",
               z.length - 6,
               " mục"
             ] })
           ] }),
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
             /* @__PURE__ */ e("h3", { className: "sme-h3", style: { marginBottom: 6 }, children: "Khách hàng" }),
             /* @__PURE__ */ e(Q, { label: "CIF", children: String(K.cif ?? "—") }),
             /* @__PURE__ */ e(Q, { label: "Mã số thuế", children: String(K.tax_id ?? "—") }),
             /* @__PURE__ */ e(Q, { label: "Số năm hoạt động", children: K.years_in_operation ?? "—" }),
-            T.proposal && /* @__PURE__ */ s("div", { className: "sme-small", style: { marginTop: 8 }, children: [
+            T.proposal && /* @__PURE__ */ n("div", { className: "sme-small", style: { marginTop: 8 }, children: [
               /* @__PURE__ */ e("div", { className: "sme-section-title", style: { marginBottom: 4 }, children: "Đề xuất ĐVKD" }),
               String(T.proposal)
             ] })
           ] }),
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 6 }, children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
+            /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 6 }, children: [
               /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Chứng từ" }),
               /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: N.documents.length })
             ] }),
-            N.documents.map((u) => /* @__PURE__ */ s("div", { className: "sme-row sme-small", style: { padding: "5px 0" }, children: [
+            N.documents.map((u) => /* @__PURE__ */ n("div", { className: "sme-row sme-small", style: { padding: "5px 0" }, children: [
               /* @__PURE__ */ e(et, { size: 14, className: "sme-muted" }),
               /* @__PURE__ */ e("span", { style: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }, children: u.name }),
               /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: u.id })
             ] }, u.id))
           ] }),
-          i.audit.length > 0 && /* @__PURE__ */ s("div", { className: "sme-small sme-muted sme-row", style: { padding: "0 4px" }, children: [
+          i.audit.length > 0 && /* @__PURE__ */ n("div", { className: "sme-small sme-muted sme-row", style: { padding: "0 4px" }, children: [
             /* @__PURE__ */ e(tt, { size: 13 }),
             " Hoạt động gần nhất ",
             D(i.audit[i.audit.length - 1].ts)
@@ -1127,13 +1133,13 @@ const St = `
 function zt() {
   const t = "sme-lending-css";
   if (typeof document > "u" || document.getElementById(t)) return;
-  const n = document.createElement("style");
-  n.id = t, n.textContent = St, document.head.appendChild(n);
+  const s = document.createElement("style");
+  s.id = t, s.textContent = St, document.head.appendChild(s);
 }
 zt();
 function Dt() {
-  const [t, n] = b(null);
-  return /* @__PURE__ */ e("div", { className: "sme", style: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }, children: t ? /* @__PURE__ */ e(Tt, { caseId: t, onBack: () => n(null) }) : /* @__PURE__ */ e(gt, { onOpen: n }) });
+  const [t, s] = b(null);
+  return /* @__PURE__ */ e("div", { className: "sme", style: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }, children: t ? /* @__PURE__ */ e(Tt, { caseId: t, onBack: () => s(null) }) : /* @__PURE__ */ e(gt, { onOpen: s }) });
 }
 export {
   Dt as default

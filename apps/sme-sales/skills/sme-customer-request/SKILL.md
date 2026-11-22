@@ -17,8 +17,9 @@ always: false
 
 ## Giọng văn
 - Lịch sự, rõ ràng, nói ngắn lý do cần (ví dụ "để ngân hàng đánh giá dòng tiền"), không dùng thuật ngữ nội bộ như DSCR, LTV, NCLOS, mã điều kiện.
+- Nếu mục cần xin đang ở trạng thái `requested` hoặc quá hạn (Sale nhờ soạn thư nhắc): dùng giọng văn **nhắc nhẹ, lịch sự**, nhắc lại thời gian đã đề nghị trước đó và hỏi xem khách có gặp vướng mắc gì hoặc cần đổi sang chứng từ thay thế không.
 - KHÔNG hứa hay ngụ ý kết quả: không "chắc chắn được duyệt", "sẽ giải ngân", không nêu lãi suất, hạn mức hay thời gian duyệt nếu Sale không đưa. `sme_draft_save` từ chối thư có câu hứa hẹn.
 - Không đưa thông tin nội bộ: cảnh báo chính sách, đánh giá rủi ro, ý kiến Thẩm định.
 
 ## Lưu và trao cho Sale
-Gọi `sme_draft_save` với `requirement_keys` là đúng các mục trong thư. Sau đó hiển thị nguyên văn thư cho Sale và nói: "Bản nháp đã lưu ở tab Thư khách hàng. Anh/chị sửa nếu cần, tự gửi, rồi bấm Đã gửi để các mục chuyển sang chờ khách."
+Gọi `sme_draft_save` với `requirement_keys` là đúng các mục mở trong thư. Sau đó hiển thị nguyên văn thư cho Sale và nói: "Bản nháp đã lưu ở mục Thư khách hàng. Anh/chị chép nội dung để tự gửi khách, rồi chọn hạn hẹn gửi và bấm Tôi đã gửi để hệ thống theo dõi tiến độ."
