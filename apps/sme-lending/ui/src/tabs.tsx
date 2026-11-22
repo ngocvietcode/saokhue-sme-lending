@@ -1,9 +1,9 @@
 import { Btn } from '@kirocrew/app-sdk/ui'
-import { ChevronRight, ClipboardCheck, FileSearch, History, MessageSquare, Play, Search } from 'lucide-react'
+import { ChevronRight, ClipboardCheck, Eye, EyeOff, FileSearch, History, MessageSquare, Play, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  AGENT_ORDER, AUDIT_LABEL, CONFIDENCE, FACT_LABEL, POLICY_STATUS, RATIO_LABEL, REASON, REVIEW_STATUS, SEVERITY,
-  agentLabel, agentState, moneyShort, num, sortFindings, text, when,
+  AGENT_ORDER, AUDIT_LABEL, CONFIDENCE, FACT_LABEL, POLICY_STATUS, RATIO_LABEL, REASON, REVIEW_STATUS,
+  RULE_STATUS_META, SEVERITY, XCHECK_META, agentLabel, agentState, moneyShort, num, sortFindings, text, when,
   type AgentResult, type CaseDetail, type Finding, type Metrics,
 } from './model'
 import { Banner, Empty, Pill, Refs, tone } from '@sme-ui/ui'
@@ -371,21 +371,210 @@ export function ReviewTab({ detail, focus, onDecide, onEvidence }: {
   )
 }
 
+/* ---------- Checklist & Đối chiếu (A-I + R1-R7) ---------- */
+
+type CFilter = 'open' | 'pass' | 'all'
+
+export function ChecklistTab({ detail, onEvidence }: {
+  detail: CaseDetail; onEvidence: (id: string) => void
+}) {
+  const cl = detail.checklist
+  const xc = detail.crosschecks
+  const handover = detail.case.sales_handover
+  const [filter, setFilter] = useState<CFilter>('open')
+  const [groupCode, setGroupCode] = useState<string>('ALL')
+  const [showSkipped, setShowSkipped] = useState(false)
+
+  const items = cl?.items ?? []
+  const applicableItems = useMemo(() => items.filter((i) => i.rule_status !== 'SKIPPED'), [items])
+  const skippedItems = useMemo(() => items.filter((i) => i.rule_status === 'SKIPPED'), [items])
+  const issueCount = useMemo(
+    () => applicableItems.filter((i) => i.rule_status !== 'PASS').length,
+    [applicableItems],
+  )
+
+  useEffect(() => {
+    if (issueCount === 0 && filter === 'open') setFilter('all')
+  }, [issueCount, filter])
+
+  const shownItems = useMemo(() => {
+    const src = showSkipped ? skippedItems : applicableItems
+    return src.filter((i) => {
+      if (groupCode !== 'ALL' && i.group !== groupCode) return false
+      if (showSkipped) return true
+      if (filter === 'open') return i.rule_status !== 'PASS'
+      if (filter === 'pass') return i.rule_status === 'PASS'
+      return true
+    })
+  }, [showSkipped, skippedItems, applicableItems, groupCode, filter])
+
+  const xRules = useMemo(
+    () => (xc?.rules ?? []).filter((r) => showSkipped || r.status !== 'SKIPPED'),
+    [xc, showSkipped],
+  )
+
+  return (
+    <div className="sme-stack">
+      {handover && (
+        <div className="sme-card sme-review t-accent">
+          <div className="sme-between sme-wrap">
+            <div className="sme-strong">Phiếu bàn giao từ ĐVKD (Sale)</div>
+            <span className="sme-small sme-muted">{handover.submitted_by} · {when(handover.submitted_at)}</span>
+          </div>
+          {handover.submission_note && (
+            <div className="sme-small" style={{ marginTop: 6 }}><b>Giải trình ĐVKD:</b> {handover.submission_note}</div>
+          )}
+          {(handover.waivers ?? []).length > 0 && (
+            <div className="sme-small" style={{ marginTop: 6 }}>
+              <b>Các mục ĐVKD xin miễn / bổ sung sau ({handover.waivers!.length}):</b>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+                {handover.waivers!.map((w) => (
+                  <li key={w.key}><b>{w.title}</b>: {w.note || 'Không có ghi chú'}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {xc && (
+        <div className="sme-card tight" style={{ overflowX: 'auto' }}>
+          <div className="sme-between sme-wrap" style={{ padding: '12px 14px 8px' }}>
+            <h3 className="sme-h3">7 Quy tắc đối chiếu chéo trọng yếu (R1 → R7)</h3>
+            <Pill t={xc.overall_status === 'PASS' ? 'ok' : xc.overall_status === 'FAIL' ? 'danger' : 'warn'}>
+              {xc.overall_status}
+            </Pill>
+          </div>
+          <table className="sme-table">
+            <thead>
+              <tr><th style={{ width: 52 }}>Mã</th><th>Quy tắc đối chiếu</th><th>Chứng từ &amp; Bằng chứng</th><th>Kết quả</th></tr>
+            </thead>
+            <tbody>
+              {xRules.map((r) => {
+                const meta = XCHECK_META[r.status]
+                return (
+                  <tr key={r.id}>
+                    <td className="sme-mono">{r.id}</td>
+                    <td>
+                      <div className="sme-strong">{r.title}</div>
+                      <div className="sme-small sme-muted">{r.detail}</div>
+                    </td>
+                    <td className="sme-small">
+                      {r.document_refs.length > 0 && <span className="sme-mono">{r.document_refs.join(', ')}</span>}
+                      {r.evidence_refs.length > 0 && <Refs refs={r.evidence_refs} onOpen={onEvidence} />}
+                      {r.document_refs.length === 0 && r.evidence_refs.length === 0 && <span className="sme-muted">—</span>}
+                    </td>
+                    <td><Pill t={meta.tone}>{meta.label}</Pill></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {cl && (
+        <div className="sme-card tight" style={{ overflowX: 'auto' }}>
+          <div className="sme-between sme-wrap" style={{ padding: '12px 14px 8px', gap: 8 }}>
+            <div className="sme-row sme-wrap" style={{ gap: 8 }}>
+              <h3 className="sme-h3">SME Master Checklist 2 lớp (Nhóm A → I)</h3>
+              <Pill t={cl.overall_status === 'COMPLETE' ? 'ok' : 'danger'}>{cl.overall_status}</Pill>
+              <span className="sme-small sme-muted">
+                PASS {cl.counts.PASS} · MISSING {cl.counts.MISSING_REQUIRED} · FAIL {cl.counts.FAIL} · UNDETERMINED {cl.counts.UNDETERMINED_CONDITION}
+              </span>
+            </div>
+            <div className="sme-row sme-wrap" style={{ gap: 6 }}>
+              {skippedItems.length > 0 && (
+                <Btn className={showSkipped ? 'sme-toggle-on' : undefined} onClick={() => setShowSkipped((v) => !v)}
+                  title="Các mục SKIPPED được ẩn mặc định">
+                  {showSkipped ? <EyeOff size={13} /> : <Eye size={13} />}
+                  {showSkipped ? 'Quay lại mục áp dụng' : `Hiện mục không áp dụng (${skippedItems.length})`}
+                </Btn>
+              )}
+            </div>
+          </div>
+
+          <div className="sme-between sme-wrap" style={{ padding: '0 14px 10px', gap: 8 }}>
+            {!showSkipped ? (
+              <div className="sme-filters" role="tablist">
+                {([['open', `Cần lưu ý (${issueCount})`], ['pass', `PASS (${cl.counts.PASS})`], ['all', `Tất cả áp dụng (${applicableItems.length})`]] as [CFilter, string][])
+                  .map(([k, l]) => (
+                    <button key={k} type="button" role="tab" aria-selected={filter === k}
+                      className={`sme-filter ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>
+                  ))}
+              </div>
+            ) : (
+              <span className="sme-small sme-muted">Đang hiển thị {skippedItems.length} mục SKIPPED (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt).</span>
+            )}
+            <div className="sme-filters" role="group" aria-label="Nhóm checklist">
+              <button type="button" className={`sme-filter ${groupCode === 'ALL' ? 'on' : ''}`} onClick={() => setGroupCode('ALL')}>A–I</button>
+              {cl.groups.filter((g) => showSkipped ? g.counts.SKIPPED > 0 : g.total_applicable > 0).map((g) => (
+                <button key={g.group} type="button" className={`sme-filter ${groupCode === g.group ? 'on' : ''}`}
+                  onClick={() => setGroupCode(g.group)} title={g.label}>{g.group}</button>
+              ))}
+            </div>
+          </div>
+
+          {shownItems.length === 0 ? (
+            <div style={{ padding: 16 }}>
+              <Empty icon={<ClipboardCheck size={26} />} title="Không có hạng mục nào ở bộ lọc này" />
+            </div>
+          ) : (
+            <table className="sme-table">
+              <thead>
+                <tr><th>Hạng mục, Điều kiện (Lớp 1) &amp; Rule (Lớp 2)</th><th>Nguồn</th><th>Chứng từ</th><th>Trạng thái</th></tr>
+              </thead>
+              <tbody>
+                {shownItems.map((it) => {
+                  const meta = RULE_STATUS_META[it.rule_status]
+                  return (
+                    <tr key={it.key}>
+                      <td>
+                        <div className="sme-row sme-wrap" style={{ gap: 6 }}>
+                          <span className="sme-mono sme-small">{it.group}</span>
+                          <span className="sme-strong">{it.title}</span>
+                          {it.crosscheck_refs.length > 0 && <span className="sme-chip sme-mono">{it.crosscheck_refs.join(', ')}</span>}
+                        </div>
+                        <div className="sme-small sme-muted">ĐK: {it.condition_label}</div>
+                        <div className="sme-small sme-muted">Rule: {it.rule_label}</div>
+                        {it.fail_reasons.length > 0 && (
+                          <div className="sme-small" style={{ marginTop: 3, color: it.rule_status === 'FAIL' ? 'var(--danger)' : undefined }}>
+                            {it.fail_reasons.join('; ')}
+                          </div>
+                        )}
+                      </td>
+                      <td><Pill t={it.owner_role === 'RM_INTERNAL' ? 'accent' : 'muted'}>{it.owner_role === 'RM_INTERNAL' ? 'ĐVKD nội bộ' : 'Khách hàng'}</Pill></td>
+                      <td className="sme-mono sme-small">{it.document_refs.length ? it.document_refs.join(', ') : '—'}</td>
+                      <td><Pill t={meta.tone}>{meta.label}</Pill></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ---------- Audit ---------- */
 
 export function AuditTab({ detail }: { detail: CaseDetail }) {
   if (!detail.audit.length) return <Empty icon={<History size={30} />} title="Chưa có nhật ký" />
   const toneOf = (a: { action: string; passed?: unknown }) =>
     a.action === 'verification' ? (a.passed ? 'ok' : 'danger')
-      : a.action === 'review_decide' ? 'accent' : a.action === 'review_add' ? 'warn' : 'muted'
+      : a.action === 'review_decide' || a.action === 'case_handover_received' ? 'accent'
+        : a.action === 'review_add' ? 'warn' : 'muted'
   const describe = (a: Record<string, any>) => {
-    const who = a.agent ? agentLabel(a.agent) : a.actor ?? ''
+    const who = a.agent ? agentLabel(a.agent) : a.actor ?? a.by ?? ''
     switch (a.action) {
       case 'result_put': return `${who} lưu kết quả v${a.version}${a.rerun_reason ? ` (chạy lại: ${a.rerun_reason})` : ''}`
       case 'verification': return `${who} v${a.version}: ${a.passed ? 'đạt kiểm chứng' : 'bị chặn'}`
       case 'evidence_add': return `${who} thêm ${(a.ids ?? []).join(', ')}`
       case 'review_add': return `${who} thêm ${a.id} (${REASON[a.reason_code]?.label ?? a.reason_code})`
       case 'review_decide': return `${a.actor} ${REVIEW_STATUS[a.status]?.label.toLowerCase() ?? a.status} ${a.id}`
+      case 'case_handover_received': return `Nhận từ ${a.from_app ?? 'sme-sales'} bởi ${a.by ?? ''}, ${a.documents ?? 0} chứng từ (${a.files_copied ?? 0} file)`
       case 'case_create': return `Luồng ${a.flow}, ${a.documents} chứng từ`
       default: return who
     }

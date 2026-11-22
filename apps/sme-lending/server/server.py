@@ -95,8 +95,24 @@ def sme_knowledge_products() -> Any:
 
 @mcp.tool()
 def sme_knowledge_checklist(product_code: str, flow: str) -> Any:
-    """Required documents for a product and flow."""
+    """Legacy required documents map for a product and flow."""
     return _safe(svc.knowledge_checklist, product_code, flow)
+
+
+@mcp.tool()
+def sme_checklist_evaluate(case_id: str, as_of: str = "") -> Any:
+    """Evaluate the unified two-layer SME Master Checklist (Groups A-I, 53 items) for a case: returns
+    overall_status (COMPLETE/INCOMPLETE), counts (PASS/MISSING_REQUIRED/FAIL/SKIPPED/UNDETERMINED_CONDITION),
+    group statuses and per-item condition -> rule -> status breakdown."""
+    return _safe(svc.checklist_evaluate, case_id, as_of)
+
+
+@mcp.tool()
+def sme_crosscheck_evaluate(case_id: str, as_of: str = "") -> Any:
+    """Evaluate the 7 core cross-check rules (R1: DKKD anchor, R2: ownership/authority, R3: contract
+    buyer/seller roles, R4: contract-VAT invoice MST mapping, R5: FS/VAT periods & signature,
+    R6: bank statement vs KHLQ/AR/AP, R7: collateral vs Prosland valuation)."""
+    return _safe(svc.crosscheck_evaluate, case_id, as_of)
 
 
 @mcp.tool()

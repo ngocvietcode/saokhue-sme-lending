@@ -1,6 +1,6 @@
 {
   "name": "sme-sales",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "displayName": "Hoàn thiện hồ sơ SME",
   "description": "Sale dựng bộ hồ sơ vay SME ngay trong chat: kể về khách hàng, đính kèm chứng từ; trợ lý đọc, ghi nhận và chỉ ra việc cần làm. Trang theo dõi cho thấy tổng thể, mục bị chặn và hồ sơ nào đủ để nộp Thẩm định.",
   "author": "Sao Khue",

@@ -41,6 +41,10 @@ class Knowledge:
         """Document-type catalogue: labels, validity, customer-facing ask, approved substitutes."""
         return self._load("documents.json")
 
+    def master_checklist(self) -> dict[str, Any]:
+        """Two-layer Master Checklist (Luồng A & B): applicability conditions + document rules."""
+        return self._load("master_checklist.json")
+
     def collateral_rules(self) -> dict[str, Any]:
         return self._load("policies.json").get("collateral", {})
 

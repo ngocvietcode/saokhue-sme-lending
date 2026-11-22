@@ -6,10 +6,10 @@ always: false
 # sme-collateral
 
 ## Các bước
-1. Đọc kết quả `document-evidence`: hồ sơ pháp lý TSBĐ, chứng thư định giá.
-2. Lập danh sách tài sản: loại (`real_estate`, `vehicle`, `deposit`, `machinery`, `other`), giá trị định giá, ngày định giá, mã bằng chứng.
+1. Đọc kết quả `document-evidence` và gọi `sme_crosscheck_evaluate` (kiểm tra `R7`: đối chiếu chủ sở hữu/mã tài sản giữa GCN QSDĐ/đăng ký xe với Báo cáo định giá Prosland).
+2. Lập danh sách tài sản: loại (`real_estate`, `vehicle`, `deposit`, `machinery`, `other`), giá trị định giá Prosland, ngày định giá, mã bằng chứng.
 3. Gọi `sme_collateral_ltv` với số tiền vay và danh sách tài sản. Tool kiểm hiệu lực định giá và tính LTV.
-4. Chứng thư hết hiệu lực, thiếu giấy tờ pháp lý, tài sản đang bảo đảm nghĩa vụ khác thì ghi finding và `expert_review`.
+4. Chứng thư Prosland hết hiệu lực, không khớp chủ sở hữu/mã tài sản với giấy tờ pháp lý TSBĐ (`R7 = FAIL`), thiếu giấy tờ pháp lý hoặc tài sản đang bảo đảm nghĩa vụ khác -> ghi finding mức `high` và `sme_review_add(expert_review` hoặc `data_conflict)`.
 5. LTV vượt ngưỡng thì finding `high` và `rule_fail`.
 
 ## Đầu ra bắt buộc

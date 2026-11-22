@@ -16,7 +16,9 @@ lock (mkdir is atomic on every platform). No module global holds case state.
 
 from __future__ import annotations
 
+import base64
 import json
+import mimetypes
 import os
 import re
 import shutil
@@ -156,6 +158,28 @@ class CaseStore:
         ev = _read_json(self._dir(case_id) / "evidence.json", {})
         return ev if not ids else {i: ev[i] for i in ids if i in ev}
 
+    def document_path(self, case_id: str, doc_id: str) -> Path | None:
+        d = self._dir(case_id)
+        doc = next((x for x in _read_json(d / "case.json", {}).get("documents", []) if x.get("id") == doc_id), None)
+        if not doc or not doc.get("file"):
+            return None
+        return d / "files" / doc["file"]
+
+    def document_file(self, case_id: str, doc_id: str) -> dict[str, Any]:
+        """Return stored file bytes as base64 + mime for preview or download."""
+        d = self._dir(case_id)
+        doc = next((x for x in _read_json(d / "case.json", {}).get("documents", []) if x.get("id") == doc_id), None)
+        if not doc or not doc.get("file"):
+            raise KeyError(f"file not found for document: {doc_id}")
+        path = d / "files" / doc["file"]
+        if not path.is_file():
+            raise KeyError(f"file missing on disk: {doc_id}")
+        raw = path.read_bytes()
+        name = str(doc.get("name") or doc["file"])
+        mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
+        return {"id": doc_id, "name": name, "mime": mime, "size": len(raw),
+                "content_b64": base64.b64encode(raw).decode()}
+
     # -- results -----------------------------------------------------------
     def _versions(self, d: Path, agent: str) -> list[int]:
         rd = d / "results" / agent
@@ -280,6 +304,8 @@ class CaseStore:
                 "agents_blocked": sum(1 for m in metas.values()
                                       if m["verification"] is not None and not m["verification"].get("passed")),
                 "review_open": sum(1 for r in review if r["status"] == "open"),
+                "from_sales": bool(case.get("sales_handover")),
+                "checklist_overall": (case.get("sales_handover") or {}).get("checklist_overall"),
             })
         return out
 

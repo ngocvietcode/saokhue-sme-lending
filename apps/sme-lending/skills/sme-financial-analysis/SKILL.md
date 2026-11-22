@@ -9,12 +9,12 @@ always: false
 1. Đọc kết quả `document-evidence`; lấy số liệu BCTC đã có mã bằng chứng. Thiếu kỳ hoặc chỉ tiêu thì ghi `missing_information`.
 2. Gọi `sme_fin_ratios` với các kỳ BCTC. KHÔNG tự tính chỉ số.
 3. Phân tích doanh thu, biên lợi nhuận, công nợ, vòng quay, đòn bẩy dựa trên output tool.
-4. Đối chiếu doanh thu BCTC với tờ khai VAT/sao kê nếu có; lệch trên 10% thì `data_conflict`.
+4. Đối chiếu doanh thu BCTC với Tờ khai VAT (`R5` — MST, đủ chuỗi kỳ 8 quý/24 tháng, chữ ký số), báo cáo phải thu/phải trả/tồn kho/khấu hao TSCĐ và sao kê (`R6`); lệch doanh thu lớn hoặc bất thường thì `data_conflict`.
 5. Gọi `sme_repayment_capacity` với dòng tiền trả nợ, nghĩa vụ hiện hữu, khoản vay đề xuất và kịch bản stress (mặc định 10%, 20%, 30%).
 6. DSCR cơ sở hoặc stress dưới ngưỡng chính sách thì finding `high` và `rule_fail`.
 
 ## Đầu ra bắt buộc
-Financial Assessment, Repayment Capacity Analysis, Financial Findings, Requests for Additional Evidence. `calculations` phải chứa cả hai lần gọi tool.
+Financial Assessment, Repayment Capacity Analysis, Financial Findings, Requests for Additional Evidence. `calculations` phải chứa cả hai lần gọi tool (`fin_ratios`, `repayment_capacity`).
 
 ## Schema kết quả chung (gửi qua `sme_case_put_result`)
 
@@ -30,7 +30,7 @@ Financial Assessment, Repayment Capacity Analysis, Financial Findings, Requests 
   "missing_information": ["..."],
   "open_issues": ["..."],
   "calculations": [
-    {"kind": "fin_ratios|repayment_capacity|collateral_ltv|policy_check|genform",
+    {"kind": "fin_ratios|repayment_capacity|collateral_ltv|policy_check|genform|checklist_eval|crosscheck_eval",
      "inputs": {}, "outputs": {}}
   ],
   "confidence": "low|medium|high"

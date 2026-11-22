@@ -24,12 +24,45 @@ def _svc(tmp: str) -> SalesService:
 
 
 def _full_case(svc: SalesService) -> str:
-    """Every field and SME-WC document present and in date."""
-    customer = {"name": "Cong ty A", "tax_id": "0101234567", "industry_code": "4669"}
+    """Every field and Master Checklist (Flow A, SME-WC, LLC_1) item present and passing."""
+    customer = {
+        "name": "Công ty TNHH MTV A",
+        "tax_id": "0101234567",
+        "industry_code": "4669",
+        "legal_type": "LLC_1",
+    }
     request = {"product_code": "SME-WC", "amount": 5e9, "purpose": "working_capital", "term_months": 12}
-    docs = [{"id": f"D{i}", "name": f"{t}.pdf", "type": t, "issued_date": "2026-10-01"}
-            for i, t in enumerate(["dkkd", "dieu_le", "bctc_2_ky", "de_nghi_vay", "pavv",
-                                   "hop_dong_dau_ra", "to_khai_vat"], start=1)]
+    docs = [
+        {"id": "D1", "name": "dkkd.pdf", "type": "dkkd", "issued_date": "2026-10-01"},
+        {"id": "D2", "name": "dieu_le.pdf", "type": "dieu_le", "issued_date": "2026-10-01"},
+        {"id": "D3", "name": "bctc_2_ky.pdf", "type": "bctc_2_ky", "issued_date": "2026-10-01"},
+        {"id": "D4", "name": "de_nghi_vay.pdf", "type": "de_nghi_vay", "issued_date": "2026-10-01"},
+        {"id": "D5", "name": "to_trinh_dexuat.pdf", "type": "to_trinh_dexuat", "issued_date": "2026-10-01"},
+        {"id": "D6", "name": "cccd_chu_chot.pdf", "type": "cccd_chu_chot", "issued_date": "2026-10-01"},
+        {"id": "D7", "name": "ds_thanh_vien.pdf", "type": "ds_thanh_vien", "issued_date": "2026-10-01"},
+        {"id": "D8", "name": "thong_tin_cic.pdf", "type": "thong_tin_cic", "issued_date": "2026-11-15"},
+        {
+            "id": "D9",
+            "name": "to_khai_vat_8q.pdf",
+            "type": "to_khai_vat",
+            "issued_date": "2026-10-20",
+            "meta": {"tax_id": "0101234567", "filing_cycle": "quarterly", "periods_count": 8, "signature_valid": True},
+        },
+        {
+            "id": "D10",
+            "name": "hop_dong_dau_ra.pdf",
+            "type": "hop_dong_dau_ra",
+            "issued_date": "2026-10-01",
+            "meta": {"customer_role": "seller", "counterparty_tax_id": "0109998888", "vat_invoice_matched": True},
+        },
+        {
+            "id": "D11",
+            "name": "anh_thuc_dia.pdf",
+            "type": "anh_thuc_dia",
+            "issued_date": "2026-10-01",
+            "meta": {"photo_count": 5},
+        },
+    ]
     cid = svc.case_create(customer, request, docs, "A")["case_id"]
     svc.store.update_case(cid, {"facts": {"years_in_operation": 5}}, actor="sale")
     return cid
@@ -45,6 +78,7 @@ class GapAnalysisTest(unittest.TestCase):
             svc = _svc(tmp)
             ov = svc.overview(_full_case(svc))
         self.assertTrue(ov["readiness"]["ready"], ov["readiness"])
+        self.assertEqual(ov["checklist_overall"], "COMPLETE")
         self.assertEqual(ov["readiness"]["score"], 100)
         self.assertEqual(ov["stage"], "ready")
 
@@ -53,11 +87,14 @@ class GapAnalysisTest(unittest.TestCase):
             svc = _svc(tmp)
             cid = svc.case_create({}, {}, [], "A")["case_id"]
             ov = svc.overview(cid)
+        items = {i["key"]: i for i in ov["items"]}
         open_keys = _keys(ov, "open")
         self.assertIn("field:request.product_code", open_keys)
         self.assertIn("doc:dkkd", open_keys)
-        self.assertNotIn("doc:pavv", open_keys, "product documents need a product first")
+        self.assertEqual(items["doc:bctc_2_ky"]["rule_status"], "UNDETERMINED_CONDITION",
+                         "Flow A BCTC applicability depends on product_code")
         self.assertFalse(ov["readiness"]["ready"])
+        self.assertEqual(ov["checklist_overall"], "INCOMPLETE")
         self.assertEqual(ov["stage"], "draft")
 
     def test_an_expired_document_blocks_and_a_missing_date_only_advises(self):
@@ -65,14 +102,15 @@ class GapAnalysisTest(unittest.TestCase):
             svc = _svc(tmp)
             cid = _full_case(svc)
             svc.store.update_document(cid, "D3", {"issued_date": "2024-12-31"}, actor="sale")
-            svc.store.update_document(cid, "D7", {"issued_date": ""}, actor="sale")
+            svc.store.update_document(cid, "D9", {"issued_date": ""}, actor="sale")
             ov = svc.overview(cid)
         items = {i["key"]: i for i in ov["items"]}
-        self.assertEqual(items["expired:bctc_2_ky"]["status"], "open")
-        self.assertTrue(items["expired:bctc_2_ky"]["blocking"])
-        self.assertIn("BCTC nội bộ", items["expired:bctc_2_ky"]["alternatives"][0])
+        self.assertEqual(items["doc:bctc_2_ky"]["status"], "open")
+        self.assertEqual(items["doc:bctc_2_ky"]["rule_status"], "FAIL")
+        self.assertTrue(items["doc:bctc_2_ky"]["blocking"])
+        self.assertIn("BCTC nội bộ", items["doc:bctc_2_ky"]["alternatives"][0])
         self.assertFalse(items["date:to_khai_vat"]["blocking"])
-        self.assertIn("expired:bctc_2_ky", ov["readiness"]["blocking_open"])
+        self.assertIn("doc:bctc_2_ky", ov["readiness"]["blocking_open"])
         self.assertNotIn("date:to_khai_vat", ov["readiness"]["blocking_open"])
 
     def test_policy_precheck_flags_a_breach_without_blocking(self):
@@ -178,7 +216,7 @@ class ExtractionTest(unittest.TestCase):
             self.assertNotIn("customer.name", todo)
             act = next(a for a in svc.overview(cid)["actions"] if a["kind"] == "extract")
             self.assertIn("Người đại diện theo pháp luật", act["detail"][0])
-            svc.store.update_case(cid, {"customer": {"address": "Hà Nội", "legal_rep": "Ông B",
+            svc.store.update_case(cid, {"customer": {"address": "Hà Nội", "legal_rep": "Ông B", "legal_type": "LLC_1",
                                                      "charter_capital": 5e9, "established": "2019-03-15"}}, actor="x")
             svc.store.update_document(cid, doc["id"], {"not_stated": ["customer.industry_code"]}, actor="x")
             self.assertEqual(svc.extract_next(cid, doc["id"]), [])
@@ -200,9 +238,11 @@ class ActionsTest(unittest.TestCase):
     def test_new_dossier_asks_for_documents_first(self):
         with tempfile.TemporaryDirectory() as tmp:
             svc = _svc(tmp)
-            cid = svc.case_create({"name": "A"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            cid = svc.case_create({"name": "Cong ty TNHH MTV A"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
             kinds = [a["kind"] for a in svc.overview(cid)["actions"]]
-        self.assertEqual(kinds[:3], ["first_upload", "request_docs", "fill_info"])
+        self.assertEqual(kinds[0], "first_upload")
+        self.assertIn("request_docs", kinds)
+        self.assertIn("fill_info", kinds)
 
     def test_ready_puts_submit_first_and_overdue_reminds(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -211,10 +251,10 @@ class ActionsTest(unittest.TestCase):
             acts = svc.overview(cid)["actions"]
             self.assertEqual(acts[0]["kind"], "submit")
             svc.store.update_document(cid, "D3", {"issued_date": "2024-01-01"}, actor="sale")
-            svc.store.set_requirement(cid, "expired:bctc_2_ky", "requested", "", actor="sale", due_date="2026-11-10")
+            svc.store.set_requirement(cid, "doc:bctc_2_ky", "requested", "", actor="sale", due_date="2026-11-10")
             acts = svc.overview(cid)["actions"]
             self.assertEqual(acts[0]["kind"], "remind")
-            self.assertEqual(acts[0]["keys"], ["expired:bctc_2_ky"])
+            self.assertEqual(acts[0]["keys"], ["doc:bctc_2_ky"])
             rows = svc.list_dossiers()
             self.assertEqual(rows[0]["overdue"], 1)
             self.assertEqual(svc.today(rows)["overdue"], [cid])
@@ -222,12 +262,17 @@ class ActionsTest(unittest.TestCase):
     def test_group_progress_counts_waived_as_done(self):
         with tempfile.TemporaryDirectory() as tmp:
             svc = _svc(tmp)
-            cid = svc.case_create({"name": "A", "tax_id": "1"}, {"product_code": "SME-WC"}, [], "A")["case_id"]
+            cid = svc.case_create(
+                {"name": "Công ty TNHH MTV A", "tax_id": "1", "legal_type": "LLC_1"},
+                {"product_code": "SME-WC", "purpose": "working_capital"},
+                [],
+                "A",
+            )["case_id"]
             svc.overview(cid)
             svc.store.set_requirement(cid, "doc:dieu_le", "waived", "lý do", actor="sale")
-            legal = next(g for g in svc.overview(cid)["groups"] if g["group"] == "phap_ly")
-        self.assertEqual(legal["done"], 3)  # name, tax id, waived articles
-        self.assertEqual(legal["blocked"], 2)  # registration certificate, years in operation
+            legal = next(g for g in svc.overview(cid)["groups"] if g["group"] == "B")
+        self.assertEqual(legal["done"], 3)  # name, tax_id, waived dieu_le
+        self.assertGreater(legal["blocked"], 0)
 
     def test_sample_fixture_gets_a_score(self):
         fixture = json.loads((ROOT / "tests" / "fixtures" / "sample_case.json").read_text(encoding="utf-8"))

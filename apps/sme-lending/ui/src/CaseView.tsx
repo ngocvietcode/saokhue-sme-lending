@@ -1,19 +1,19 @@
 import { useAppApi } from '@kirocrew/app-sdk'
 import { Btn, ErrorNotice } from '@kirocrew/app-sdk/ui'
 import {
-  Activity, ArrowLeft, ClipboardList, FileText, Gauge, Landmark, MessageSquare, Play, RefreshCw, ShieldCheck,
+  Activity, ArrowLeft, ClipboardList, Download, Eye, FileText, Gauge, Landmark, MessageSquare, Play, RefreshCw, ShieldCheck,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import type { AssistantIntent } from '@sme-ui/AssistantDock'
 import {
   AGENT_ORDER, API, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
-  type CaseDetail,
+  type CaseDetail, type DocumentFilePayload,
 } from './model'
-import { AgentsTab, AuditTab, EvidenceTab, OverviewTab, ReviewTab } from './tabs'
+import { AgentsTab, AuditTab, ChecklistTab, EvidenceTab, OverviewTab, ReviewTab } from './tabs'
 import { Kpi, Pill, tone } from '@sme-ui/ui'
 import { StateIcon } from './agentUi'
 
-type Tab = 'overview' | 'agents' | 'evidence' | 'review' | 'audit'
+type Tab = 'overview' | 'checklist' | 'agents' | 'evidence' | 'review' | 'audit'
 
 function Stepper({ detail, flow, onAgent }: { detail: CaseDetail; flow: string; onAgent: (a: string) => void }) {
   return (
@@ -68,8 +68,41 @@ export default function CaseView({
   const [focusEv, setFocusEv] = useState<string | null>(null)
   const [focusRv, setFocusRv] = useState<string | null>(null)
   const [focusAgent, setFocusAgent] = useState<string | null>(null)
+  const [dlBusyId, setDlBusyId] = useState<string | null>(null)
   const lastSyncRef = useRef(0)
   const silentInFlightRef = useRef(false)
+
+  const downloadDocument = async (docId: string) => {
+    setDlBusyId(docId)
+    try {
+      const res = await api.get<DocumentFilePayload>(`${API}/cases/${caseId}/documents/${docId}/file`)
+      const bin = atob(res.content_b64)
+      const bytes = new Uint8Array(bin.length)
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+      const blob = new Blob([bytes], { type: res.mime || 'application/octet-stream' })
+      const url = URL.createObjectURL(blob)
+      const previewable = res.mime.startsWith('image/') || res.mime === 'application/pdf' || res.mime.startsWith('text/')
+      if (previewable) {
+        const win = window.open(url, '_blank', 'noopener')
+        if (!win) {
+          const a = document.createElement('a')
+          a.href = url
+          a.download = res.name
+          a.click()
+        }
+      } else {
+        const a = document.createElement('a')
+        a.href = url
+        a.download = res.name
+        a.click()
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    } catch (e) {
+      setError(errMsg(e))
+    } finally {
+      setDlBusyId(null)
+    }
+  }
 
   const load = useCallback(async (silent = false) => {
     if (silent && silentInFlightRef.current) return
@@ -145,8 +178,14 @@ export default function CaseView({
     `Giải thích chi tiết kết quả, bằng chứng và điểm cần lưu ý của agent ${label} (${agentId}) trên hồ sơ ${caseId}.`,
     'prefill',
   )
+  const checklistIssues = useMemo(() => {
+    const c = detail?.checklist?.counts
+    if (!c) return 0
+    return (c.MISSING_REQUIRED ?? 0) + (c.FAIL ?? 0) + (c.UNDETERMINED_CONDITION ?? 0)
+  }, [detail])
   const tabs: { key: Tab; label: string; count?: number }[] = [
     { key: 'overview', label: 'Tổng quan' },
+    { key: 'checklist', label: 'Checklist & Đối chiếu', count: checklistIssues || undefined },
     { key: 'agents', label: 'Kết quả agent', count: detail ? Object.keys(detail.results).length : undefined },
     { key: 'evidence', label: 'Bằng chứng', count: detail ? Object.keys(detail.evidence).length : undefined },
     { key: 'review', label: 'Rà soát', count: openReview.length || undefined },
@@ -162,6 +201,12 @@ export default function CaseView({
           <div className="sme-row sme-wrap" style={{ gap: 6 }}>
             <span className="sme-chip sme-mono">{caseId}</span>
             {c && <span className="sme-chip">Luồng {c.flow}</span>}
+            {c?.sales_handover && <Pill t="accent">Nhận từ ĐVKD</Pill>}
+            {detail?.checklist && (
+              <Pill t={detail.checklist.overall_status === 'COMPLETE' ? 'ok' : 'warn'}>
+                Checklist {detail.checklist.overall_status}
+              </Pill>
+            )}
             {customer.industry_code && <span className="sme-chip">Ngành {String(customer.industry_code)}</span>}
             {request.purpose && <span className="sme-chip">{PURPOSE[request.purpose] ?? request.purpose}</span>}
             {c && <span className="sme-small sme-muted">Tạo {when(c.created_at)}</span>}
@@ -212,6 +257,7 @@ export default function CaseView({
                 ))}
               </div>
               {tab === 'overview' && <OverviewTab detail={detail} m={m} onEvidence={goEvidence} goAgents={() => setTab('agents')} />}
+              {tab === 'checklist' && <ChecklistTab detail={detail} onEvidence={goEvidence} />}
               {tab === 'agents' && <AgentsTab detail={detail} openAgent={focusAgent} onEvidence={goEvidence}
                 onRunAssessment={run} onAskAgent={askAgent} />}
               {tab === 'evidence' && <EvidenceTab detail={detail} focus={focusEv} />}
@@ -256,10 +302,15 @@ export default function CaseView({
                   <h3 className="sme-h3">Chứng từ</h3><span className="sme-small sme-muted">{c.documents.length}</span>
                 </div>
                 {c.documents.map((d) => (
-                  <div key={d.id} className="sme-row sme-small" style={{ padding: '5px 0' }}>
+                  <div key={d.id} className="sme-row sme-small" style={{ padding: '5px 0', gap: 6 }}>
                     <FileText size={14} className="sme-muted" />
-                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.name}</span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} title={d.name}>{d.name}</span>
                     <span className="sme-mono sme-muted">{d.id}</span>
+                    {d.file && (
+                      <Btn busy={dlBusyId === d.id} onClick={() => downloadDocument(d.id)} title="Xem hoặc tải chứng từ">
+                        {/\.(pdf|png|jpe?g|webp|txt)$/i.test(d.name) ? <Eye size={12} /> : <Download size={12} />}
+                      </Btn>
+                    )}
                   </div>
                 ))}
               </div>

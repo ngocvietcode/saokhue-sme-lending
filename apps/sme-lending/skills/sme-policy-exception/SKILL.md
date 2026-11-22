@@ -6,12 +6,12 @@ always: false
 # sme-policy-exception
 
 ## Các bước
-1. Đọc kết quả `product-match`, `financial-analysis`, `collateral` nếu đã có.
-2. Gom dữ kiện cần kiểm tra (năm hoạt động, số tiền vay, kỳ hạn, DSCR, LTV, nhóm nợ CIC...), mỗi dữ kiện kèm mã bằng chứng.
+1. Đọc kết quả `product-match`, `financial-analysis`, `collateral` nếu đã có; đồng thời gọi `sme_checklist_evaluate` và `sme_crosscheck_evaluate`.
+2. Gom dữ kiện cần kiểm tra (năm hoạt động, số tiền vay, tổng hạn mức, kỳ hạn, DSCR, LTV, nhóm nợ CIC...), mỗi dữ kiện kèm mã bằng chứng.
 3. Gọi `sme_policy_check` với mã sản phẩm và dữ kiện. Tool trả phiên bản chính sách, ngày hiệu lực và từng điều kiện `met / not_met / missing / na`.
-4. Lập Policy Compliance Matrix từ output tool, không đổi trạng thái tool trả về.
-5. Mỗi điều kiện `not_met` ghi vào Exception Register (finding topic `exception`) kèm điều khoản căn cứ, gọi `sme_review_add` reason `exception_needed`. KHÔNG kết luận ngoại lệ được chấp nhận.
-6. `missing` ghi vào `missing_information` và Required Clarifications.
+4. Kiểm tra thêm điều kiện kích hoạt **Nhóm H** (Phê duyệt GĐ vùng SME khi HM >= 50 tỷ hoặc tổng HM >= 70 tỷ; GĐ khối SME khi HM >= 150 tỷ hoặc tổng HM >= 200 tỷ; hoặc bằng chứng thay thế TP KD SME theo cấu hình) và **Nhóm I** (`AMEND_CONDITION`), cùng danh sách `waivers` từ ĐVKD (`sales_handover`).
+5. Lập Policy Compliance Matrix từ output tool, không đổi trạng thái tool trả về. Mỗi điều kiện `not_met` hoặc mục xin miễn/thiếu phê duyệt cấp cao ghi Exception Register + `sme_review_add` (`exception_needed` / `rule_fail`).
+6. `missing` hoặc `UNDETERMINED_CONDITION` ghi vào `missing_information` và Required Clarifications.
 
 ## Đầu ra bắt buộc
 Bản đồ chính sách áp dụng (kèm version), Policy Compliance Matrix, Exception Register, Required Clarifications.

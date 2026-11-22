@@ -5,23 +5,41 @@ export const API = '/apps/sme-sales/api'
 
 export type Stage = 'draft' | 'collecting' | 'ready' | 'submitted'
 export type ItemStatus = 'open' | 'requested' | 'waived' | 'resolved' | 'ok'
+export type RuleStatus = 'PASS' | 'MISSING_REQUIRED' | 'FAIL' | 'SKIPPED' | 'UNDETERMINED_CONDITION'
+export type OwnerRole = 'CUSTOMER' | 'RM_INTERNAL'
+export type ChecklistOverall = 'COMPLETE' | 'INCOMPLETE'
+export type CrossCheckStatus = 'PASS' | 'FAIL' | 'MISSING_DATA' | 'SKIPPED'
 
+export type CrossCheckRule = {
+  id: string; code: string; title: string; status: CrossCheckStatus
+  detail: string; document_refs: string[]; evidence_refs: string[]
+}
+export type CrossCheckEval = {
+  as_of: string; overall_status: 'PASS' | 'FAIL' | 'INCOMPLETE'
+  counts: Record<CrossCheckStatus, number>; rules: CrossCheckRule[]
+}
 export type CheckItem = {
   key: string; kind: string; group: string; title: string; ok: boolean; blocking: boolean
   reason: string; ask: string; alternatives: string[]; document_refs: string[]; status: ItemStatus
+  owner_role?: OwnerRole; applicable?: boolean; rule_status?: RuleStatus; is_master_item?: boolean
+  condition_label?: string; rule_label?: string; fail_reasons?: string[]
+  missing_condition_fields?: string[]; crosscheck_refs?: string[]
   note?: string; due_date?: string; requested_at?: string; resolved_at?: string; updated_by?: string
 }
 export type PolicyCheckRow = {
   id: string; fact: string; label: string; op: string; threshold: number
   actual?: number | string | null; status: 'met' | 'not_met' | 'missing' | 'na'; clause: string
 }
-export type ActionKind = 'submit' | 'first_upload' | 'remind' | 'request_docs' | 'fill_info' | 'classify' | 'extract'
+export type ActionKind = 'submit' | 'first_upload' | 'remind' | 'clarify_conditions' | 'crosscheck_fix'
+  | 'request_docs' | 'rm_internal' | 'fill_info' | 'classify' | 'extract'
   | 'review_proposal' | 'follow_up' | 'advisory' | 'waiting'
 export type Action = {
   id: string; kind: ActionKind; tone: Tone; title: string; detail: string[]; keys: string[]
   cta: 'draft' | 'chat' | 'submit' | 'none'; prompt: string
 }
-export type GroupProgress = { group: string; label: string; done: number; total: number; blocked: number }
+export type GroupProgress = {
+  group: string; label: string; done: number; total: number; blocked: number; skipped?: number
+}
 export type ProfileField = { path: string; section: string; label: string; value: unknown }
 export type Overview = {
   case_id: string; as_of: string; stage: Stage
@@ -29,20 +47,28 @@ export type Overview = {
     score: number; ready: boolean; blocking_open: string[]; waived: string[]
     actionable_blocking?: string[]; waiting_blocking?: string[]
   }
+  checklist_overall?: ChecklistOverall
+  checklist_counts?: Record<RuleStatus, number>
+  checklist_groups?: { group: string; label: string; status: string; counts: Record<RuleStatus, number>; total_applicable: number }[]
+  crosschecks?: CrossCheckEval
   items: CheckItem[]; policy_checks?: PolicyCheckRow[]
   actions: Action[]; groups: GroupProgress[]; profile: ProfileField[]
 }
 export type Doc = {
   id: string; name: string; type?: string; issued_date?: string; file?: string; size?: number
-  summary?: string; added_by?: string; added_at?: string; not_stated?: string[]
+  summary?: string; added_by?: string; added_at?: string; not_stated?: string[]; meta?: Record<string, unknown>
 }
 export type DocumentFilePayload = {
   id: string; name: string; mime: string; size: number; content_b64: string
 }
+export type HandoverReceipt = {
+  status: string; adapter: string; schema_version?: string; target_app?: string
+  case_id?: string; files_copied?: number; transferred_at?: string; message?: string
+}
 export type CaseRec = {
   case_id: string; flow: string; created_at: string
   customer: Record<string, any>; request: Record<string, any>; facts?: Record<string, any>
-  documents: Doc[]; submitted?: { by: string; at: string; note: string }
+  documents: Doc[]; submitted?: { by: string; at: string; note: string; handover?: HandoverReceipt }
 }
 export type Today = {
   ready: string[]; overdue: string[]; blocked: string[]; waiting: number; no_documents: string[]
@@ -57,17 +83,19 @@ export type DossierRow = {
   case_id: string; created_at: string; updated_at?: string; flow: string; customer_name?: string
   tax_id?: string | null; product_code?: string | null
   amount?: number; term_months?: number; purpose?: string; stage: Stage; score: number; ready: boolean
+  checklist_overall?: ChecklistOverall; checklist_counts?: Record<RuleStatus, number>
+  crosscheck_overall?: 'PASS' | 'FAIL' | 'INCOMPLETE'
   blocking_open: number; actionable_blocking?: number; requested: number; overdue: number; stale?: number
   unclassified_docs?: number; policy_breaches?: number; next_due_date?: string | null; pending_drafts?: number
   open_items: number; groups: GroupProgress[]
   next_action: Pick<Action, 'kind' | 'tone' | 'title' | 'cta'> | null
   actions: Action[]
-  items_open: (Pick<CheckItem, 'key' | 'title' | 'status' | 'blocking' | 'group' | 'kind'> & { due_date?: string })[]
+  items_open: (Pick<CheckItem, 'key' | 'title' | 'status' | 'blocking' | 'group' | 'kind' | 'owner_role' | 'rule_status'> & { due_date?: string })[]
   profile: ProfileField[]
-  documents: Pick<Doc, 'id' | 'name' | 'type' | 'issued_date' | 'summary'>[]
+  documents: Pick<Doc, 'id' | 'name' | 'type' | 'issued_date' | 'summary' | 'meta'>[]
 }
 export type CaseDetail = { case: CaseRec; overview: Overview; drafts: Draft[]; audit: { ts: string; action: string; [k: string]: unknown }[] }
-export type DocType = { label: string; group: string; validity_months: number | null; ask: string; alternatives: string[]; extract?: string[] }
+export type DocType = { label: string; group: string; owner_role?: OwnerRole; validity_months: number | null; ask: string; alternatives: string[]; extract?: string[] }
 export type Catalog = {
   documents: {
     groups: Record<string, string>; types: Record<string, DocType>
@@ -90,6 +118,19 @@ export const ITEM_STATUS: Record<ItemStatus, { label: string; tone: Tone }> = {
   resolved: { label: 'Đạt', tone: 'ok' },
   ok: { label: 'Đạt', tone: 'ok' },
 }
+export const RULE_STATUS_META: Record<RuleStatus, { label: string; tone: Tone }> = {
+  PASS: { label: 'PASS', tone: 'ok' },
+  MISSING_REQUIRED: { label: 'MISSING_REQUIRED', tone: 'warn' },
+  FAIL: { label: 'FAIL', tone: 'danger' },
+  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
+  UNDETERMINED_CONDITION: { label: 'UNDETERMINED_CONDITION', tone: 'info' },
+}
+export const XCHECK_META: Record<CrossCheckStatus, { label: string; tone: Tone }> = {
+  PASS: { label: 'Khớp', tone: 'ok' },
+  FAIL: { label: 'Không đạt', tone: 'danger' },
+  MISSING_DATA: { label: 'Thiếu căn cứ', tone: 'warn' },
+  SKIPPED: { label: 'Không áp dụng', tone: 'muted' },
+}
 export const CHANNEL: Record<DraftChannel, string> = { email: 'Email', zalo: 'Zalo', phone_script: 'Kịch bản gọi' }
 export const AUDIT_LABEL: Record<string, string> = {
   case_create: 'Khởi tạo hồ sơ', case_update: 'Cập nhật hồ sơ', document_add: 'Tiếp nhận chứng từ',
@@ -99,7 +140,10 @@ export const AUDIT_LABEL: Record<string, string> = {
   case_submitted: 'Bàn giao Thẩm định', case_reopened: 'Mở lại hồ sơ', evidence_add: 'Thêm bằng chứng',
 }
 
-export const isOpen = (i: CheckItem) => i.status === 'open' || i.status === 'requested'
+export const isSkipped = (i: CheckItem) => i.rule_status === 'SKIPPED' || i.applicable === false
+export const isCustomerRequestable = (i: CheckItem) =>
+  !isSkipped(i) && (i.owner_role ?? 'CUSTOMER') === 'CUSTOMER' && i.rule_status !== 'UNDETERMINED_CONDITION' && Boolean(i.ask)
+export const isOpen = (i: CheckItem) => !isSkipped(i) && (i.status === 'open' || i.status === 'requested')
 export const actor = (a?: string) => (!a ? 'Hệ thống' : a.startsWith('agent:') || a === 'dossier-coach' ? 'Trợ lý AI' : 'ĐVKD')
 export const COACH = 'dossier-coach'
 export const CHAT_PREFIX = 'sme-sales-chat-'
@@ -129,6 +173,7 @@ export function describeAudit(a: { ts: string; action: string; [k: string]: unkn
 /** A field value formatted for corporate banking display. */
 export function showValue(path: string, value: unknown, catalog: Catalog | null): string {
   if (value === null || value === undefined || value === '') return '—'
+  if (typeof value === 'boolean') return value ? 'Có' : 'Không'
   if (path === 'request.purpose' && typeof value === 'string') return PURPOSE[value] ?? value
   if (path === 'request.product_code' && typeof value === 'string') {
     const p = catalog?.products.products.find((x) => x.code === value)
@@ -139,7 +184,7 @@ export function showValue(path: string, value: unknown, catalog: Catalog | null)
     if (/_pct$|ty_le/.test(path)) return `${num(value, 2)}%`
     if (/term_months|so_thang/.test(path)) return `${value} tháng`
     if (/years_in_operation|so_nam/.test(path)) return `${num(value, 1)} năm`
-    if (/amount|capital|revenue|income|assets|equity|investment|value|so_tien|gia_tri|doanh_thu|von|tai_san|loi_nhuan/.test(path)) {
+    if (/amount|capital|revenue|income|assets|equity|investment|value|exposure|so_tien|gia_tri|doanh_thu|von|tai_san|loi_nhuan/.test(path)) {
       return money(value)
     }
     return value.toLocaleString('vi-VN')
@@ -172,12 +217,14 @@ export function buildDraftPrompt(
 export function buildLosHandoverText(detail: CaseDetail, catalog: Catalog | null): string {
   const { case: c, overview: ov } = detail
   const types = catalog?.documents.types ?? {}
-  const mandatoryTotal = ov.items.filter((i) => i.blocking).length
-  const mandatoryDone = ov.items.filter((i) => i.blocking && ['ok', 'resolved', 'waived'].includes(i.status)).length
+  const active = ov.items.filter((i) => !isSkipped(i))
+  const mandatoryTotal = active.filter((i) => i.blocking).length
+  const mandatoryDone = active.filter((i) => i.blocking && ['ok', 'resolved', 'waived'].includes(i.status)).length
   const lines: string[] = [
     `PHIẾU BÀN GIAO HỒ SƠ THẨM ĐỊNH: ${c.case_id}`,
     `Khách hàng: ${c.customer?.name ?? 'Chưa rõ'} | MST: ${c.customer?.tax_id ?? '—'} | Luồng: ${c.flow}`,
-    `Hạng mục bắt buộc: ${mandatoryDone}/${mandatoryTotal} | Trạng thái: ${ov.readiness.ready ? 'Đủ điều kiện trình' : `Còn ${ov.readiness.blocking_open.length} mục chặn`}`,
+    `Master Checklist: ${ov.checklist_overall ?? 'INCOMPLETE'} | Hạng mục áp dụng: ${mandatoryDone}/${mandatoryTotal}`,
+    `Trạng thái: ${ov.readiness.ready ? 'Đủ điều kiện trình' : `Còn ${ov.readiness.blocking_open.length} mục chặn`}`,
     '',
     '1. THÔNG TIN KHÁCH HÀNG & ĐỀ XUẤT',
   ]
@@ -190,25 +237,32 @@ export function buildLosHandoverText(detail: CaseDetail, catalog: Catalog | null
     const label = d.type ? (types[d.type]?.label ?? d.type) : 'Chưa phân loại'
     lines.push(`- ${d.id}: ${label} (${d.name}${d.issued_date ? `, lập ${day(d.issued_date)}` : ''})${d.summary ? ` — ${d.summary}` : ''}`)
   }
+  const xc = ov.crosschecks?.rules ?? []
+  if (xc.length > 0) {
+    lines.push('', `3. ĐỐI CHIẾU CHÉO 7 RULE (${ov.crosschecks?.overall_status ?? '—'})`)
+    for (const r of xc.filter((x) => x.status !== 'SKIPPED')) {
+      lines.push(`- [${r.id}] ${r.title}: ${r.status} — ${r.detail}`)
+    }
+  }
   const breaches = (ov.policy_checks ?? []).filter((p) => p.status === 'not_met')
   if (breaches.length > 0) {
-    lines.push('', '3. LƯU Ý ĐIỀU KIỆN CHÍNH SÁCH SƠ BỘ')
+    lines.push('', '4. LƯU Ý ĐIỀU KIỆN CHÍNH SÁCH SƠ BỘ')
     for (const b of breaches) {
       lines.push(`- ${b.label}: thực tế ${formatFactValue(b.fact, b.actual)}, yêu cầu ${b.op} ${formatFactValue(b.fact, b.threshold)} (${b.clause})`)
     }
   }
-  const waived = ov.items.filter((i) => i.status === 'waived')
+  const waived = active.filter((i) => i.status === 'waived')
   if (waived.length > 0) {
-    lines.push('', '4. CÁC HẠNG MỤC XIN MIỄN / BỔ SUNG SAU KÈM GIẢI TRÌNH')
+    lines.push('', '5. CÁC HẠNG MỤC XIN MIỄN / BỔ SUNG SAU KÈM GIẢI TRÌNH')
     for (const w of waived) {
       lines.push(`- ${w.title}: ${w.note || 'Không có ghi chú'}`)
     }
   }
-  const openBlock = ov.items.filter((i) => i.blocking && (i.status === 'open' || i.status === 'requested'))
+  const openBlock = active.filter((i) => i.blocking && (i.status === 'open' || i.status === 'requested'))
   if (openBlock.length > 0) {
-    lines.push('', '5. CÁC HẠNG MỤC CHẶN CHƯA ĐẠT (TRÌNH KÈM GIẢI TRÌNH)')
+    lines.push('', '6. CÁC HẠNG MỤC CHẶN CHƯA ĐẠT (TRÌNH KÈM GIẢI TRÌNH)')
     for (const o of openBlock) {
-      lines.push(`- ${o.title} (${ITEM_STATUS[o.status].label}${o.due_date ? `, hạn ${day(o.due_date)}` : ''})`)
+      lines.push(`- [${o.owner_role ?? 'CUSTOMER'}] ${o.title}: ${o.rule_status ?? ITEM_STATUS[o.status].label}${o.due_date ? ` (hạn ${day(o.due_date)})` : ''}`)
     }
   }
   return lines.join('\n')

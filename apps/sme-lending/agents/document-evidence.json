@@ -11,7 +11,9 @@
     "@sme-lending:lending/sme_case_put_result",
     "@sme-lending:lending/sme_ocr_extract",
     "@sme-lending:lending/sme_evidence_add",
-    "@sme-lending:lending/sme_knowledge_checklist"
+    "@sme-lending:lending/sme_knowledge_checklist",
+    "@sme-lending:lending/sme_checklist_evaluate",
+    "@sme-lending:lending/sme_crosscheck_evaluate"
   ],
   "allowedTools": [
     "@sme-lending:lending/sme_case_get",
@@ -21,7 +23,9 @@
     "@sme-lending:lending/sme_case_put_result",
     "@sme-lending:lending/sme_ocr_extract",
     "@sme-lending:lending/sme_evidence_add",
-    "@sme-lending:lending/sme_knowledge_checklist"
+    "@sme-lending:lending/sme_knowledge_checklist",
+    "@sme-lending:lending/sme_checklist_evaluate",
+    "@sme-lending:lending/sme_crosscheck_evaluate"
   ],
   "resources": [
     "skill://{APP_ROOT}/skills/sme-document-evidence/SKILL.md"

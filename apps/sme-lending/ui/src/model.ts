@@ -3,6 +3,8 @@ export const API = '/apps/sme-lending/api'
 import { num, pct, type Tone } from '@sme-ui/format'
 export * from '@sme-ui/format'
 export type AgentState = 'passed' | 'blocked' | 'unverified'
+export type RuleStatus = 'PASS' | 'MISSING_REQUIRED' | 'FAIL' | 'SKIPPED' | 'UNDETERMINED_CONDITION'
+export type CrossCheckStatus = 'PASS' | 'FAIL' | 'MISSING_DATA' | 'SKIPPED'
 
 export type Finding = { id: string; topic: string; statement: string; severity: string; evidence_refs: string[] }
 export type Verification = { passed: boolean; errors: string[]; version?: number; checked_at?: string } | null
@@ -16,20 +18,58 @@ export type ReviewItem = {
   status: string; created_at: string; note?: string; decided_by?: string; decided_at?: string
 }
 export type Evidence = { id: string; source: string; value: unknown; added_by: string; added_at: string; [k: string]: unknown }
+
+export type ChecklistItem = {
+  code: string; key: string; group: string; title: string; owner_role: 'CUSTOMER' | 'RM_INTERNAL'
+  doc_types: string[]; condition_label: string; rule_label: string; applicable: boolean
+  rule_status: RuleStatus; document_refs: string[]; fail_reasons: string[]
+  missing_condition_fields: string[]; crosscheck_refs: string[]
+}
+export type ChecklistGroup = {
+  group: string; label: string; status: 'COMPLETE' | 'INCOMPLETE' | 'SKIPPED'
+  counts: Record<RuleStatus, number>; total_applicable: number
+}
+export type ChecklistEval = {
+  version: string; as_of: string; flow: string; overall_status: 'COMPLETE' | 'INCOMPLETE'
+  counts: Record<RuleStatus, number>; groups: ChecklistGroup[]; items: ChecklistItem[]
+}
+export type CrossCheckRule = {
+  id: string; code: string; title: string; status: CrossCheckStatus
+  detail: string; document_refs: string[]; evidence_refs: string[]
+}
+export type CrossCheckEval = {
+  as_of: string; overall_status: 'PASS' | 'FAIL' | 'INCOMPLETE'
+  counts: Record<CrossCheckStatus, number>; rules: CrossCheckRule[]
+}
+export type SalesHandover = {
+  submitted_by: string; submitted_at: string; submission_note?: string
+  checklist_overall?: 'COMPLETE' | 'INCOMPLETE'; checklist_counts?: Record<string, number>
+  crosscheck_overall?: string
+  waivers?: { key: string; title: string; rule_status?: string; note?: string; updated_by?: string }[]
+  open_blockers?: { key: string; title: string; owner_role?: string; rule_status?: string; reason?: string }[]
+}
+export type DocumentFilePayload = {
+  id: string; name: string; mime: string; size: number; content_b64: string
+}
 export type CaseSummary = {
   case_id: string; created_at: string; updated_at?: string; flow: string; customer_name?: string; industry_code?: string
   amount?: number; term_months?: number; purpose?: string; agents: Record<string, AgentState>; high_findings: number
   agents_done: number; agents_passed: number; agents_blocked: number; review_open: number
+  from_sales?: boolean; checklist_overall?: 'COMPLETE' | 'INCOMPLETE'
 }
 export type CaseDetail = {
   case: {
     case_id: string; flow: string; created_at: string; customer: Record<string, any>
-    request: Record<string, any>; documents: { id: string; name: string; type?: string }[]
+    request: Record<string, any>; facts?: Record<string, any>
+    documents: { id: string; name: string; type?: string; file?: string; size?: number; issued_date?: string; summary?: string }[]
+    sales_handover?: SalesHandover
   }
   results: Record<string, AgentResult>
   evidence: Record<string, Evidence>
   review: ReviewItem[]
   audit: { ts: string; action: string; [k: string]: unknown }[]
+  checklist?: ChecklistEval
+  crosschecks?: CrossCheckEval
 }
 
 // Workflow phases, in the order sme-credit-assessment runs them.
@@ -59,6 +99,19 @@ export const STATE_META: Record<AgentState | 'none', { label: string; tone: Tone
   unverified: { label: 'Chưa kiểm chứng', tone: 'warn' },
   none: { label: 'Chưa chạy', tone: 'muted' },
 }
+export const RULE_STATUS_META: Record<RuleStatus, { label: string; tone: Tone }> = {
+  PASS: { label: 'PASS', tone: 'ok' },
+  MISSING_REQUIRED: { label: 'MISSING_REQUIRED', tone: 'warn' },
+  FAIL: { label: 'FAIL', tone: 'danger' },
+  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
+  UNDETERMINED_CONDITION: { label: 'UNDETERMINED_CONDITION', tone: 'info' },
+}
+export const XCHECK_META: Record<CrossCheckStatus, { label: string; tone: Tone }> = {
+  PASS: { label: 'PASS', tone: 'ok' },
+  FAIL: { label: 'FAIL', tone: 'danger' },
+  MISSING_DATA: { label: 'MISSING_DATA', tone: 'warn' },
+  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
+}
 export const SEVERITY: Record<string, { label: string; tone: Tone; rank: number }> = {
   high: { label: 'Cao', tone: 'danger', rank: 0 },
   medium: { label: 'Trung bình', tone: 'warn', rank: 1 },
@@ -82,6 +135,7 @@ export const REVIEW_STATUS: Record<string, { label: string; tone: Tone }> = {
 }
 export const AUDIT_LABEL: Record<string, string> = {
   case_create: 'Tạo hồ sơ',
+  case_handover_received: 'Nhận bàn giao từ ĐVKD',
   evidence_add: 'Thêm bằng chứng',
   result_put: 'Lưu kết quả',
   verification: 'Kiểm chứng',

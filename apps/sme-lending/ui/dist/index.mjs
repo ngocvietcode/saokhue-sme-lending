@@ -1,361 +1,361 @@
-import { jsxs as s, jsx as e, Fragment as Je } from "react/jsx-runtime";
-import { useCallback as O, useState as k, useMemo as ae, useRef as H, useEffect as L } from "react";
-import * as De from "@kirocrew/app-sdk";
-import { useChatLauncher as ht, useAppApi as Qe } from "@kirocrew/app-sdk";
-import { Btn as R, PageHeader as pt, ErrorNotice as Ze } from "@kirocrew/app-sdk/ui";
-import { MessageSquare as $e, Plus as Be, ExternalLink as Ie, PanelRightClose as ut, ArrowRight as gt, AlertTriangle as ft, RefreshCw as et, FolderOpen as We, ClipboardList as tt, ShieldAlert as bt, AlertOctagon as vt, Search as Se, CheckCircle2 as xt, XCircle as yt, CircleDot as wt, CircleDashed as kt, Play as nt, FileSearch as st, ClipboardCheck as Ve, History as Nt, ChevronRight as Ct, ArrowLeft as _t, Landmark as St, Gauge as Tt, ShieldCheck as zt, FileText as $t, Activity as Et } from "lucide-react";
-const At = (t) => t.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 100);
-function It(t, n, r) {
-  const i = ht();
-  return O(
-    async (a, m, u) => {
-      const { openChat: l } = i, c = i.createChat;
-      if (!c) {
-        l({ autoSend: !1, message: a });
+import { jsxs as n, jsx as e, Fragment as Ze } from "react/jsx-runtime";
+import { useCallback as q, useState as x, useMemo as F, useRef as j, useEffect as K } from "react";
+import * as Be from "@kirocrew/app-sdk";
+import { useChatLauncher as ut, useAppApi as et } from "@kirocrew/app-sdk";
+import { Btn as L, PageHeader as gt, ErrorNotice as tt } from "@kirocrew/app-sdk/ui";
+import { MessageSquare as $e, Plus as qe, ExternalLink as Me, PanelRightClose as ft, ArrowRight as bt, AlertTriangle as vt, RefreshCw as nt, FolderOpen as We, ClipboardList as st, ShieldAlert as xt, AlertOctagon as yt, Search as Ae, CheckCircle2 as wt, XCircle as kt, CircleDot as Nt, CircleDashed as _t, EyeOff as Ct, Eye as rt, ClipboardCheck as Fe, Play as it, FileSearch as at, History as St, ChevronRight as Tt, ArrowLeft as Et, Landmark as It, Gauge as At, ShieldCheck as zt, FileText as $t, Download as Dt, Activity as Lt } from "lucide-react";
+const Rt = (t) => t.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 100);
+function Kt(t, s, r) {
+  const i = ut();
+  return q(
+    async (l, h, f) => {
+      const { openChat: d } = i, o = i.createChat;
+      if (!o) {
+        d({ autoSend: !1, message: l });
         return;
       }
       try {
-        const o = await c({ slotKey: n + At(m), agent: t, title: u });
-        l({ slotKey: o, autoSend: !1, message: a });
+        const c = await o({ slotKey: s + Rt(h), agent: t, title: f });
+        d({ slotKey: c, autoSend: !1, message: l });
       } catch {
       }
     },
-    [i, t, n, r]
+    [i, t, s, r]
   );
 }
-const rt = {
+const lt = {
   working_capital: "Vốn lưu động",
   fixed_asset: "Đầu tư TSCĐ",
   expansion: "Mở rộng",
   trade_finance: "Tài trợ thương mại"
-}, _e = new Intl.NumberFormat("vi-VN"), Lt = (t) => typeof t == "number" ? _e.format(t) + " đ" : "—", Te = (t) => typeof t != "number" ? "—" : Math.abs(t) >= 1e9 ? _e.format(Math.round(t / 1e7) / 100) + " tỷ" : Math.abs(t) >= 1e6 ? _e.format(Math.round(t / 1e4) / 100) + " triệu" : _e.format(t) + " đ", j = (t, n = 2) => typeof t == "number" ? t.toLocaleString("vi-VN", { maximumFractionDigits: n }) : "—", de = (t) => typeof t == "number" ? (t * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "%" : "—", oe = (t) => {
+}, Ee = new Intl.NumberFormat("vi-VN"), Mt = (t) => typeof t == "number" ? Ee.format(t) + " đ" : "—", ze = (t) => typeof t != "number" ? "—" : Math.abs(t) >= 1e9 ? Ee.format(Math.round(t / 1e7) / 100) + " tỷ" : Math.abs(t) >= 1e6 ? Ee.format(Math.round(t / 1e4) / 100) + " triệu" : Ee.format(t) + " đ", X = (t, s = 2) => typeof t == "number" ? t.toLocaleString("vi-VN", { maximumFractionDigits: s }) : "—", me = (t) => typeof t == "number" ? (t * 100).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + "%" : "—", re = (t) => {
   if (!t) return "—";
-  const n = new Date(t);
-  return Number.isNaN(n.getTime()) ? "—" : n.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
-}, Rt = (t) => {
+  const s = new Date(t);
+  return Number.isNaN(s.getTime()) ? "—" : s.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" });
+}, Pt = (t) => {
   if (!t) return "—";
-  const n = new Date(t).getTime();
-  if (Number.isNaN(n)) return "—";
-  const r = Math.round((Date.now() - n) / 1e3);
+  const s = new Date(t).getTime();
+  if (Number.isNaN(s)) return "—";
+  const r = Math.round((Date.now() - s) / 1e3);
   return r < 60 ? "vừa xong" : r < 3600 ? `${Math.floor(r / 60)} phút trước` : r < 86400 ? `${Math.floor(r / 3600)} giờ trước` : `${Math.floor(r / 86400)} ngày trước`;
-}, je = (t) => typeof t == "string" ? t : JSON.stringify(t, null, 2), ze = (t) => t instanceof Error ? t.message : String(t), Ke = "kirocrew_prefill", Ge = (t) => t.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 100), Dt = (t, n) => {
+}, Ge = (t) => typeof t == "string" ? t : JSON.stringify(t, null, 2), be = (t) => t instanceof Error ? t.message : String(t), He = "kirocrew_prefill", Xe = (t) => t.replace(/[^A-Za-z0-9._-]/g, "-").slice(0, 100), Ot = (t, s) => {
 };
-function Me(t) {
+function Ve(t) {
   return Math.min(620, Math.max(360, Math.round(t)));
 }
 function Bt(t) {
   try {
-    const n = localStorage.getItem(t);
-    if (n === "1") return !0;
-    if (n === "0") return !1;
+    const s = localStorage.getItem(t);
+    if (s === "1") return !0;
+    if (s === "0") return !1;
   } catch {
   }
   return typeof window > "u" ? !0 : window.innerWidth >= 1180;
 }
-function Kt(t, n) {
+function qt(t, s) {
   try {
-    localStorage.setItem(t, n ? "1" : "0");
+    localStorage.setItem(t, s ? "1" : "0");
   } catch {
   }
 }
-function qt(t, n = 420) {
+function Ft(t, s = 420) {
   try {
     const r = Number(localStorage.getItem(t));
     if (Number.isFinite(r) && r >= 360 && r <= 620) return Math.round(r);
   } catch {
   }
-  return n;
+  return s;
 }
-function Mt(t, n) {
+function Ht(t, s) {
   try {
-    localStorage.setItem(t, String(Me(n)));
+    localStorage.setItem(t, String(Ve(s)));
   } catch {
   }
 }
-function Ot(t, n = 4e3) {
-  const r = De.useAppEvents ?? Dt, [i, a] = k(0), m = O(() => a((u) => u + 1), []);
-  return r("tool_result", m), r("chat_done", m), L(() => {
+function Vt(t, s = 4e3) {
+  const r = Be.useAppEvents ?? Ot, [i, l] = x(0), h = q(() => l((f) => f + 1), []);
+  return r("tool_result", h), r("chat_done", h), K(() => {
     if (!t) return;
-    const u = window.setInterval(() => {
-      document.visibilityState !== "hidden" && a((l) => l + 1);
-    }, n);
-    return () => window.clearInterval(u);
-  }, [t, n]), { syncTick: i, bumpSync: m };
+    const f = window.setInterval(() => {
+      document.visibilityState !== "hidden" && l((d) => d + 1);
+    }, s);
+    return () => window.clearInterval(f);
+  }, [t, s]), { syncTick: i, bumpSync: h };
 }
-function Ft(t) {
+function jt(t) {
   try {
-    const n = sessionStorage.getItem(t);
-    if (n) return n;
+    const s = sessionStorage.getItem(t);
+    if (s) return s;
     const r = `intake-${Date.now().toString(36)}`;
     return sessionStorage.setItem(t, r), r;
   } catch {
     return "intake-default";
   }
 }
-function Pt(t, n) {
+function Ut(t, s) {
   try {
-    sessionStorage.setItem(t, n);
+    sessionStorage.setItem(t, s);
   } catch {
   }
 }
-function me(t) {
+function he(t) {
   return t ? t.querySelector("[data-composer-input]") ?? t.querySelector("textarea") : null;
 }
-function Ne(t) {
+function Se(t) {
   return t ? t instanceof HTMLTextAreaElement ? t.value : t.textContent ?? "" : "";
 }
-function Ce(t) {
+function Te(t) {
   if (!t) return;
   if (t.focus(), t instanceof HTMLTextAreaElement) {
     const r = t.value.length;
     t.setSelectionRange(r, r);
     return;
   }
-  const n = window.getSelection();
-  n && (n.selectAllChildren(t), n.collapseToEnd());
+  const s = window.getSelection();
+  s && (s.selectAllChildren(t), s.collapseToEnd());
 }
-function Xe(t, n) {
+function Qe(t, s) {
   const r = Date.now();
   try {
-    sessionStorage.setItem(Ke, JSON.stringify({ slotKey: t, prompt: n, ts: r }));
+    sessionStorage.setItem(He, JSON.stringify({ slotKey: t, prompt: s, ts: r }));
   } catch {
   }
   return r;
 }
-function Ht({
+function Wt({
   storagePrefix: t,
-  chatPrefix: n,
+  chatPrefix: s,
   agent: r,
   panelLabel: i,
-  newIntakePrompt: a,
-  newSessionTitle: m,
-  caseTitlePrefix: u = "Hồ sơ",
-  chips: l = [],
-  showNewSessionButton: c,
-  attachDefaultPrefix: o,
-  embedPlaceholder: w,
-  width: h,
-  onWidthChange: z,
-  onClose: d,
+  newIntakePrompt: l,
+  newSessionTitle: h,
+  caseTitlePrefix: f = "Hồ sơ",
+  chips: d = [],
+  showNewSessionButton: o,
+  attachDefaultPrefix: c,
+  embedPlaceholder: y,
+  width: u,
+  onWidthChange: _,
+  onClose: p,
   caseId: b,
-  customerName: _,
-  intent: S,
-  onConsumeIntent: K,
-  createdCase: q,
-  onOpenCase: G,
-  onDismissCreatedCase: D
+  customerName: E,
+  intent: I,
+  onConsumeIntent: m,
+  createdCase: S,
+  onOpenCase: Q,
+  onDismissCreatedCase: P
 }) {
-  const W = De, x = W.ChatPanel, C = W.ChatEmbed, g = De.useChatLauncher(), v = It(r, n), N = `${t}:intake-id`, [ne, ue] = k(() => Ft(N)), Q = b ?? ne, M = n + Ge(Q), se = ae(() => b ? _ ? `${u} ${_} (${b})` : `${u} ${b}` : m, [b, _, m, u]), [F, ge] = k(null), [$, V] = k(null), A = H(null);
-  A.current = F, L(() => {
-    let f = !1;
-    V(null);
-    const y = A.current === M, E = g.createChat;
-    if (!E) {
-      y || ge(M);
+  const U = Be, w = U.ChatPanel, A = U.ChatEmbed, v = Be.useChatLauncher(), N = Kt(r, s), R = `${t}:intake-id`, [O, H] = x(() => jt(R)), M = b ?? O, W = s + Xe(M), J = F(() => b ? E ? `${f} ${E} (${b})` : `${f} ${b}` : h, [b, E, h, f]), [B, te] = x(null), [ye, we] = x(null), oe = j(null);
+  oe.current = B, K(() => {
+    let a = !1;
+    we(null);
+    const g = oe.current === W, T = v.createChat;
+    if (!T) {
+      g || te(W);
       return;
     }
-    return y || ge(null), E({ slotKey: M, agent: r, title: se }).then((T) => {
-      if (f) return;
-      const I = T || M;
-      A.current !== I && ge(I);
-    }).catch((T) => {
-      f || y || V(ze(T));
+    return g || te(null), T({ slotKey: W, agent: r, title: J }).then((C) => {
+      if (a) return;
+      const D = C || W;
+      oe.current !== D && te(D);
+    }).catch((C) => {
+      a || g || we(be(C));
     }), () => {
-      f = !0;
+      a = !0;
     };
-  }, [M, r, se, g]);
-  const P = H(null), le = H(0), U = H(null), Z = H(!1), [ye, fe] = k(0), re = O((f, y) => {
-    const E = y.trim();
-    if (!E) return;
-    const T = me(P.current);
-    if (A.current === f && T) {
-      Ne(T).trim().includes(E) || window.dispatchEvent(new CustomEvent("mc-widget-send", { detail: { text: y } })), requestAnimationFrame(() => Ce(me(P.current)));
+  }, [W, r, J, v]);
+  const k = j(null), G = j(0), $ = j(null), ne = j(!1), [ce, de] = x(0), ie = q((a, g) => {
+    const T = g.trim();
+    if (!T) return;
+    const C = he(k.current);
+    if (oe.current === a && C) {
+      Se(C).trim().includes(T) || window.dispatchEvent(new CustomEvent("mc-widget-send", { detail: { text: g } })), requestAnimationFrame(() => Te(he(k.current)));
       return;
     }
-    const I = Xe(f, y);
-    U.current = { slotKey: f, prompt: y, ts: I }, fe((Fe) => Fe + 1);
+    const D = Qe(a, g);
+    $.current = { slotKey: a, prompt: g, ts: D }, de((le) => le + 1);
   }, []);
-  L(() => {
-    const f = U.current;
-    if (!f || F !== f.slotKey) return;
-    let y = 0, E = 0;
-    const T = window.setInterval(() => {
-      y += 1;
-      const I = me(P.current);
-      if (!I) {
-        y >= 20 && (window.clearInterval(T), U.current = null);
+  K(() => {
+    const a = $.current;
+    if (!a || B !== a.slotKey) return;
+    let g = 0, T = 0;
+    const C = window.setInterval(() => {
+      g += 1;
+      const D = he(k.current);
+      if (!D) {
+        g >= 20 && (window.clearInterval(C), $.current = null);
         return;
       }
-      if (Ne(I).trim().includes(f.prompt.trim())) {
-        U.current = null, window.clearInterval(T), Ce(I);
+      if (Se(D).trim().includes(a.prompt.trim())) {
+        $.current = null, window.clearInterval(C), Te(D);
         return;
       }
-      if (E += 1, E >= 3) {
+      if (T += 1, T >= 3) {
         try {
-          const Pe = sessionStorage.getItem(Ke);
-          if (Pe) {
-            const He = JSON.parse(Pe);
-            He.slotKey === f.slotKey && He.ts === f.ts && sessionStorage.removeItem(Ke);
+          const Re = sessionStorage.getItem(He);
+          if (Re) {
+            const V = JSON.parse(Re);
+            V.slotKey === a.slotKey && V.ts === a.ts && sessionStorage.removeItem(He);
           }
         } catch {
         }
-        window.dispatchEvent(new CustomEvent("mc-widget-send", { detail: { text: f.prompt } })), U.current = null, window.clearInterval(T), requestAnimationFrame(() => Ce(me(P.current)));
+        window.dispatchEvent(new CustomEvent("mc-widget-send", { detail: { text: a.prompt } })), $.current = null, window.clearInterval(C), requestAnimationFrame(() => Te(he(k.current)));
       }
     }, 60);
-    return () => window.clearInterval(T);
-  }, [F, ye]), L(() => {
-    if (!Z.current || !F) return;
-    let f = 0;
-    const y = () => {
-      var I;
-      const T = (I = P.current) == null ? void 0 : I.querySelector('input[type="file"]');
-      return T ? (Z.current = !1, T.click(), !0) : !1;
+    return () => window.clearInterval(C);
+  }, [B, ce]), K(() => {
+    if (!ne.current || !B) return;
+    let a = 0;
+    const g = () => {
+      var D;
+      const C = (D = k.current) == null ? void 0 : D.querySelector('input[type="file"]');
+      return C ? (ne.current = !1, C.click(), !0) : !1;
     };
-    if (y()) return;
-    const E = window.setInterval(() => {
-      f += 1, (y() || f >= 16) && (Z.current = !1, window.clearInterval(E));
+    if (g()) return;
+    const T = window.setInterval(() => {
+      a += 1, (g() || a >= 16) && (ne.current = !1, window.clearInterval(T));
     }, 50);
-    return () => window.clearInterval(E);
-  }, [F, ye]);
-  const ce = O((f) => {
-    const y = `intake-${Date.now().toString(36)}`, E = n + Ge(y);
-    if (Pt(N, y), D(), f) {
-      const T = Xe(E, f);
-      U.current = { slotKey: E, prompt: f, ts: T }, fe((I) => I + 1);
+    return () => window.clearInterval(T);
+  }, [B, ce]);
+  const ge = q((a) => {
+    const g = `intake-${Date.now().toString(36)}`, T = s + Xe(g);
+    if (Ut(R, g), P(), a) {
+      const C = Qe(T, a);
+      $.current = { slotKey: T, prompt: a, ts: C }, de((D) => D + 1);
     }
-    ue(y);
-  }, [n, N, D]);
-  L(() => {
-    var f;
-    if (!(!S || S.id === le.current)) {
-      if (le.current = S.id, S.mode === "new_intake") {
-        const y = me(P.current), E = Ne(y).trim(), T = (S.prompt || a).trim();
-        b === null && E === T && y ? Ce(y) : ce(S.prompt || a), K();
+    H(g);
+  }, [s, R, P]);
+  K(() => {
+    var a;
+    if (!(!I || I.id === G.current)) {
+      if (G.current = I.id, I.mode === "new_intake") {
+        const g = he(k.current), T = Se(g).trim(), C = (I.prompt || l).trim();
+        b === null && T === C && g ? Te(g) : ge(I.prompt || l), m();
         return;
       }
-      if (S.mode === "attach") {
-        const y = me(P.current), E = o ?? (b ? `Tôi gửi chứng từ bổ sung cho hồ sơ ${b}: ` : "");
-        E && !Ne(y).trim() && re(M, E);
-        const T = (f = P.current) == null ? void 0 : f.querySelector('input[type="file"]');
-        T ? (Z.current = !1, T.click()) : (Z.current = !0, fe((I) => I + 1)), K();
+      if (I.mode === "attach") {
+        const g = he(k.current), T = c ?? (b ? `Tôi gửi chứng từ bổ sung cho hồ sơ ${b}: ` : "");
+        T && !Se(g).trim() && ie(W, T);
+        const C = (a = k.current) == null ? void 0 : a.querySelector('input[type="file"]');
+        C ? (ne.current = !1, C.click()) : (ne.current = !0, de((D) => D + 1)), m();
         return;
       }
-      re(M, S.prompt), K();
+      ie(W, I.prompt), m();
     }
   }, [
-    S,
+    I,
     b,
-    M,
-    a,
-    o,
-    K,
-    re,
-    ce
+    W,
+    l,
+    c,
+    m,
+    ie,
+    ge
   ]);
-  const [we, be] = k(!1), ie = H(null), p = (f) => {
-    f.preventDefault(), f.currentTarget.setPointerCapture(f.pointerId), ie.current = { startX: f.clientX, startW: h, pointerId: f.pointerId }, be(!0);
-  }, X = (f) => {
-    const y = ie.current;
-    !y || y.pointerId !== f.pointerId || z(Me(y.startW + (y.startX - f.clientX)));
-  }, ke = (f) => {
-    var y;
-    ((y = ie.current) == null ? void 0 : y.pointerId) === f.pointerId && (ie.current = null, be(!1));
-  }, Ae = c ?? !b;
-  return /* @__PURE__ */ s("aside", { ref: P, className: "sme-dock", style: { width: h }, "aria-label": i, children: [
+  const [Le, ke] = x(!1), ae = j(null), Ne = (a) => {
+    a.preventDefault(), a.currentTarget.setPointerCapture(a.pointerId), ae.current = { startX: a.clientX, startW: u, pointerId: a.pointerId }, ke(!0);
+  }, _e = (a) => {
+    const g = ae.current;
+    !g || g.pointerId !== a.pointerId || _(Ve(g.startW + (g.startX - a.clientX)));
+  }, fe = (a) => {
+    var g;
+    ((g = ae.current) == null ? void 0 : g.pointerId) === a.pointerId && (ae.current = null, ke(!1));
+  }, Ce = o ?? !b;
+  return /* @__PURE__ */ n("aside", { ref: k, className: "sme-dock", style: { width: u }, "aria-label": i, children: [
     /* @__PURE__ */ e(
       "div",
       {
-        className: `sme-dock-resizer ${we ? "dragging" : ""}`,
+        className: `sme-dock-resizer ${Le ? "dragging" : ""}`,
         role: "separator",
         "aria-orientation": "vertical",
         "aria-label": "Kéo để đổi độ rộng bảng trợ lý",
-        onPointerDown: p,
-        onPointerMove: X,
-        onPointerUp: ke,
-        onPointerCancel: ke
+        onPointerDown: Ne,
+        onPointerMove: _e,
+        onPointerUp: fe,
+        onPointerCancel: fe
       }
     ),
-    /* @__PURE__ */ s("header", { className: "sme-dock-head", children: [
-      /* @__PURE__ */ s("div", { className: "sme-dock-left", children: [
-        /* @__PURE__ */ s("div", { className: "sme-row", style: { gap: 5, flex: "none" }, children: [
+    /* @__PURE__ */ n("header", { className: "sme-dock-head", children: [
+      /* @__PURE__ */ n("div", { className: "sme-dock-left", children: [
+        /* @__PURE__ */ n("div", { className: "sme-row", style: { gap: 5, flex: "none" }, children: [
           /* @__PURE__ */ e($e, { size: 14, style: { color: "var(--accent)", flex: "none" } }),
           b ? /* @__PURE__ */ e("span", { className: "sme-mono sme-small sme-muted", children: b }) : /* @__PURE__ */ e("span", { className: "sme-small sme-strong", children: i })
         ] }),
-        l.length > 0 && /* @__PURE__ */ e("div", { className: "sme-dock-chips", children: l.map((f) => /* @__PURE__ */ e(
+        d.length > 0 && /* @__PURE__ */ e("div", { className: "sme-dock-chips", children: d.map((a) => /* @__PURE__ */ e(
           "button",
           {
             type: "button",
             className: "sme-quick-chip",
             onClick: () => {
-              f.onClick ? f.onClick() : f.prompt && re(M, f.prompt);
+              a.onClick ? a.onClick() : a.prompt && ie(W, a.prompt);
             },
-            children: f.label
+            children: a.label
           },
-          f.label
+          a.label
         )) })
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-row", style: { gap: 2, flex: "none" }, children: [
-        Ae && /* @__PURE__ */ e("button", { type: "button", className: "sme-icon-btn", title: "Phiên tạo hồ sơ mới", onClick: () => ce(), children: /* @__PURE__ */ e(Be, { size: 15 }) }),
+      /* @__PURE__ */ n("div", { className: "sme-row", style: { gap: 2, flex: "none" }, children: [
+        Ce && /* @__PURE__ */ e("button", { type: "button", className: "sme-icon-btn", title: "Phiên tạo hồ sơ mới", onClick: () => ge(), children: /* @__PURE__ */ e(qe, { size: 15 }) }),
         /* @__PURE__ */ e(
           "button",
           {
             type: "button",
             className: "sme-icon-btn",
             title: "Mở toàn màn hình trong Chat",
-            onClick: () => v("", Q, se),
-            children: /* @__PURE__ */ e(Ie, { size: 14 })
+            onClick: () => N("", M, J),
+            children: /* @__PURE__ */ e(Me, { size: 14 })
           }
         ),
-        /* @__PURE__ */ e("button", { type: "button", className: "sme-icon-btn", title: "Thu gọn trợ lý", onClick: d, children: /* @__PURE__ */ e(ut, { size: 15 }) })
+        /* @__PURE__ */ e("button", { type: "button", className: "sme-icon-btn", title: "Thu gọn trợ lý", onClick: p, children: /* @__PURE__ */ e(ft, { size: 15 }) })
       ] })
     ] }),
-    !b && q && /* @__PURE__ */ s("div", { className: "sme-dock-new-banner", children: [
-      /* @__PURE__ */ s("div", { style: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
+    !b && S && /* @__PURE__ */ n("div", { className: "sme-dock-new-banner", children: [
+      /* @__PURE__ */ n("div", { style: { minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: [
         "Hồ sơ mới: ",
-        /* @__PURE__ */ e("b", { children: q.name }),
+        /* @__PURE__ */ e("b", { children: S.name }),
         " ",
-        /* @__PURE__ */ s("span", { className: "sme-mono", children: [
+        /* @__PURE__ */ n("span", { className: "sme-mono", children: [
           "(",
-          q.caseId,
+          S.caseId,
           ")"
         ] })
       ] }),
-      /* @__PURE__ */ s(R, { primary: !0, onClick: () => G(q.caseId), children: [
+      /* @__PURE__ */ n(L, { primary: !0, onClick: () => Q(S.caseId), children: [
         "Mở hồ sơ ",
-        /* @__PURE__ */ e(gt, { size: 12 })
+        /* @__PURE__ */ e(bt, { size: 12 })
       ] })
     ] }),
-    /* @__PURE__ */ e("div", { className: "sme-dock-body", children: $ ? /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ s("div", { className: "sme-card sme-stack", style: { gap: 10 }, children: [
+    /* @__PURE__ */ e("div", { className: "sme-dock-body", children: ye ? /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ n("div", { className: "sme-card sme-stack", style: { gap: 10 }, children: [
       /* @__PURE__ */ e("div", { className: "sme-h3", children: "Không khởi tạo được phiên trợ lý" }),
-      /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: $ }),
-      /* @__PURE__ */ e("div", { className: "sme-row", children: /* @__PURE__ */ s(R, { onClick: () => v("", Q, se), children: [
-        /* @__PURE__ */ e(Ie, { size: 13 }),
+      /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: ye }),
+      /* @__PURE__ */ e("div", { className: "sme-row", children: /* @__PURE__ */ n(L, { onClick: () => N("", M, J), children: [
+        /* @__PURE__ */ e(Me, { size: 13 }),
         " Mở Trợ lý ở trang Chat"
       ] }) })
-    ] }) }) : F ? x ? /* @__PURE__ */ e(x, { slotKey: F, conversationOnly: !0 }, F) : C ? /* @__PURE__ */ e(
-      C,
+    ] }) }) : B ? w ? /* @__PURE__ */ e(w, { slotKey: B, conversationOnly: !0 }, B) : A ? /* @__PURE__ */ e(
+      A,
       {
-        slotKey: F,
+        slotKey: B,
         agent: r,
         frameless: !0,
         startAtBottom: !0,
-        placeholder: w
+        placeholder: y
       },
-      F
-    ) : /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ s("div", { className: "sme-card sme-stack", style: { gap: 10 }, children: [
+      B
+    ) : /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ n("div", { className: "sme-card sme-stack", style: { gap: 10 }, children: [
       /* @__PURE__ */ e("div", { className: "sme-h3", children: "Host chưa hỗ trợ nhúng khung chat tại trang" }),
-      /* @__PURE__ */ e("div", { className: "sme-row", children: /* @__PURE__ */ s(R, { primary: !0, onClick: () => v("", Q, se), children: [
-        /* @__PURE__ */ e(Ie, { size: 13 }),
+      /* @__PURE__ */ e("div", { className: "sme-row", children: /* @__PURE__ */ n(L, { primary: !0, onClick: () => N("", M, J), children: [
+        /* @__PURE__ */ e(Me, { size: 13 }),
         " Mở Trợ lý ở trang Chat"
       ] }) })
-    ] }) }) : /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ s("div", { className: "sme-card sme-stack", children: [
+    ] }) }) : /* @__PURE__ */ e("div", { className: "sme-dock-fallback", children: /* @__PURE__ */ n("div", { className: "sme-card sme-stack", children: [
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "55%" } }),
       /* @__PURE__ */ e("div", { className: "sme-skel" }),
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "75%" } })
     ] }) }) })
   ] });
 }
-const Wt = `
+const Gt = `
 .sme { --sme-gap: 16px; color: var(--text); font-family: var(--font-body, inherit); }
 .sme * { box-sizing: border-box; }
 .sme-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 24px 40px; }
@@ -573,19 +573,19 @@ const Wt = `
   .sme-dock-resizer { display: none; }
 }
 `;
-function Vt() {
+function Xt() {
   const t = "sme-lending-css";
   if (typeof document > "u" || document.getElementById(t)) return;
-  const n = document.createElement("style");
-  n.id = t, n.textContent = Wt, document.head.appendChild(n);
+  const s = document.createElement("style");
+  s.id = t, s.textContent = Gt, document.head.appendChild(s);
 }
-const jt = "sme-assistant", qe = "/apps/sme-lending/api", it = [
+const Qt = "sme-assistant", Ie = "/apps/sme-lending/api", ot = [
   { name: "Chứng từ", agents: ["document-evidence"] },
   { name: "Sản phẩm", agents: ["product-match"] },
   { name: "Chuyên môn", agents: ["financial-analysis", "risk-compliance", "collateral", "industry"] },
   { name: "Chính sách", agents: ["policy-exception"] },
   { name: "Tổng hợp", agents: ["consolidation"] }
-], ve = it.flatMap((t) => t.agents), Gt = {
+], ve = ot.flatMap((t) => t.agents), Yt = {
   "document-evidence": "Chứng từ & bằng chứng",
   "product-match": "Nhận diện sản phẩm",
   "financial-analysis": "Phân tích tài chính",
@@ -594,17 +594,28 @@ const jt = "sme-assistant", qe = "/apps/sme-lending/api", it = [
   industry: "Ngành & cạnh tranh",
   "policy-exception": "Chính sách & ngoại lệ",
   consolidation: "Tổng hợp tờ trình"
-}, J = (t) => Gt[t] ?? t, xe = {
+}, Z = (t) => Yt[t] ?? t, xe = {
   passed: { label: "Đã kiểm chứng", tone: "ok" },
   blocked: { label: "Bị chặn", tone: "danger" },
   unverified: { label: "Chưa kiểm chứng", tone: "warn" },
   none: { label: "Chưa chạy", tone: "muted" }
-}, pe = {
+}, Jt = {
+  PASS: { label: "PASS", tone: "ok" },
+  MISSING_REQUIRED: { label: "MISSING_REQUIRED", tone: "warn" },
+  FAIL: { label: "FAIL", tone: "danger" },
+  SKIPPED: { label: "SKIPPED", tone: "muted" },
+  UNDETERMINED_CONDITION: { label: "UNDETERMINED_CONDITION", tone: "info" }
+}, Zt = {
+  PASS: { label: "PASS", tone: "ok" },
+  FAIL: { label: "FAIL", tone: "danger" },
+  MISSING_DATA: { label: "MISSING_DATA", tone: "warn" },
+  SKIPPED: { label: "SKIPPED", tone: "muted" }
+}, ue = {
   high: { label: "Cao", tone: "danger", rank: 0 },
   medium: { label: "Trung bình", tone: "warn", rank: 1 },
   low: { label: "Thấp", tone: "info", rank: 2 },
   info: { label: "Thông tin", tone: "muted", rank: 3 }
-}, Xt = { high: "cao", medium: "trung bình", low: "thấp" }, Oe = {
+}, en = { high: "cao", medium: "trung bình", low: "thấp" }, je = {
   missing_document: { label: "Thiếu chứng từ", tone: "warn" },
   data_conflict: { label: "Dữ liệu mâu thuẫn", tone: "danger" },
   rule_fail: { label: "Không đạt điều kiện", tone: "danger" },
@@ -612,62 +623,63 @@ const jt = "sme-assistant", qe = "/apps/sme-lending/api", it = [
   exception_needed: { label: "Cần ngoại lệ", tone: "danger" },
   expert_review: { label: "Cần chuyên gia", tone: "info" },
   system_error: { label: "Lỗi hệ thống", tone: "muted" }
-}, at = {
+}, ct = {
   open: { label: "Chờ xử lý", tone: "warn" },
   confirmed: { label: "Đã xác nhận", tone: "ok" },
   needs_info: { label: "Yêu cầu bổ sung", tone: "info" }
-}, Yt = {
+}, tn = {
   case_create: "Tạo hồ sơ",
+  case_handover_received: "Nhận bàn giao từ ĐVKD",
   evidence_add: "Thêm bằng chứng",
   result_put: "Lưu kết quả",
   verification: "Kiểm chứng",
   review_add: "Thêm mục rà soát",
   review_decide: "Cán bộ quyết định"
-}, Ut = (t) => [...t].sort((n, r) => {
-  var i, a;
-  return (((i = pe[n.severity]) == null ? void 0 : i.rank) ?? 9) - (((a = pe[r.severity]) == null ? void 0 : a.rank) ?? 9);
+}, nn = (t) => [...t].sort((s, r) => {
+  var i, l;
+  return (((i = ue[s.severity]) == null ? void 0 : i.rank) ?? 9) - (((l = ue[r.severity]) == null ? void 0 : l.rank) ?? 9);
 });
-function Ee(t) {
+function De(t) {
   return t ? t.verification ? t.verification.passed ? "passed" : "blocked" : "unverified" : "none";
 }
-function he(t, n, r) {
-  var i, a;
-  return (a = (i = t.results[n]) == null ? void 0 : i.calculations) == null ? void 0 : a.find((m) => m.kind === r);
+function pe(t, s, r) {
+  var i, l;
+  return (l = (i = t.results[s]) == null ? void 0 : i.calculations) == null ? void 0 : l.find((h) => h.kind === r);
 }
-function Jt(t) {
-  var l, c, o, w, h;
-  const n = {}, r = he(t, "policy-exception", "policy_check") ?? he(t, "risk-compliance", "policy_check");
-  (l = r == null ? void 0 : r.outputs) != null && l.matrix && (n.policy = { version: r.outputs.policy_version, product: r.outputs.product_code, rows: r.outputs.matrix });
-  const i = he(t, "financial-analysis", "repayment_capacity");
-  if ((c = i == null ? void 0 : i.outputs) != null && c.scenarios) {
-    const z = (o = n.policy) == null ? void 0 : o.rows.find((d) => d.fact === "dscr");
-    n.dscr = {
+function sn(t) {
+  var d, o, c, y, u;
+  const s = {}, r = pe(t, "policy-exception", "policy_check") ?? pe(t, "risk-compliance", "policy_check");
+  (d = r == null ? void 0 : r.outputs) != null && d.matrix && (s.policy = { version: r.outputs.policy_version, product: r.outputs.product_code, rows: r.outputs.matrix });
+  const i = pe(t, "financial-analysis", "repayment_capacity");
+  if ((o = i == null ? void 0 : i.outputs) != null && o.scenarios) {
+    const _ = (c = s.policy) == null ? void 0 : c.rows.find((p) => p.fact === "dscr");
+    s.dscr = {
       scenarios: i.outputs.scenarios,
-      threshold: typeof (z == null ? void 0 : z.threshold) == "number" ? z.threshold : void 0,
+      threshold: typeof (_ == null ? void 0 : _.threshold) == "number" ? _.threshold : void 0,
       debtService: i.outputs.total_debt_service_annual,
-      cash: (w = i.inputs) == null ? void 0 : w.cash_available_annual
+      cash: (y = i.inputs) == null ? void 0 : y.cash_available_annual
     };
   }
-  const a = he(t, "collateral", "collateral_ltv");
-  a != null && a.outputs && (n.ltv = { ltv: a.outputs.ltv_pct ?? null, cap: a.outputs.max_ltv_pct ?? null, eligible: a.outputs.eligible_value });
-  const m = he(t, "financial-analysis", "fin_ratios");
-  (h = m == null ? void 0 : m.outputs) != null && h.periods && (n.ratios = m.outputs.periods);
-  const u = he(t, "consolidation", "genform");
-  return u != null && u.outputs && (n.genform = u.outputs), n;
+  const l = pe(t, "collateral", "collateral_ltv");
+  l != null && l.outputs && (s.ltv = { ltv: l.outputs.ltv_pct ?? null, cap: l.outputs.max_ltv_pct ?? null, eligible: l.outputs.eligible_value });
+  const h = pe(t, "financial-analysis", "fin_ratios");
+  (u = h == null ? void 0 : h.outputs) != null && u.periods && (s.ratios = h.outputs.periods);
+  const f = pe(t, "consolidation", "genform");
+  return f != null && f.outputs && (s.genform = f.outputs), s;
 }
-const Le = {
-  gross_margin: { label: "Biên lợi nhuận gộp", fmt: de },
-  net_margin: { label: "Biên lợi nhuận ròng", fmt: de },
-  ebitda_margin: { label: "Biên EBITDA", fmt: de },
-  current_ratio: { label: "Thanh toán hiện hành", fmt: (t) => j(t) },
-  debt_to_equity: { label: "Nợ vay / Vốn chủ", fmt: (t) => j(t) },
-  liabilities_to_assets: { label: "Nợ phải trả / Tài sản", fmt: de },
-  roa: { label: "ROA", fmt: de },
-  roe: { label: "ROE", fmt: de },
-  interest_coverage: { label: "Khả năng trả lãi", fmt: (t) => j(t, 1) + (typeof t == "number" ? " lần" : "") },
-  receivable_days: { label: "Số ngày phải thu", fmt: (t) => j(t, 0) },
-  inventory_days: { label: "Số ngày tồn kho", fmt: (t) => j(t, 0) }
-}, Qt = {
+const Pe = {
+  gross_margin: { label: "Biên lợi nhuận gộp", fmt: me },
+  net_margin: { label: "Biên lợi nhuận ròng", fmt: me },
+  ebitda_margin: { label: "Biên EBITDA", fmt: me },
+  current_ratio: { label: "Thanh toán hiện hành", fmt: (t) => X(t) },
+  debt_to_equity: { label: "Nợ vay / Vốn chủ", fmt: (t) => X(t) },
+  liabilities_to_assets: { label: "Nợ phải trả / Tài sản", fmt: me },
+  roa: { label: "ROA", fmt: me },
+  roe: { label: "ROE", fmt: me },
+  interest_coverage: { label: "Khả năng trả lãi", fmt: (t) => X(t, 1) + (typeof t == "number" ? " lần" : "") },
+  receivable_days: { label: "Số ngày phải thu", fmt: (t) => X(t, 0) },
+  inventory_days: { label: "Số ngày tồn kho", fmt: (t) => X(t, 0) }
+}, rn = {
   years_in_operation: "Số năm hoạt động",
   loan_amount: "Số tiền vay",
   term_months: "Kỳ hạn (tháng)",
@@ -675,381 +687,383 @@ const Le = {
   cic_debt_group: "Nhóm nợ CIC",
   ltv_pct: "LTV (%)",
   equity_contribution_pct: "Vốn tự có (%)"
-}, Zt = {
+}, an = {
   met: { label: "Đạt", tone: "ok" },
   not_met: { label: "Không đạt", tone: "danger" },
   missing: { label: "Thiếu dữ liệu", tone: "warn" },
   na: { label: "Không áp dụng", tone: "muted" }
 }, Y = (t) => `t-${t}`;
-function B({ t, children: n, title: r }) {
-  return /* @__PURE__ */ e("span", { className: `sme-pill ${Y(t)}`, title: r, children: n });
+function z({ t, children: s, title: r }) {
+  return /* @__PURE__ */ e("span", { className: `sme-pill ${Y(t)}`, title: r, children: s });
 }
-function ee({ icon: t, label: n, value: r, hint: i, t: a = "accent" }) {
-  return /* @__PURE__ */ s("div", { className: `sme-kpi ${Y(a)}`, children: [
+function se({ icon: t, label: s, value: r, hint: i, t: l = "accent" }) {
+  return /* @__PURE__ */ n("div", { className: `sme-kpi ${Y(l)}`, children: [
     /* @__PURE__ */ e("div", { className: "sme-kpi-icon", children: t }),
-    /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-      /* @__PURE__ */ e("div", { className: "sme-kpi-label", children: n }),
+    /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+      /* @__PURE__ */ e("div", { className: "sme-kpi-label", children: s }),
       /* @__PURE__ */ e("div", { className: "sme-kpi-value", children: r }),
       i && /* @__PURE__ */ e("div", { className: "sme-kpi-hint", children: i })
     ] })
   ] });
 }
-function te({ icon: t, title: n, hint: r, action: i }) {
-  return /* @__PURE__ */ s("div", { className: "sme-empty", children: [
+function ee({ icon: t, title: s, hint: r, action: i }) {
+  return /* @__PURE__ */ n("div", { className: "sme-empty", children: [
     t,
-    /* @__PURE__ */ e("div", { className: "sme-strong", children: n }),
+    /* @__PURE__ */ e("div", { className: "sme-strong", children: s }),
     r && /* @__PURE__ */ e("div", { className: "sme-small", style: { marginTop: 4 }, children: r }),
     i && /* @__PURE__ */ e("div", { style: { marginTop: 12 }, children: i })
   ] });
 }
-function ot({ t = "warn", children: n }) {
-  return /* @__PURE__ */ s("div", { className: `sme-banner ${Y(t)}`, children: [
-    /* @__PURE__ */ e(ft, { size: 15 }),
-    /* @__PURE__ */ e("div", { children: n })
+function dt({ t = "warn", children: s }) {
+  return /* @__PURE__ */ n("div", { className: `sme-banner ${Y(t)}`, children: [
+    /* @__PURE__ */ e(vt, { size: 15 }),
+    /* @__PURE__ */ e("div", { children: s })
   ] });
 }
-function lt({ refs: t, onOpen: n }) {
-  return t != null && t.length ? /* @__PURE__ */ e("span", { className: "sme-row sme-wrap", style: { gap: 4, display: "inline-flex", marginLeft: 4 }, children: t.map((r) => /* @__PURE__ */ e("button", { type: "button", className: "sme-ref", title: "Xem bằng chứng", onClick: () => n(r), children: r }, r)) }) : null;
+function Ue({ refs: t, onOpen: s }) {
+  return t != null && t.length ? /* @__PURE__ */ e("span", { className: "sme-row sme-wrap", style: { gap: 4, display: "inline-flex", marginLeft: 4 }, children: t.map((r) => /* @__PURE__ */ e("button", { type: "button", className: "sme-ref", title: "Xem bằng chứng", onClick: () => s(r), children: r }, r)) }) : null;
 }
-function en({ c: t, onOpen: n }) {
+function ln({ c: t, onOpen: s }) {
   const r = t.agents ?? {}, i = Object.keys(r).length;
-  return /* @__PURE__ */ s(
+  return /* @__PURE__ */ n(
     "div",
     {
       className: "sme-card hover",
       role: "button",
       tabIndex: 0,
-      onClick: n,
-      onKeyDown: (a) => {
-        (a.key === "Enter" || a.key === " ") && (a.preventDefault(), n());
+      onClick: s,
+      onKeyDown: (l) => {
+        (l.key === "Enter" || l.key === " ") && (l.preventDefault(), s());
       },
       children: [
-        /* @__PURE__ */ s("div", { className: "sme-between", style: { alignItems: "flex-start" }, children: [
-          /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-between", style: { alignItems: "flex-start" }, children: [
+          /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
             /* @__PURE__ */ e("div", { className: "sme-h2", style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: t.customer_name ?? "Chưa có tên khách hàng" }),
             /* @__PURE__ */ e("div", { className: "sme-mono sme-muted", style: { marginTop: 2 }, children: t.case_id })
           ] }),
-          t.review_open > 0 ? /* @__PURE__ */ s(B, { t: "warn", children: [
+          t.review_open > 0 ? /* @__PURE__ */ n(z, { t: "warn", children: [
             t.review_open,
             " chờ rà soát"
-          ] }) : i > 0 ? /* @__PURE__ */ e(B, { t: "ok", children: "Đã rà soát" }) : /* @__PURE__ */ e(B, { t: "muted", children: "Mới" })
+          ] }) : i > 0 ? /* @__PURE__ */ e(z, { t: "ok", children: "Đã rà soát" }) : /* @__PURE__ */ e(z, { t: "muted", children: "Mới" })
         ] }),
-        /* @__PURE__ */ s("div", { className: "sme-row", style: { marginTop: 12, alignItems: "baseline", gap: 10 }, children: [
-          /* @__PURE__ */ e("span", { className: "sme-case-amount", children: Te(t.amount) }),
-          /* @__PURE__ */ e("span", { className: "sme-muted sme-small", children: [t.term_months ? `${t.term_months} tháng` : null, t.purpose ? rt[t.purpose] ?? t.purpose : null].filter(Boolean).join(" · ") })
+        /* @__PURE__ */ n("div", { className: "sme-row", style: { marginTop: 12, alignItems: "baseline", gap: 10 }, children: [
+          /* @__PURE__ */ e("span", { className: "sme-case-amount", children: ze(t.amount) }),
+          /* @__PURE__ */ e("span", { className: "sme-muted sme-small", children: [t.term_months ? `${t.term_months} tháng` : null, t.purpose ? lt[t.purpose] ?? t.purpose : null].filter(Boolean).join(" · ") })
         ] }),
-        /* @__PURE__ */ e("div", { className: "sme-pipe", "aria-label": `${i}/${ve.length} agent đã chạy`, children: ve.map((a) => {
-          const m = r[a];
+        /* @__PURE__ */ e("div", { className: "sme-pipe", "aria-label": `${i}/${ve.length} agent đã chạy`, children: ve.map((l) => {
+          const h = r[l];
           return /* @__PURE__ */ e(
             "span",
             {
-              className: m ? Y(xe[m].tone) : "none",
-              title: `${J(a)}: ${xe[m ?? "none"].label}`
+              className: h ? Y(xe[h].tone) : "none",
+              title: `${Z(l)}: ${xe[h ?? "none"].label}`
             },
-            a
+            l
           );
         }) }),
-        /* @__PURE__ */ s("div", { className: "sme-between sme-small sme-muted", children: [
-          /* @__PURE__ */ s("span", { className: "sme-row", style: { gap: 6 }, children: [
-            /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+        /* @__PURE__ */ n("div", { className: "sme-between sme-small sme-muted", children: [
+          /* @__PURE__ */ n("span", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
+            /* @__PURE__ */ n("span", { className: "sme-chip", children: [
               "Luồng ",
               t.flow
             ] }),
-            (t.high_findings ?? 0) > 0 && /* @__PURE__ */ s(B, { t: "danger", children: [
+            t.from_sales && /* @__PURE__ */ e(z, { t: "accent", children: "Từ ĐVKD" }),
+            t.checklist_overall && /* @__PURE__ */ e(z, { t: t.checklist_overall === "COMPLETE" ? "ok" : "warn", children: t.checklist_overall }),
+            (t.high_findings ?? 0) > 0 && /* @__PURE__ */ n(z, { t: "danger", children: [
               t.high_findings,
               " cảnh báo cao"
             ] }),
-            t.agents_blocked > 0 && /* @__PURE__ */ s(B, { t: "danger", children: [
+            t.agents_blocked > 0 && /* @__PURE__ */ n(z, { t: "danger", children: [
               t.agents_blocked,
               " bị chặn"
             ] })
           ] }),
-          /* @__PURE__ */ s("span", { title: t.updated_at, children: [
+          /* @__PURE__ */ n("span", { title: t.updated_at, children: [
             "Cập nhật ",
-            Rt(t.updated_at)
+            Pt(t.updated_at)
           ] })
         ] })
       ]
     }
   );
 }
-function tn({
+function on({
   onOpen: t,
-  assistantOpen: n,
+  assistantOpen: s,
   syncTick: r,
   onToggleAssistant: i,
-  onAskAssistant: a,
-  onCreatedCase: m
+  onAskAssistant: l,
+  onCreatedCase: h
 }) {
-  const u = Qe(), [l, c] = k(null), [o, w] = k(null), [h, z] = k(""), [d, b] = k("all"), [_, S] = k(!1), K = H(0), q = H(!1), G = H(null), D = O(async (g = !1) => {
-    if (!(g && q.current)) {
-      g ? q.current = !0 : S(!0);
+  const f = et(), [d, o] = x(null), [c, y] = x(null), [u, _] = x(""), [p, b] = x("all"), [E, I] = x(!1), m = j(0), S = j(!1), Q = j(null), P = q(async (v = !1) => {
+    if (!(v && S.current)) {
+      v ? S.current = !0 : I(!0);
       try {
-        const v = (await u.get(`${qe}/cases`)).cases;
-        if (G.current === null)
-          G.current = new Set(v.map((N) => N.case_id));
+        const N = (await f.get(`${Ie}/cases`)).cases;
+        if (Q.current === null)
+          Q.current = new Set(N.map((R) => R.case_id));
         else {
-          const N = v.find((ne) => !G.current.has(ne.case_id));
-          v.forEach((ne) => G.current.add(ne.case_id)), N && m({ caseId: N.case_id, name: N.customer_name ?? N.case_id });
+          const R = N.find((O) => !Q.current.has(O.case_id));
+          N.forEach((O) => Q.current.add(O.case_id)), R && h({ caseId: R.case_id, name: R.customer_name ?? R.case_id });
         }
-        c(v), w(null), K.current = Date.now();
-      } catch (v) {
-        g || w(ze(v));
+        o(N), y(null), m.current = Date.now();
+      } catch (N) {
+        v || y(be(N));
       } finally {
-        g ? q.current = !1 : S(!1);
+        v ? S.current = !1 : I(!1);
       }
     }
-  }, [u, m]);
-  L(() => {
-    D();
-  }, [D]), L(() => {
-    r > 0 && D(!0);
-  }, [r, D]), L(() => {
-    const g = () => {
-      document.visibilityState !== "hidden" && Date.now() - K.current >= 3e3 && D(!0);
+  }, [f, h]);
+  K(() => {
+    P();
+  }, [P]), K(() => {
+    r > 0 && P(!0);
+  }, [r, P]), K(() => {
+    const v = () => {
+      document.visibilityState !== "hidden" && Date.now() - m.current >= 3e3 && P(!0);
     };
-    return window.addEventListener("focus", g), document.addEventListener("visibilitychange", g), () => {
-      window.removeEventListener("focus", g), document.removeEventListener("visibilitychange", g);
+    return window.addEventListener("focus", v), document.addEventListener("visibilitychange", v), () => {
+      window.removeEventListener("focus", v), document.removeEventListener("visibilitychange", v);
     };
-  }, [D]);
-  const W = ae(() => ({
-    open: (l == null ? void 0 : l.reduce((g, v) => g + v.review_open, 0)) ?? 0,
-    blocked: (l == null ? void 0 : l.reduce((g, v) => g + v.agents_blocked, 0)) ?? 0,
-    high: (l == null ? void 0 : l.reduce((g, v) => g + (v.high_findings ?? 0), 0)) ?? 0
-  }), [l]), x = ae(() => {
-    const g = h.trim().toLowerCase();
-    return (l ?? []).filter((v) => d === "review" && v.review_open === 0 || d === "blocked" && v.agents_blocked === 0 ? !1 : g ? [v.customer_name, v.case_id, v.industry_code].some((N) => N == null ? void 0 : N.toLowerCase().includes(g)) : !0);
-  }, [l, h, d]), C = () => a("Tạo hồ sơ thẩm định SME mới: ", "new_intake");
-  return /* @__PURE__ */ s(Je, { children: [
+  }, [P]);
+  const U = F(() => ({
+    open: (d == null ? void 0 : d.reduce((v, N) => v + N.review_open, 0)) ?? 0,
+    blocked: (d == null ? void 0 : d.reduce((v, N) => v + N.agents_blocked, 0)) ?? 0,
+    high: (d == null ? void 0 : d.reduce((v, N) => v + (N.high_findings ?? 0), 0)) ?? 0
+  }), [d]), w = F(() => {
+    const v = u.trim().toLowerCase();
+    return (d ?? []).filter((N) => p === "review" && N.review_open === 0 || p === "blocked" && N.agents_blocked === 0 ? !1 : v ? [N.customer_name, N.case_id, N.industry_code].some((R) => R == null ? void 0 : R.toLowerCase().includes(v)) : !0);
+  }, [d, u, p]), A = () => l("Tạo hồ sơ thẩm định SME mới: ", "new_intake");
+  return /* @__PURE__ */ n(Ze, { children: [
     /* @__PURE__ */ e(
-      pt,
+      gt,
       {
         title: "Thẩm định SME",
         subtitle: "Hồ sơ vay, kết quả các agent, bằng chứng và hàng đợi rà soát của cán bộ",
-        actions: /* @__PURE__ */ s("div", { className: "sme-row", children: [
-          /* @__PURE__ */ s(R, { onClick: () => D(), busy: _, children: [
-            /* @__PURE__ */ e(et, { size: 14 }),
+        actions: /* @__PURE__ */ n("div", { className: "sme-row", children: [
+          /* @__PURE__ */ n(L, { onClick: () => P(), busy: E, children: [
+            /* @__PURE__ */ e(nt, { size: 14 }),
             " Làm mới"
           ] }),
-          /* @__PURE__ */ s(
-            R,
+          /* @__PURE__ */ n(
+            L,
             {
-              className: n ? "sme-toggle-on" : void 0,
-              "aria-pressed": n,
+              className: s ? "sme-toggle-on" : void 0,
+              "aria-pressed": s,
               onClick: i,
-              title: n ? "Thu gọn trợ lý thẩm định" : "Mở trợ lý thẩm định bên phải",
+              title: s ? "Thu gọn trợ lý thẩm định" : "Mở trợ lý thẩm định bên phải",
               children: [
                 /* @__PURE__ */ e($e, { size: 14 }),
                 " Trợ lý thẩm định"
               ]
             }
           ),
-          /* @__PURE__ */ s(R, { primary: !0, onClick: C, children: [
-            /* @__PURE__ */ e(Be, { size: 14 }),
+          /* @__PURE__ */ n(L, { primary: !0, onClick: A, children: [
+            /* @__PURE__ */ e(qe, { size: 14 }),
             " Hồ sơ mới"
           ] })
         ] })
       }
     ),
-    /* @__PURE__ */ s("div", { className: "sme-scroll", children: [
-      o && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(Ze, { title: "Không tải được danh sách hồ sơ", children: o }) }),
-      /* @__PURE__ */ s("div", { className: "sme-kpis", children: [
-        /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(We, { size: 18 }), label: "Hồ sơ", value: (l == null ? void 0 : l.length) ?? "…" }),
+    /* @__PURE__ */ n("div", { className: "sme-scroll", children: [
+      c && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(tt, { title: "Không tải được danh sách hồ sơ", children: c }) }),
+      /* @__PURE__ */ n("div", { className: "sme-kpis", children: [
+        /* @__PURE__ */ e(se, { icon: /* @__PURE__ */ e(We, { size: 18 }), label: "Hồ sơ", value: (d == null ? void 0 : d.length) ?? "…" }),
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
             t: "warn",
-            icon: /* @__PURE__ */ e(tt, { size: 18 }),
+            icon: /* @__PURE__ */ e(st, { size: 18 }),
             label: "Mục chờ rà soát",
-            value: l ? W.open : "…",
+            value: d ? U.open : "…",
             hint: "Cần cán bộ xác nhận"
           }
         ),
-        /* @__PURE__ */ e(ee, { t: "danger", icon: /* @__PURE__ */ e(bt, { size: 18 }), label: "Cảnh báo mức cao", value: l ? W.high : "…" }),
+        /* @__PURE__ */ e(se, { t: "danger", icon: /* @__PURE__ */ e(xt, { size: 18 }), label: "Cảnh báo mức cao", value: d ? U.high : "…" }),
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
-            t: W.blocked ? "danger" : "ok",
-            icon: /* @__PURE__ */ e(vt, { size: 18 }),
+            t: U.blocked ? "danger" : "ok",
+            icon: /* @__PURE__ */ e(yt, { size: 18 }),
             label: "Kết quả bị chặn",
-            value: l ? W.blocked : "…",
+            value: d ? U.blocked : "…",
             hint: "Không qua kiểm chứng"
           }
         )
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", style: { marginBottom: 12 }, children: [
-        /* @__PURE__ */ e("div", { className: "sme-filters", role: "tablist", "aria-label": "Lọc hồ sơ", children: [["all", "Tất cả"], ["review", "Chờ rà soát"], ["blocked", "Bị chặn"]].map(([g, v]) => /* @__PURE__ */ e(
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", style: { marginBottom: 12 }, children: [
+        /* @__PURE__ */ e("div", { className: "sme-filters", role: "tablist", "aria-label": "Lọc hồ sơ", children: [["all", "Tất cả"], ["review", "Chờ rà soát"], ["blocked", "Bị chặn"]].map(([v, N]) => /* @__PURE__ */ e(
           "button",
           {
             type: "button",
             role: "tab",
-            "aria-selected": d === g,
-            className: `sme-filter ${d === g ? "on" : ""}`,
-            onClick: () => b(g),
-            children: v
+            "aria-selected": p === v,
+            className: `sme-filter ${p === v ? "on" : ""}`,
+            onClick: () => b(v),
+            children: N
           },
-          g
+          v
         )) }),
-        /* @__PURE__ */ s("label", { className: "sme-search", children: [
-          /* @__PURE__ */ e(Se, { size: 14, className: "sme-muted" }),
-          /* @__PURE__ */ e("input", { value: h, onChange: (g) => z(g.target.value), placeholder: "Tìm khách hàng, mã hồ sơ, mã ngành" })
+        /* @__PURE__ */ n("label", { className: "sme-search", children: [
+          /* @__PURE__ */ e(Ae, { size: 14, className: "sme-muted" }),
+          /* @__PURE__ */ e("input", { value: u, onChange: (v) => _(v.target.value), placeholder: "Tìm khách hàng, mã hồ sơ, mã ngành" })
         ] })
       ] }),
-      l === null && !o && /* @__PURE__ */ e("div", { className: "sme-cases", children: [0, 1, 2].map((g) => /* @__PURE__ */ s("div", { className: "sme-card sme-stack", children: [
+      d === null && !c && /* @__PURE__ */ e("div", { className: "sme-cases", children: [0, 1, 2].map((v) => /* @__PURE__ */ n("div", { className: "sme-card sme-stack", children: [
         /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "60%" } }),
         /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "40%" } }),
         /* @__PURE__ */ e("div", { className: "sme-skel" })
-      ] }, g)) }),
-      l && l.length === 0 && /* @__PURE__ */ e(
-        te,
+      ] }, v)) }),
+      d && d.length === 0 && /* @__PURE__ */ e(
+        ee,
         {
           icon: /* @__PURE__ */ e(We, { size: 32 }),
           title: "Chưa có hồ sơ nào",
           hint: "Trợ lý thẩm định SME sẽ hỏi thông tin khách hàng và tạo hồ sơ cho bạn.",
-          action: /* @__PURE__ */ s(R, { primary: !0, onClick: C, children: [
-            /* @__PURE__ */ e(Be, { size: 14 }),
+          action: /* @__PURE__ */ n(L, { primary: !0, onClick: A, children: [
+            /* @__PURE__ */ e(qe, { size: 14 }),
             " Tạo hồ sơ đầu tiên"
           ] })
         }
       ),
-      l && l.length > 0 && x.length === 0 && /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(Se, { size: 28 }), title: "Không có hồ sơ phù hợp", hint: "Thử bỏ bộ lọc hoặc đổi từ khoá." }),
-      x.length > 0 && /* @__PURE__ */ e("div", { className: "sme-cases", children: x.map((g) => /* @__PURE__ */ e(en, { c: g, onOpen: () => t(g.case_id) }, g.case_id)) })
+      d && d.length > 0 && w.length === 0 && /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(Ae, { size: 28 }), title: "Không có hồ sơ phù hợp", hint: "Thử bỏ bộ lọc hoặc đổi từ khoá." }),
+      w.length > 0 && /* @__PURE__ */ e("div", { className: "sme-cases", children: w.map((v) => /* @__PURE__ */ e(ln, { c: v, onOpen: () => t(v.case_id) }, v.case_id)) })
     ] })
   ] });
 }
-function ct({ state: t, size: n = 13 }) {
-  return t === "passed" ? /* @__PURE__ */ e(xt, { size: n }) : t === "blocked" ? /* @__PURE__ */ e(yt, { size: n }) : t === "unverified" ? /* @__PURE__ */ e(wt, { size: n }) : /* @__PURE__ */ e(kt, { size: n });
+function mt({ state: t, size: s = 13 }) {
+  return t === "passed" ? /* @__PURE__ */ e(wt, { size: s }) : t === "blocked" ? /* @__PURE__ */ e(kt, { size: s }) : t === "unverified" ? /* @__PURE__ */ e(Nt, { size: s }) : /* @__PURE__ */ e(_t, { size: s });
 }
-function dt({ state: t }) {
-  const n = xe[t];
-  return /* @__PURE__ */ s(B, { t: n.tone, children: [
-    /* @__PURE__ */ e(ct, { state: t, size: 12 }),
-    n.label
+function ht({ state: t }) {
+  const s = xe[t];
+  return /* @__PURE__ */ n(z, { t: s.tone, children: [
+    /* @__PURE__ */ e(mt, { state: t, size: 12 }),
+    s.label
   ] });
 }
-function mt({ f: t, onEvidence: n }) {
-  const r = pe[t.severity] ?? pe.info;
-  return /* @__PURE__ */ s("div", { className: `sme-finding ${Y(r.tone)}`, children: [
+function pt({ f: t, onEvidence: s }) {
+  const r = ue[t.severity] ?? ue.info;
+  return /* @__PURE__ */ n("div", { className: `sme-finding ${Y(r.tone)}`, children: [
     /* @__PURE__ */ e("div", { className: "bar" }),
-    /* @__PURE__ */ s("div", { children: [
-      /* @__PURE__ */ s("div", { className: "sme-finding-topic sme-row", style: { gap: 6 }, children: [
-        /* @__PURE__ */ e(B, { t: r.tone, children: r.label }),
+    /* @__PURE__ */ n("div", { children: [
+      /* @__PURE__ */ n("div", { className: "sme-finding-topic sme-row", style: { gap: 6 }, children: [
+        /* @__PURE__ */ e(z, { t: r.tone, children: r.label }),
         /* @__PURE__ */ e("span", { children: t.topic.replace(/_/g, " ") })
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-finding-text", children: [
+      /* @__PURE__ */ n("div", { className: "sme-finding-text", children: [
         t.statement,
-        /* @__PURE__ */ e(lt, { refs: t.evidence_refs, onOpen: n })
+        /* @__PURE__ */ e(Ue, { refs: t.evidence_refs, onOpen: s })
       ] })
     ] })
   ] });
 }
-function nn({ m: t }) {
-  const n = Math.max(1.6, (t.threshold ?? 0) * 1.3, ...t.scenarios.map((r) => r.dscr ?? 0));
-  return /* @__PURE__ */ s("div", { className: "sme-card", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 12 }, children: [
+function cn({ m: t }) {
+  const s = Math.max(1.6, (t.threshold ?? 0) * 1.3, ...t.scenarios.map((r) => r.dscr ?? 0));
+  return /* @__PURE__ */ n("div", { className: "sme-card", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 12 }, children: [
       /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Khả năng trả nợ (DSCR)" }),
-      t.threshold !== void 0 && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+      t.threshold !== void 0 && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
         "Ngưỡng chính sách ≥ ",
-        j(t.threshold)
+        X(t.threshold)
       ] })
     ] }),
     /* @__PURE__ */ e("div", { className: "sme-bars", children: t.scenarios.map((r) => {
       const i = t.threshold === void 0 || (r.dscr ?? 0) >= t.threshold;
-      return /* @__PURE__ */ s("div", { className: `sme-bar-row ${Y(i ? "ok" : "danger")}`, children: [
+      return /* @__PURE__ */ n("div", { className: `sme-bar-row ${Y(i ? "ok" : "danger")}`, children: [
         /* @__PURE__ */ e("span", { className: "sme-muted", children: r.stress_pct ? `Stress −${r.stress_pct}%` : "Cơ sở" }),
-        /* @__PURE__ */ s("div", { className: "sme-bar-track", children: [
-          /* @__PURE__ */ e("div", { className: "sme-bar-fill", style: { width: `${Math.min(100, (r.dscr ?? 0) / n * 100)}%` } }),
-          t.threshold !== void 0 && /* @__PURE__ */ e("div", { className: "sme-bar-mark", style: { left: `${t.threshold / n * 100}%` } })
+        /* @__PURE__ */ n("div", { className: "sme-bar-track", children: [
+          /* @__PURE__ */ e("div", { className: "sme-bar-fill", style: { width: `${Math.min(100, (r.dscr ?? 0) / s * 100)}%` } }),
+          t.threshold !== void 0 && /* @__PURE__ */ e("div", { className: "sme-bar-mark", style: { left: `${t.threshold / s * 100}%` } })
         ] }),
-        /* @__PURE__ */ e("span", { className: "sme-num sme-strong", children: j(r.dscr) })
+        /* @__PURE__ */ e("span", { className: "sme-num sme-strong", children: X(r.dscr) })
       ] }, r.stress_pct);
     }) }),
-    (t.cash !== void 0 || t.debtService !== void 0) && /* @__PURE__ */ s("div", { className: "sme-small sme-muted", style: { marginTop: 10 }, children: [
+    (t.cash !== void 0 || t.debtService !== void 0) && /* @__PURE__ */ n("div", { className: "sme-small sme-muted", style: { marginTop: 10 }, children: [
       "Dòng tiền trả nợ ",
-      Te(t.cash),
+      ze(t.cash),
       " / năm · Nghĩa vụ trả nợ ",
-      Te(t.debtService),
+      ze(t.debtService),
       " / năm"
     ] })
   ] });
 }
-function sn({ m: t }) {
-  return /* @__PURE__ */ s("div", { className: "sme-card", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
-      /* @__PURE__ */ s("h3", { className: "sme-h3", children: [
+function dn({ m: t }) {
+  return /* @__PURE__ */ n("div", { className: "sme-card", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
+      /* @__PURE__ */ n("h3", { className: "sme-h3", children: [
         "Điều kiện chính sách ",
         t.product
       ] }),
-      t.version && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+      t.version && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
         "Phiên bản ",
         t.version
       ] })
     ] }),
-    /* @__PURE__ */ s("table", { className: "sme-table", children: [
-      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("table", { className: "sme-table", children: [
+      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
         /* @__PURE__ */ e("th", { children: "Điều kiện" }),
         /* @__PURE__ */ e("th", { className: "sme-num", children: "Yêu cầu" }),
         /* @__PURE__ */ e("th", { className: "sme-num", children: "Thực tế" }),
         /* @__PURE__ */ e("th", { children: "Kết quả" })
       ] }) }),
-      /* @__PURE__ */ e("tbody", { children: t.rows.map((n) => {
-        const r = Zt[n.status] ?? { label: n.status, tone: "muted" }, i = (a) => n.fact === "loan_amount" ? Te(a) : typeof a == "number" ? j(a) : "—";
-        return /* @__PURE__ */ s("tr", { children: [
-          /* @__PURE__ */ s("td", { children: [
-            Qt[n.fact] ?? n.fact,
-            /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: n.clause })
+      /* @__PURE__ */ e("tbody", { children: t.rows.map((s) => {
+        const r = an[s.status] ?? { label: s.status, tone: "muted" }, i = (l) => s.fact === "loan_amount" ? ze(l) : typeof l == "number" ? X(l) : "—";
+        return /* @__PURE__ */ n("tr", { children: [
+          /* @__PURE__ */ n("td", { children: [
+            rn[s.fact] ?? s.fact,
+            /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: s.clause })
           ] }),
-          /* @__PURE__ */ s("td", { className: "sme-num", children: [
-            n.op,
+          /* @__PURE__ */ n("td", { className: "sme-num", children: [
+            s.op,
             " ",
-            i(n.threshold)
+            i(s.threshold)
           ] }),
-          /* @__PURE__ */ e("td", { className: "sme-num", children: i(n.actual) }),
-          /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(B, { t: r.tone, children: r.label }) })
-        ] }, n.id);
+          /* @__PURE__ */ e("td", { className: "sme-num", children: i(s.actual) }),
+          /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(z, { t: r.tone, children: r.label }) })
+        ] }, s.id);
       }) })
     ] })
   ] });
 }
-function rn({ periods: t }) {
-  const n = Object.keys(Le).filter((r) => t.some((i) => {
-    var a;
-    return ((a = i.ratios) == null ? void 0 : a[r]) != null;
+function mn({ periods: t }) {
+  const s = Object.keys(Pe).filter((r) => t.some((i) => {
+    var l;
+    return ((l = i.ratios) == null ? void 0 : l[r]) != null;
   }));
-  return n.length ? /* @__PURE__ */ s("div", { className: "sme-card", children: [
+  return s.length ? /* @__PURE__ */ n("div", { className: "sme-card", children: [
     /* @__PURE__ */ e("h3", { className: "sme-h3", style: { marginBottom: 8 }, children: "Chỉ số tài chính" }),
-    /* @__PURE__ */ s("table", { className: "sme-table", children: [
-      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("table", { className: "sme-table", children: [
+      /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
         /* @__PURE__ */ e("th", { children: "Chỉ số" }),
         t.map((r) => /* @__PURE__ */ e("th", { className: "sme-num", children: r.period }, r.period))
       ] }) }),
-      /* @__PURE__ */ e("tbody", { children: n.map((r) => /* @__PURE__ */ s("tr", { children: [
-        /* @__PURE__ */ e("td", { children: Le[r].label }),
+      /* @__PURE__ */ e("tbody", { children: s.map((r) => /* @__PURE__ */ n("tr", { children: [
+        /* @__PURE__ */ e("td", { children: Pe[r].label }),
         t.map((i) => {
-          var a;
-          return /* @__PURE__ */ e("td", { className: "sme-num", children: Le[r].fmt((a = i.ratios) == null ? void 0 : a[r]) }, i.period);
+          var l;
+          return /* @__PURE__ */ e("td", { className: "sme-num", children: Pe[r].fmt((l = i.ratios) == null ? void 0 : l[r]) }, i.period);
         })
       ] }, r)) })
     ] })
   ] }) : null;
 }
-function an({ detail: t, m: n, onEvidence: r, goAgents: i }) {
-  const a = t.results.consolidation, m = ve.flatMap((l) => {
-    var c;
-    return (((c = t.results[l]) == null ? void 0 : c.findings) ?? []).filter((o) => o.severity === "high").map((o) => ({ ...o, agent: l }));
-  }), u = Object.values(t.evidence).some((l) => /MẪU|sample/i.test(String(l.source)));
-  return /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    u && /* @__PURE__ */ s(ot, { children: [
+function hn({ detail: t, m: s, onEvidence: r, goAgents: i }) {
+  const l = t.results.consolidation, h = ve.flatMap((d) => {
+    var o;
+    return (((o = t.results[d]) == null ? void 0 : o.findings) ?? []).filter((c) => c.severity === "high").map((c) => ({ ...c, agent: d }));
+  }), f = Object.values(t.evidence).some((d) => /MẪU|sample/i.test(String(d.source)));
+  return /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    f && /* @__PURE__ */ n(dt, { children: [
       "Hồ sơ đang dùng ",
       /* @__PURE__ */ e("b", { children: "dữ liệu mẫu" }),
       " (OCR, CIC hoặc NCLOS chưa nối hệ thống thật). Không dùng kết quả này cho quyết định tín dụng."
     ] }),
-    /* @__PURE__ */ s("div", { className: "sme-card", children: [
-      /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
+    /* @__PURE__ */ n("div", { className: "sme-card", children: [
+      /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 8 }, children: [
         /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Tóm tắt thẩm định" }),
-        a ? /* @__PURE__ */ e(dt, { state: Ee(a) }) : /* @__PURE__ */ e(B, { t: "muted", children: "Chưa tổng hợp" })
+        l ? /* @__PURE__ */ e(ht, { state: De(l) }) : /* @__PURE__ */ e(z, { t: "muted", children: "Chưa tổng hợp" })
       ] }),
-      a ? /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: a.summary }) : /* @__PURE__ */ s("p", { className: "sme-muted", style: { margin: 0 }, children: [
+      l ? /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: l.summary }) : /* @__PURE__ */ n("p", { className: "sme-muted", style: { margin: 0 }, children: [
         "Agent Tổng hợp chưa chạy. Kết quả từng agent xem ở tab ",
         /* @__PURE__ */ e(
           "button",
@@ -1063,645 +1077,846 @@ function an({ detail: t, m: n, onEvidence: r, goAgents: i }) {
         "."
       ] })
     ] }),
-    m.length > 0 && /* @__PURE__ */ s("div", { className: "sme-card", children: [
-      /* @__PURE__ */ s("h3", { className: "sme-h3", style: { marginBottom: 4 }, children: [
+    h.length > 0 && /* @__PURE__ */ n("div", { className: "sme-card", children: [
+      /* @__PURE__ */ n("h3", { className: "sme-h3", style: { marginBottom: 4 }, children: [
         "Cảnh báo mức cao (",
-        m.length,
+        h.length,
         ")"
       ] }),
-      m.map((l) => /* @__PURE__ */ s("div", { children: [
-        /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { marginTop: 8 }, children: J(l.agent) }),
-        /* @__PURE__ */ e(mt, { f: l, onEvidence: r })
-      ] }, l.agent + l.id))
+      h.map((d) => /* @__PURE__ */ n("div", { children: [
+        /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { marginTop: 8 }, children: Z(d.agent) }),
+        /* @__PURE__ */ e(pt, { f: d, onEvidence: r })
+      ] }, d.agent + d.id))
     ] }),
-    n.dscr && /* @__PURE__ */ e(nn, { m: n.dscr }),
-    n.policy && /* @__PURE__ */ e(sn, { m: n.policy }),
-    n.ratios && /* @__PURE__ */ e(rn, { periods: n.ratios })
+    s.dscr && /* @__PURE__ */ e(cn, { m: s.dscr }),
+    s.policy && /* @__PURE__ */ e(dn, { m: s.policy }),
+    s.ratios && /* @__PURE__ */ e(mn, { periods: s.ratios })
   ] });
 }
-function on({ id: t, r: n, open: r, onToggle: i, onEvidence: a, onAsk: m }) {
-  var l, c;
-  const u = ["high", "medium", "low"].map((o) => [o, n.findings.filter((w) => w.severity === o).length]);
-  return /* @__PURE__ */ s("div", { className: "sme-card", id: `agent-${t}`, children: [
-    /* @__PURE__ */ s("button", { type: "button", className: `sme-acc-head ${r ? "open" : ""}`, onClick: i, "aria-expanded": r, children: [
-      /* @__PURE__ */ e(Ct, { size: 16, className: "chev" }),
-      /* @__PURE__ */ s("div", { style: { flex: 1, minWidth: 0 }, children: [
-        /* @__PURE__ */ s("div", { className: "sme-between", children: [
-          /* @__PURE__ */ e("span", { className: "sme-h3", children: J(t) }),
-          /* @__PURE__ */ e(dt, { state: Ee(n) })
+function pn({ id: t, r: s, open: r, onToggle: i, onEvidence: l, onAsk: h }) {
+  var d, o;
+  const f = ["high", "medium", "low"].map((c) => [c, s.findings.filter((y) => y.severity === c).length]);
+  return /* @__PURE__ */ n("div", { className: "sme-card", id: `agent-${t}`, children: [
+    /* @__PURE__ */ n("button", { type: "button", className: `sme-acc-head ${r ? "open" : ""}`, onClick: i, "aria-expanded": r, children: [
+      /* @__PURE__ */ e(Tt, { size: 16, className: "chev" }),
+      /* @__PURE__ */ n("div", { style: { flex: 1, minWidth: 0 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-between", children: [
+          /* @__PURE__ */ e("span", { className: "sme-h3", children: Z(t) }),
+          /* @__PURE__ */ e(ht, { state: De(s) })
         ] }),
-        /* @__PURE__ */ s("div", { className: "sme-row sme-small sme-muted", style: { marginTop: 4 }, children: [
-          /* @__PURE__ */ s("span", { children: [
+        /* @__PURE__ */ n("div", { className: "sme-row sme-small sme-muted", style: { marginTop: 4 }, children: [
+          /* @__PURE__ */ n("span", { children: [
             "v",
-            n._version,
+            s._version,
             " · độ tin cậy ",
-            Xt[n.confidence] ?? n.confidence,
+            en[s.confidence] ?? s.confidence,
             " · ",
-            oe(n._saved_at)
+            re(s._saved_at)
           ] }),
-          /* @__PURE__ */ e("span", { className: "sme-sev-counts", children: u.filter(([, o]) => o > 0).map(([o, w]) => /* @__PURE__ */ s(B, { t: pe[o].tone, children: [
-            w,
+          /* @__PURE__ */ e("span", { className: "sme-sev-counts", children: f.filter(([, c]) => c > 0).map(([c, y]) => /* @__PURE__ */ n(z, { t: ue[c].tone, children: [
+            y,
             " ",
-            pe[o].label.toLowerCase()
-          ] }, o)) })
+            ue[c].label.toLowerCase()
+          ] }, c)) })
         ] })
       ] })
     ] }),
-    r && /* @__PURE__ */ s("div", { className: "sme-acc-body sme-stack", children: [
-      /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: n.summary }),
-      n.verification && !n.verification.passed && /* @__PURE__ */ s(ot, { t: "danger", children: [
+    r && /* @__PURE__ */ n("div", { className: "sme-acc-body sme-stack", children: [
+      /* @__PURE__ */ e("p", { style: { margin: 0, fontSize: 13.5, lineHeight: 1.6 }, children: s.summary }),
+      s.verification && !s.verification.passed && /* @__PURE__ */ n(dt, { t: "danger", children: [
         /* @__PURE__ */ e("b", { children: "Lý do bị chặn:" }),
-        /* @__PURE__ */ e("ul", { style: { margin: "4px 0 0", paddingLeft: 18 }, children: n.verification.errors.slice(0, 8).map((o, w) => /* @__PURE__ */ e("li", { children: o }, w)) })
+        /* @__PURE__ */ e("ul", { style: { margin: "4px 0 0", paddingLeft: 18 }, children: s.verification.errors.slice(0, 8).map((c, y) => /* @__PURE__ */ e("li", { children: c }, y)) })
       ] }),
-      n.findings.length > 0 && /* @__PURE__ */ e("div", { children: Ut(n.findings).map((o) => /* @__PURE__ */ e(mt, { f: o, onEvidence: a }, o.id)) }),
-      (((l = n.missing_information) == null ? void 0 : l.length) ?? 0) > 0 && /* @__PURE__ */ s("div", { children: [
+      s.findings.length > 0 && /* @__PURE__ */ e("div", { children: nn(s.findings).map((c) => /* @__PURE__ */ e(pt, { f: c, onEvidence: l }, c.id)) }),
+      (((d = s.missing_information) == null ? void 0 : d.length) ?? 0) > 0 && /* @__PURE__ */ n("div", { children: [
         /* @__PURE__ */ e("div", { className: "sme-section-title", children: "Còn thiếu" }),
-        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: n.missing_information.map((o, w) => /* @__PURE__ */ e("li", { children: o }, w)) })
+        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: s.missing_information.map((c, y) => /* @__PURE__ */ e("li", { children: c }, y)) })
       ] }),
-      (((c = n.open_issues) == null ? void 0 : c.length) ?? 0) > 0 && /* @__PURE__ */ s("div", { children: [
+      (((o = s.open_issues) == null ? void 0 : o.length) ?? 0) > 0 && /* @__PURE__ */ n("div", { children: [
         /* @__PURE__ */ e("div", { className: "sme-section-title", children: "Vấn đề mở" }),
-        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: n.open_issues.map((o, w) => /* @__PURE__ */ e("li", { children: o }, w)) })
+        /* @__PURE__ */ e("ul", { style: { margin: 0, paddingLeft: 18, fontSize: 13 }, children: s.open_issues.map((c, y) => /* @__PURE__ */ e("li", { children: c }, y)) })
       ] }),
-      m && /* @__PURE__ */ e("div", { className: "sme-row", style: { justifyContent: "flex-end" }, children: /* @__PURE__ */ s(R, { onClick: m, children: [
+      h && /* @__PURE__ */ e("div", { className: "sme-row", style: { justifyContent: "flex-end" }, children: /* @__PURE__ */ n(L, { onClick: h, children: [
         /* @__PURE__ */ e($e, { size: 13 }),
         " Hỏi trợ lý về phần này"
       ] }) })
     ] })
   ] });
 }
-function ln({ detail: t, openAgent: n, onEvidence: r, onRunAssessment: i, onAskAgent: a }) {
-  const m = ve.filter((o) => t.results[o]), [u, l] = k(() => new Set(n ? [n] : []));
-  if (L(() => {
-    n && (l((o) => new Set(o).add(n)), requestAnimationFrame(() => {
-      var o;
-      return (o = document.getElementById(`agent-${n}`)) == null ? void 0 : o.scrollIntoView({ block: "start", behavior: "smooth" });
+function un({ detail: t, openAgent: s, onEvidence: r, onRunAssessment: i, onAskAgent: l }) {
+  const h = ve.filter((c) => t.results[c]), [f, d] = x(() => new Set(s ? [s] : []));
+  if (K(() => {
+    s && (d((c) => new Set(c).add(s)), requestAnimationFrame(() => {
+      var c;
+      return (c = document.getElementById(`agent-${s}`)) == null ? void 0 : c.scrollIntoView({ block: "start", behavior: "smooth" });
     }));
-  }, [n]), !m.length)
+  }, [s]), !h.length)
     return /* @__PURE__ */ e(
-      te,
+      ee,
       {
-        icon: /* @__PURE__ */ e(st, { size: 30 }),
+        icon: /* @__PURE__ */ e(at, { size: 30 }),
         title: "Chưa có kết quả",
         hint: "Chạy thẩm định để các agent ghi kết quả vào hồ sơ.",
-        action: i ? /* @__PURE__ */ s(R, { primary: !0, onClick: i, children: [
-          /* @__PURE__ */ e(nt, { size: 13 }),
+        action: i ? /* @__PURE__ */ n(L, { primary: !0, onClick: i, children: [
+          /* @__PURE__ */ e(it, { size: 13 }),
           " Chạy thẩm định"
         ] }) : void 0
       }
     );
-  const c = (o) => l((w) => {
-    const h = new Set(w);
-    return h.has(o) ? h.delete(o) : h.add(o), h;
+  const o = (c) => d((y) => {
+    const u = new Set(y);
+    return u.has(c) ? u.delete(c) : u.add(c), u;
   });
-  return /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    /* @__PURE__ */ e("div", { className: "sme-row", style: { justifyContent: "flex-end" }, children: /* @__PURE__ */ e(R, { onClick: () => l(u.size === m.length ? /* @__PURE__ */ new Set() : new Set(m)), children: u.size === m.length ? "Thu gọn tất cả" : "Mở tất cả" }) }),
-    m.map((o) => /* @__PURE__ */ e(
-      on,
+  return /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    /* @__PURE__ */ e("div", { className: "sme-row", style: { justifyContent: "flex-end" }, children: /* @__PURE__ */ e(L, { onClick: () => d(f.size === h.length ? /* @__PURE__ */ new Set() : new Set(h)), children: f.size === h.length ? "Thu gọn tất cả" : "Mở tất cả" }) }),
+    h.map((c) => /* @__PURE__ */ e(
+      pn,
       {
-        id: o,
-        r: t.results[o],
-        open: u.has(o),
-        onToggle: () => c(o),
+        id: c,
+        r: t.results[c],
+        open: f.has(c),
+        onToggle: () => o(c),
         onEvidence: r,
-        onAsk: a ? () => a(o, J(o)) : void 0
+        onAsk: l ? () => l(c, Z(c)) : void 0
       },
-      o
+      c
     ))
   ] });
 }
-function cn({ detail: t, focus: n }) {
-  const r = Object.values(t.evidence), [i, a] = k(""), [m, u] = k("all"), [l, c] = k(n);
-  L(() => {
-    n && (c(n), a(""), u("all"), requestAnimationFrame(() => {
-      var h;
-      return (h = document.getElementById(`ev-${n}`)) == null ? void 0 : h.scrollIntoView({ block: "center", behavior: "smooth" });
+function gn({ detail: t, focus: s }) {
+  const r = Object.values(t.evidence), [i, l] = x(""), [h, f] = x("all"), [d, o] = x(s);
+  K(() => {
+    s && (o(s), l(""), f("all"), requestAnimationFrame(() => {
+      var u;
+      return (u = document.getElementById(`ev-${s}`)) == null ? void 0 : u.scrollIntoView({ block: "center", behavior: "smooth" });
     }));
-  }, [n]);
-  const o = ae(() => Array.from(new Set(r.map((h) => h.added_by))), [r]), w = r.filter((h) => (m === "all" || h.added_by === m) && (!i.trim() || `${h.id} ${h.source} ${je(h.value)}`.toLowerCase().includes(i.trim().toLowerCase())));
-  return r.length ? /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", children: [
-      /* @__PURE__ */ s("div", { className: "sme-filters", children: [
-        /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${m === "all" ? "on" : ""}`, onClick: () => u("all"), children: "Tất cả" }),
-        o.map((h) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${m === h ? "on" : ""}`, onClick: () => u(h), children: J(h) }, h))
+  }, [s]);
+  const c = F(() => Array.from(new Set(r.map((u) => u.added_by))), [r]), y = r.filter((u) => (h === "all" || u.added_by === h) && (!i.trim() || `${u.id} ${u.source} ${Ge(u.value)}`.toLowerCase().includes(i.trim().toLowerCase())));
+  return r.length ? /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", children: [
+      /* @__PURE__ */ n("div", { className: "sme-filters", children: [
+        /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${h === "all" ? "on" : ""}`, onClick: () => f("all"), children: "Tất cả" }),
+        c.map((u) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${h === u ? "on" : ""}`, onClick: () => f(u), children: Z(u) }, u))
       ] }),
-      /* @__PURE__ */ s("label", { className: "sme-search", children: [
-        /* @__PURE__ */ e(Se, { size: 14, className: "sme-muted" }),
-        /* @__PURE__ */ e("input", { value: i, onChange: (h) => a(h.target.value), placeholder: "Tìm mã, nguồn, giá trị" })
+      /* @__PURE__ */ n("label", { className: "sme-search", children: [
+        /* @__PURE__ */ e(Ae, { size: 14, className: "sme-muted" }),
+        /* @__PURE__ */ e("input", { value: i, onChange: (u) => l(u.target.value), placeholder: "Tìm mã, nguồn, giá trị" })
       ] })
     ] }),
-    /* @__PURE__ */ s("div", { className: "sme-card tight", children: [
-      /* @__PURE__ */ s("table", { className: "sme-table", children: [
-        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ s("tr", { children: [
+    /* @__PURE__ */ n("div", { className: "sme-card tight", children: [
+      /* @__PURE__ */ n("table", { className: "sme-table", children: [
+        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
           /* @__PURE__ */ e("th", { style: { width: 64 }, children: "Mã" }),
           /* @__PURE__ */ e("th", { children: "Nguồn" }),
           /* @__PURE__ */ e("th", { children: "Giá trị" }),
           /* @__PURE__ */ e("th", { style: { width: 150 }, children: "Agent" })
         ] }) }),
-        /* @__PURE__ */ e("tbody", { children: w.map((h) => {
-          const z = je(h.value), d = l === h.id;
-          return /* @__PURE__ */ s(
+        /* @__PURE__ */ e("tbody", { children: y.map((u) => {
+          const _ = Ge(u.value), p = d === u.id;
+          return /* @__PURE__ */ n(
             "tr",
             {
-              id: `ev-${h.id}`,
-              className: `click ${n === h.id ? "focus" : ""}`,
-              onClick: () => c(d ? null : h.id),
+              id: `ev-${u.id}`,
+              className: `click ${s === u.id ? "focus" : ""}`,
+              onClick: () => o(p ? null : u.id),
               children: [
-                /* @__PURE__ */ e("td", { className: "sme-mono", children: h.id }),
-                /* @__PURE__ */ e("td", { children: h.source }),
-                /* @__PURE__ */ s("td", { children: [
-                  /* @__PURE__ */ e("span", { className: "sme-mono", style: { wordBreak: "break-word" }, children: z.length > 90 && !d ? z.slice(0, 88) + "…" : d ? "" : z }),
-                  d && /* @__PURE__ */ e("pre", { className: "sme-pre", children: z })
+                /* @__PURE__ */ e("td", { className: "sme-mono", children: u.id }),
+                /* @__PURE__ */ e("td", { children: u.source }),
+                /* @__PURE__ */ n("td", { children: [
+                  /* @__PURE__ */ e("span", { className: "sme-mono", style: { wordBreak: "break-word" }, children: _.length > 90 && !p ? _.slice(0, 88) + "…" : p ? "" : _ }),
+                  p && /* @__PURE__ */ e("pre", { className: "sme-pre", children: _ })
                 ] }),
-                /* @__PURE__ */ s("td", { className: "sme-muted sme-small", children: [
-                  J(h.added_by),
-                  /* @__PURE__ */ e("div", { children: oe(h.added_at) })
+                /* @__PURE__ */ n("td", { className: "sme-muted sme-small", children: [
+                  Z(u.added_by),
+                  /* @__PURE__ */ e("div", { children: re(u.added_at) })
                 ] })
               ]
             },
-            h.id
+            u.id
           );
         }) })
       ] }),
-      w.length === 0 && /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(Se, { size: 24 }), title: "Không có bằng chứng phù hợp" })
+      y.length === 0 && /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(Ae, { size: 24 }), title: "Không có bằng chứng phù hợp" })
     ] })
-  ] }) : /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(st, { size: 30 }), title: "Chưa có bằng chứng" });
+  ] }) : /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(at, { size: 30 }), title: "Chưa có bằng chứng" });
 }
-function dn({ detail: t, focus: n, onDecide: r, onEvidence: i }) {
-  const [a, m] = k("open"), [u, l] = k({}), [c, o] = k(null);
-  L(() => {
-    n && (m("all"), requestAnimationFrame(() => {
-      var d;
-      return (d = document.getElementById(`rv-${n}`)) == null ? void 0 : d.scrollIntoView({ block: "center", behavior: "smooth" });
+function fn({ detail: t, focus: s, onDecide: r, onEvidence: i }) {
+  const [l, h] = x("open"), [f, d] = x({}), [o, c] = x(null);
+  K(() => {
+    s && (h("all"), requestAnimationFrame(() => {
+      var p;
+      return (p = document.getElementById(`rv-${s}`)) == null ? void 0 : p.scrollIntoView({ block: "center", behavior: "smooth" });
     }));
-  }, [n]);
-  const w = t.review.filter((d) => d.status === "open").length, h = t.review.filter((d) => a === "all" || a === "open" == (d.status === "open")), z = async (d, b) => {
-    o(d + b);
+  }, [s]);
+  const y = t.review.filter((p) => p.status === "open").length, u = t.review.filter((p) => l === "all" || l === "open" == (p.status === "open")), _ = async (p, b) => {
+    c(p + b);
     try {
-      await r(d, b, u[d] ?? "") && l((_) => ({ ..._, [d]: "" }));
+      await r(p, b, f[p] ?? "") && d((E) => ({ ...E, [p]: "" }));
     } finally {
-      o(null);
+      c(null);
     }
   };
-  return t.review.length ? /* @__PURE__ */ s("div", { className: "sme-stack", children: [
-    /* @__PURE__ */ s("div", { className: "sme-between sme-wrap", children: [
-      /* @__PURE__ */ e("div", { className: "sme-filters", children: [["open", `Chờ xử lý (${w})`], ["done", `Đã xử lý (${t.review.length - w})`], ["all", "Tất cả"]].map(([d, b]) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${a === d ? "on" : ""}`, onClick: () => m(d), children: b }, d)) }),
+  return t.review.length ? /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", children: [
+      /* @__PURE__ */ e("div", { className: "sme-filters", children: [["open", `Chờ xử lý (${y})`], ["done", `Đã xử lý (${t.review.length - y})`], ["all", "Tất cả"]].map(([p, b]) => /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${l === p ? "on" : ""}`, onClick: () => h(p), children: b }, p)) }),
       /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: "Quyết định chỉ dành cho cán bộ; agent không đóng được mục rà soát." })
     ] }),
-    h.length === 0 && /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(Ve, { size: 30 }), title: a === "open" ? "Đã xử lý hết các mục" : "Không có mục nào" }),
-    h.map((d) => {
-      const b = Oe[d.reason_code] ?? { label: d.reason_code, tone: "muted" }, _ = at[d.status] ?? { label: d.status, tone: "muted" }, S = u[d.id] ?? "";
-      return /* @__PURE__ */ s(
+    u.length === 0 && /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(Fe, { size: 30 }), title: l === "open" ? "Đã xử lý hết các mục" : "Không có mục nào" }),
+    u.map((p) => {
+      const b = je[p.reason_code] ?? { label: p.reason_code, tone: "muted" }, E = ct[p.status] ?? { label: p.status, tone: "muted" }, I = f[p.id] ?? "";
+      return /* @__PURE__ */ n(
         "div",
         {
-          id: `rv-${d.id}`,
+          id: `rv-${p.id}`,
           className: `sme-card sme-review ${Y(b.tone)}`,
-          style: n === d.id ? { boxShadow: "0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent)" } : void 0,
+          style: s === p.id ? { boxShadow: "0 0 0 2px color-mix(in srgb, var(--accent) 50%, transparent)" } : void 0,
           children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", children: [
-              /* @__PURE__ */ s("span", { className: "sme-row", children: [
-                /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: d.id }),
-                /* @__PURE__ */ e(B, { t: b.tone, children: b.label })
+            /* @__PURE__ */ n("div", { className: "sme-between", children: [
+              /* @__PURE__ */ n("span", { className: "sme-row", children: [
+                /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: p.id }),
+                /* @__PURE__ */ e(z, { t: b.tone, children: b.label })
               ] }),
-              /* @__PURE__ */ e(B, { t: _.tone, children: _.label })
+              /* @__PURE__ */ e(z, { t: E.tone, children: E.label })
             ] }),
-            /* @__PURE__ */ e("p", { style: { margin: "10px 0 6px", fontSize: 13.5, lineHeight: 1.55 }, children: d.detail }),
-            /* @__PURE__ */ s("div", { className: "sme-small sme-muted", children: [
-              J(d.source_agent),
+            /* @__PURE__ */ e("p", { style: { margin: "10px 0 6px", fontSize: 13.5, lineHeight: 1.55 }, children: p.detail }),
+            /* @__PURE__ */ n("div", { className: "sme-small sme-muted", children: [
+              Z(p.source_agent),
               " · ",
-              oe(d.created_at),
-              /* @__PURE__ */ e(lt, { refs: d.evidence_refs, onOpen: i })
+              re(p.created_at),
+              /* @__PURE__ */ e(Ue, { refs: p.evidence_refs, onOpen: i })
             ] }),
-            d.status === "open" ? /* @__PURE__ */ s("div", { style: { marginTop: 12 }, children: [
+            p.status === "open" ? /* @__PURE__ */ n("div", { style: { marginTop: 12 }, children: [
               /* @__PURE__ */ e(
                 "textarea",
                 {
                   className: "sme-textarea",
-                  value: S,
+                  value: I,
                   placeholder: "Ghi chú của cán bộ (bắt buộc): căn cứ, chứng từ đã đối chiếu, việc cần ĐVKD bổ sung…",
-                  onChange: (K) => l({ ...u, [d.id]: K.target.value })
+                  onChange: (m) => d({ ...f, [p.id]: m.target.value })
                 }
               ),
-              /* @__PURE__ */ s("div", { className: "sme-row", style: { marginTop: 8, justifyContent: "flex-end" }, children: [
-                /* @__PURE__ */ e(R, { disabled: !S.trim(), busy: c === d.id + "needs_info", onClick: () => z(d.id, "needs_info"), children: "Yêu cầu bổ sung" }),
-                /* @__PURE__ */ e(R, { primary: !0, disabled: !S.trim(), busy: c === d.id + "confirmed", onClick: () => z(d.id, "confirmed"), children: "Xác nhận" })
+              /* @__PURE__ */ n("div", { className: "sme-row", style: { marginTop: 8, justifyContent: "flex-end" }, children: [
+                /* @__PURE__ */ e(L, { disabled: !I.trim(), busy: o === p.id + "needs_info", onClick: () => _(p.id, "needs_info"), children: "Yêu cầu bổ sung" }),
+                /* @__PURE__ */ e(L, { primary: !0, disabled: !I.trim(), busy: o === p.id + "confirmed", onClick: () => _(p.id, "confirmed"), children: "Xác nhận" })
               ] })
-            ] }) : /* @__PURE__ */ s("div", { className: `sme-decision ${Y(_.tone)}`, children: [
-              /* @__PURE__ */ e("b", { children: _.label }),
+            ] }) : /* @__PURE__ */ n("div", { className: `sme-decision ${Y(E.tone)}`, children: [
+              /* @__PURE__ */ e("b", { children: E.label }),
               " bởi ",
-              d.decided_by,
+              p.decided_by,
               " · ",
-              oe(d.decided_at),
-              /* @__PURE__ */ e("div", { style: { marginTop: 2 }, children: d.note })
+              re(p.decided_at),
+              /* @__PURE__ */ e("div", { style: { marginTop: 2 }, children: p.note })
             ] })
           ]
         },
-        d.id
+        p.id
       );
     })
-  ] }) : /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(Ve, { size: 30 }), title: "Không có mục cần rà soát" });
+  ] }) : /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(Fe, { size: 30 }), title: "Không có mục cần rà soát" });
 }
-function mn({ detail: t }) {
-  if (!t.audit.length) return /* @__PURE__ */ e(te, { icon: /* @__PURE__ */ e(Nt, { size: 30 }), title: "Chưa có nhật ký" });
-  const n = (i) => i.action === "verification" ? i.passed ? "ok" : "danger" : i.action === "review_decide" ? "accent" : i.action === "review_add" ? "warn" : "muted", r = (i) => {
-    var m, u;
-    const a = i.agent ? J(i.agent) : i.actor ?? "";
+function bn({ detail: t, onEvidence: s }) {
+  const r = t.checklist, i = t.crosschecks, l = t.case.sales_handover, [h, f] = x("open"), [d, o] = x("ALL"), [c, y] = x(!1), u = (r == null ? void 0 : r.items) ?? [], _ = F(() => u.filter((m) => m.rule_status !== "SKIPPED"), [u]), p = F(() => u.filter((m) => m.rule_status === "SKIPPED"), [u]), b = F(
+    () => _.filter((m) => m.rule_status !== "PASS").length,
+    [_]
+  );
+  K(() => {
+    b === 0 && h === "open" && f("all");
+  }, [b, h]);
+  const E = F(() => (c ? p : _).filter((S) => d !== "ALL" && S.group !== d ? !1 : c ? !0 : h === "open" ? S.rule_status !== "PASS" : h === "pass" ? S.rule_status === "PASS" : !0), [c, p, _, d, h]), I = F(
+    () => ((i == null ? void 0 : i.rules) ?? []).filter((m) => c || m.status !== "SKIPPED"),
+    [i, c]
+  );
+  return /* @__PURE__ */ n("div", { className: "sme-stack", children: [
+    l && /* @__PURE__ */ n("div", { className: "sme-card sme-review t-accent", children: [
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", children: [
+        /* @__PURE__ */ e("div", { className: "sme-strong", children: "Phiếu bàn giao từ ĐVKD (Sale)" }),
+        /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
+          l.submitted_by,
+          " · ",
+          re(l.submitted_at)
+        ] })
+      ] }),
+      l.submission_note && /* @__PURE__ */ n("div", { className: "sme-small", style: { marginTop: 6 }, children: [
+        /* @__PURE__ */ e("b", { children: "Giải trình ĐVKD:" }),
+        " ",
+        l.submission_note
+      ] }),
+      (l.waivers ?? []).length > 0 && /* @__PURE__ */ n("div", { className: "sme-small", style: { marginTop: 6 }, children: [
+        /* @__PURE__ */ n("b", { children: [
+          "Các mục ĐVKD xin miễn / bổ sung sau (",
+          l.waivers.length,
+          "):"
+        ] }),
+        /* @__PURE__ */ e("ul", { style: { margin: "4px 0 0", paddingLeft: 18 }, children: l.waivers.map((m) => /* @__PURE__ */ n("li", { children: [
+          /* @__PURE__ */ e("b", { children: m.title }),
+          ": ",
+          m.note || "Không có ghi chú"
+        ] }, m.key)) })
+      ] })
+    ] }),
+    i && /* @__PURE__ */ n("div", { className: "sme-card tight", style: { overflowX: "auto" }, children: [
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", style: { padding: "12px 14px 8px" }, children: [
+        /* @__PURE__ */ e("h3", { className: "sme-h3", children: "7 Quy tắc đối chiếu chéo trọng yếu (R1 → R7)" }),
+        /* @__PURE__ */ e(z, { t: i.overall_status === "PASS" ? "ok" : i.overall_status === "FAIL" ? "danger" : "warn", children: i.overall_status })
+      ] }),
+      /* @__PURE__ */ n("table", { className: "sme-table", children: [
+        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
+          /* @__PURE__ */ e("th", { style: { width: 52 }, children: "Mã" }),
+          /* @__PURE__ */ e("th", { children: "Quy tắc đối chiếu" }),
+          /* @__PURE__ */ e("th", { children: "Chứng từ & Bằng chứng" }),
+          /* @__PURE__ */ e("th", { children: "Kết quả" })
+        ] }) }),
+        /* @__PURE__ */ e("tbody", { children: I.map((m) => {
+          const S = Zt[m.status];
+          return /* @__PURE__ */ n("tr", { children: [
+            /* @__PURE__ */ e("td", { className: "sme-mono", children: m.id }),
+            /* @__PURE__ */ n("td", { children: [
+              /* @__PURE__ */ e("div", { className: "sme-strong", children: m.title }),
+              /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: m.detail })
+            ] }),
+            /* @__PURE__ */ n("td", { className: "sme-small", children: [
+              m.document_refs.length > 0 && /* @__PURE__ */ e("span", { className: "sme-mono", children: m.document_refs.join(", ") }),
+              m.evidence_refs.length > 0 && /* @__PURE__ */ e(Ue, { refs: m.evidence_refs, onOpen: s }),
+              m.document_refs.length === 0 && m.evidence_refs.length === 0 && /* @__PURE__ */ e("span", { className: "sme-muted", children: "—" })
+            ] }),
+            /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(z, { t: S.tone, children: S.label }) })
+          ] }, m.id);
+        }) })
+      ] })
+    ] }),
+    r && /* @__PURE__ */ n("div", { className: "sme-card tight", style: { overflowX: "auto" }, children: [
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", style: { padding: "12px 14px 8px", gap: 8 }, children: [
+        /* @__PURE__ */ n("div", { className: "sme-row sme-wrap", style: { gap: 8 }, children: [
+          /* @__PURE__ */ e("h3", { className: "sme-h3", children: "SME Master Checklist 2 lớp (Nhóm A → I)" }),
+          /* @__PURE__ */ e(z, { t: r.overall_status === "COMPLETE" ? "ok" : "danger", children: r.overall_status }),
+          /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
+            "PASS ",
+            r.counts.PASS,
+            " · MISSING ",
+            r.counts.MISSING_REQUIRED,
+            " · FAIL ",
+            r.counts.FAIL,
+            " · UNDETERMINED ",
+            r.counts.UNDETERMINED_CONDITION
+          ] })
+        ] }),
+        /* @__PURE__ */ e("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: p.length > 0 && /* @__PURE__ */ n(
+          L,
+          {
+            className: c ? "sme-toggle-on" : void 0,
+            onClick: () => y((m) => !m),
+            title: "Các mục SKIPPED được ẩn mặc định",
+            children: [
+              c ? /* @__PURE__ */ e(Ct, { size: 13 }) : /* @__PURE__ */ e(rt, { size: 13 }),
+              c ? "Quay lại mục áp dụng" : `Hiện mục không áp dụng (${p.length})`
+            ]
+          }
+        ) })
+      ] }),
+      /* @__PURE__ */ n("div", { className: "sme-between sme-wrap", style: { padding: "0 14px 10px", gap: 8 }, children: [
+        c ? /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
+          "Đang hiển thị ",
+          p.length,
+          " mục SKIPPED (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt)."
+        ] }) : /* @__PURE__ */ e("div", { className: "sme-filters", role: "tablist", children: [["open", `Cần lưu ý (${b})`], ["pass", `PASS (${r.counts.PASS})`], ["all", `Tất cả áp dụng (${_.length})`]].map(([m, S]) => /* @__PURE__ */ e(
+          "button",
+          {
+            type: "button",
+            role: "tab",
+            "aria-selected": h === m,
+            className: `sme-filter ${h === m ? "on" : ""}`,
+            onClick: () => f(m),
+            children: S
+          },
+          m
+        )) }),
+        /* @__PURE__ */ n("div", { className: "sme-filters", role: "group", "aria-label": "Nhóm checklist", children: [
+          /* @__PURE__ */ e("button", { type: "button", className: `sme-filter ${d === "ALL" ? "on" : ""}`, onClick: () => o("ALL"), children: "A–I" }),
+          r.groups.filter((m) => c ? m.counts.SKIPPED > 0 : m.total_applicable > 0).map((m) => /* @__PURE__ */ e(
+            "button",
+            {
+              type: "button",
+              className: `sme-filter ${d === m.group ? "on" : ""}`,
+              onClick: () => o(m.group),
+              title: m.label,
+              children: m.group
+            },
+            m.group
+          ))
+        ] })
+      ] }),
+      E.length === 0 ? /* @__PURE__ */ e("div", { style: { padding: 16 }, children: /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(Fe, { size: 26 }), title: "Không có hạng mục nào ở bộ lọc này" }) }) : /* @__PURE__ */ n("table", { className: "sme-table", children: [
+        /* @__PURE__ */ e("thead", { children: /* @__PURE__ */ n("tr", { children: [
+          /* @__PURE__ */ e("th", { children: "Hạng mục, Điều kiện (Lớp 1) & Rule (Lớp 2)" }),
+          /* @__PURE__ */ e("th", { children: "Nguồn" }),
+          /* @__PURE__ */ e("th", { children: "Chứng từ" }),
+          /* @__PURE__ */ e("th", { children: "Trạng thái" })
+        ] }) }),
+        /* @__PURE__ */ e("tbody", { children: E.map((m) => {
+          const S = Jt[m.rule_status];
+          return /* @__PURE__ */ n("tr", { children: [
+            /* @__PURE__ */ n("td", { children: [
+              /* @__PURE__ */ n("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
+                /* @__PURE__ */ e("span", { className: "sme-mono sme-small", children: m.group }),
+                /* @__PURE__ */ e("span", { className: "sme-strong", children: m.title }),
+                m.crosscheck_refs.length > 0 && /* @__PURE__ */ e("span", { className: "sme-chip sme-mono", children: m.crosscheck_refs.join(", ") })
+              ] }),
+              /* @__PURE__ */ n("div", { className: "sme-small sme-muted", children: [
+                "ĐK: ",
+                m.condition_label
+              ] }),
+              /* @__PURE__ */ n("div", { className: "sme-small sme-muted", children: [
+                "Rule: ",
+                m.rule_label
+              ] }),
+              m.fail_reasons.length > 0 && /* @__PURE__ */ e("div", { className: "sme-small", style: { marginTop: 3, color: m.rule_status === "FAIL" ? "var(--danger)" : void 0 }, children: m.fail_reasons.join("; ") })
+            ] }),
+            /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(z, { t: m.owner_role === "RM_INTERNAL" ? "accent" : "muted", children: m.owner_role === "RM_INTERNAL" ? "ĐVKD nội bộ" : "Khách hàng" }) }),
+            /* @__PURE__ */ e("td", { className: "sme-mono sme-small", children: m.document_refs.length ? m.document_refs.join(", ") : "—" }),
+            /* @__PURE__ */ e("td", { children: /* @__PURE__ */ e(z, { t: S.tone, children: S.label }) })
+          ] }, m.key);
+        }) })
+      ] })
+    ] })
+  ] });
+}
+function vn({ detail: t }) {
+  if (!t.audit.length) return /* @__PURE__ */ e(ee, { icon: /* @__PURE__ */ e(St, { size: 30 }), title: "Chưa có nhật ký" });
+  const s = (i) => i.action === "verification" ? i.passed ? "ok" : "danger" : i.action === "review_decide" || i.action === "case_handover_received" ? "accent" : i.action === "review_add" ? "warn" : "muted", r = (i) => {
+    var h, f;
+    const l = i.agent ? Z(i.agent) : i.actor ?? i.by ?? "";
     switch (i.action) {
       case "result_put":
-        return `${a} lưu kết quả v${i.version}${i.rerun_reason ? ` (chạy lại: ${i.rerun_reason})` : ""}`;
+        return `${l} lưu kết quả v${i.version}${i.rerun_reason ? ` (chạy lại: ${i.rerun_reason})` : ""}`;
       case "verification":
-        return `${a} v${i.version}: ${i.passed ? "đạt kiểm chứng" : "bị chặn"}`;
+        return `${l} v${i.version}: ${i.passed ? "đạt kiểm chứng" : "bị chặn"}`;
       case "evidence_add":
-        return `${a} thêm ${(i.ids ?? []).join(", ")}`;
+        return `${l} thêm ${(i.ids ?? []).join(", ")}`;
       case "review_add":
-        return `${a} thêm ${i.id} (${((m = Oe[i.reason_code]) == null ? void 0 : m.label) ?? i.reason_code})`;
+        return `${l} thêm ${i.id} (${((h = je[i.reason_code]) == null ? void 0 : h.label) ?? i.reason_code})`;
       case "review_decide":
-        return `${i.actor} ${((u = at[i.status]) == null ? void 0 : u.label.toLowerCase()) ?? i.status} ${i.id}`;
+        return `${i.actor} ${((f = ct[i.status]) == null ? void 0 : f.label.toLowerCase()) ?? i.status} ${i.id}`;
+      case "case_handover_received":
+        return `Nhận từ ${i.from_app ?? "sme-sales"} bởi ${i.by ?? ""}, ${i.documents ?? 0} chứng từ (${i.files_copied ?? 0} file)`;
       case "case_create":
         return `Luồng ${i.flow}, ${i.documents} chứng từ`;
       default:
-        return a;
+        return l;
     }
   };
-  return /* @__PURE__ */ e("div", { className: "sme-card", children: /* @__PURE__ */ e("div", { className: "sme-tl", children: [...t.audit].reverse().map((i, a) => /* @__PURE__ */ s("div", { className: `sme-tl-item ${Y(n(i))}`, children: [
-    /* @__PURE__ */ s("div", { className: "sme-between", children: [
-      /* @__PURE__ */ e("span", { className: "sme-strong", style: { fontSize: 13 }, children: Yt[i.action] ?? i.action }),
-      /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: oe(i.ts) })
+  return /* @__PURE__ */ e("div", { className: "sme-card", children: /* @__PURE__ */ e("div", { className: "sme-tl", children: [...t.audit].reverse().map((i, l) => /* @__PURE__ */ n("div", { className: `sme-tl-item ${Y(s(i))}`, children: [
+    /* @__PURE__ */ n("div", { className: "sme-between", children: [
+      /* @__PURE__ */ e("span", { className: "sme-strong", style: { fontSize: 13 }, children: tn[i.action] ?? i.action }),
+      /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: re(i.ts) })
     ] }),
     /* @__PURE__ */ e("div", { className: "sme-small sme-muted", children: r(i) })
-  ] }, a)) }) });
+  ] }, l)) }) });
 }
-function hn({ detail: t, flow: n, onAgent: r }) {
-  return /* @__PURE__ */ e("div", { className: "sme-card tight", children: /* @__PURE__ */ e("div", { className: "sme-steps", children: it.map((i) => /* @__PURE__ */ s("div", { className: "sme-phase", children: [
+function xn({ detail: t, flow: s, onAgent: r }) {
+  return /* @__PURE__ */ e("div", { className: "sme-card tight", children: /* @__PURE__ */ e("div", { className: "sme-steps", children: ot.map((i) => /* @__PURE__ */ n("div", { className: "sme-phase", children: [
     /* @__PURE__ */ e("span", { className: "sme-phase-name", children: i.name }),
-    i.agents.map((a) => {
-      const m = a === "industry" && n !== "B" && !t.results[a], u = m ? "none" : Ee(t.results[a]);
-      return /* @__PURE__ */ s(
+    i.agents.map((l) => {
+      const h = l === "industry" && s !== "B" && !t.results[l], f = h ? "none" : De(t.results[l]);
+      return /* @__PURE__ */ n(
         "button",
         {
           type: "button",
-          className: `sme-node ${Y(xe[u].tone)} ${m || u === "none" ? "skip" : ""}`,
-          disabled: m || u === "none",
-          title: m ? "Chỉ chạy ở luồng B" : xe[u].label,
-          onClick: () => r(a),
+          className: `sme-node ${Y(xe[f].tone)} ${h || f === "none" ? "skip" : ""}`,
+          disabled: h || f === "none",
+          title: h ? "Chỉ chạy ở luồng B" : xe[f].label,
+          onClick: () => r(l),
           children: [
-            /* @__PURE__ */ e("span", { className: "dot", children: /* @__PURE__ */ e(ct, { state: u, size: 12 }) }),
-            /* @__PURE__ */ s("span", { children: [
-              J(a),
-              m ? " (luồng B)" : ""
+            /* @__PURE__ */ e("span", { className: "dot", children: /* @__PURE__ */ e(mt, { state: f, size: 12 }) }),
+            /* @__PURE__ */ n("span", { children: [
+              Z(l),
+              h ? " (luồng B)" : ""
             ] })
           ]
         },
-        a
+        l
       );
     })
   ] }, i.name)) }) });
 }
-function Re({ label: t, children: n }) {
-  return /* @__PURE__ */ s("div", { className: "sme-between sme-small", style: { padding: "5px 0" }, children: [
+function Oe({ label: t, children: s }) {
+  return /* @__PURE__ */ n("div", { className: "sme-between sme-small", style: { padding: "5px 0" }, children: [
     /* @__PURE__ */ e("span", { className: "sme-muted", children: t }),
-    /* @__PURE__ */ e("span", { style: { textAlign: "right" }, children: n })
+    /* @__PURE__ */ e("span", { style: { textAlign: "right" }, children: s })
   ] });
 }
-function pn({
+function yn({
   caseId: t,
-  assistantOpen: n,
+  assistantOpen: s,
   syncTick: r,
   onBack: i,
-  onToggleAssistant: a,
-  onAskAssistant: m,
-  onCaseMetaChange: u
+  onToggleAssistant: l,
+  onAskAssistant: h,
+  onCaseMetaChange: f
 }) {
-  var re, ce, we, be, ie;
-  const l = Qe(), [c, o] = k(null), [w, h] = k(null), [z, d] = k(!1), [b, _] = k("overview"), [S, K] = k(null), [q, G] = k(null), [D, W] = k(null), x = H(0), C = H(!1), g = O(async (p = !1) => {
-    if (!(p && C.current)) {
-      p ? C.current = !0 : d(!0);
+  var ae, Ne, _e, fe, Ce;
+  const d = et(), [o, c] = x(null), [y, u] = x(null), [_, p] = x(!1), [b, E] = x("overview"), [I, m] = x(null), [S, Q] = x(null), [P, U] = x(null), [w, A] = x(null), v = j(0), N = j(!1), R = async (a) => {
+    A(a);
+    try {
+      const g = await d.get(`${Ie}/cases/${t}/documents/${a}/file`), T = atob(g.content_b64), C = new Uint8Array(T.length);
+      for (let V = 0; V < T.length; V++) C[V] = T.charCodeAt(V);
+      const D = new Blob([C], { type: g.mime || "application/octet-stream" }), le = URL.createObjectURL(D);
+      if (g.mime.startsWith("image/") || g.mime === "application/pdf" || g.mime.startsWith("text/")) {
+        if (!window.open(le, "_blank", "noopener")) {
+          const Ke = document.createElement("a");
+          Ke.href = le, Ke.download = g.name, Ke.click();
+        }
+      } else {
+        const V = document.createElement("a");
+        V.href = le, V.download = g.name, V.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(le), 6e4);
+    } catch (g) {
+      u(be(g));
+    } finally {
+      A(null);
+    }
+  }, O = q(async (a = !1) => {
+    if (!(a && N.current)) {
+      a ? N.current = !0 : p(!0);
       try {
-        o(await l.get(`${qe}/cases/${t}`)), h(null), x.current = Date.now();
-      } catch (X) {
-        p || h(ze(X));
+        c(await d.get(`${Ie}/cases/${t}`)), u(null), v.current = Date.now();
+      } catch (g) {
+        a || u(be(g));
       } finally {
-        p ? C.current = !1 : d(!1);
+        a ? N.current = !1 : p(!1);
       }
     }
-  }, [l, t]);
-  L(() => {
-    g();
-  }, [g]), L(() => {
-    r > 0 && g(!0);
-  }, [r, g]), L(() => {
-    const p = () => {
-      document.visibilityState !== "hidden" && Date.now() - x.current >= 3e3 && g(!0);
+  }, [d, t]);
+  K(() => {
+    O();
+  }, [O]), K(() => {
+    r > 0 && O(!0);
+  }, [r, O]), K(() => {
+    const a = () => {
+      document.visibilityState !== "hidden" && Date.now() - v.current >= 3e3 && O(!0);
     };
-    return window.addEventListener("focus", p), document.addEventListener("visibilitychange", p), () => {
-      window.removeEventListener("focus", p), document.removeEventListener("visibilitychange", p);
+    return window.addEventListener("focus", a), document.addEventListener("visibilitychange", a), () => {
+      window.removeEventListener("focus", a), document.removeEventListener("visibilitychange", a);
     };
-  }, [g]);
-  const v = ae(() => c ? Jt(c) : {}, [c]), N = (c == null ? void 0 : c.review.filter((p) => p.status === "open")) ?? [], ne = ae(
-    () => c ? ve.filter((p) => Ee(c.results[p]) === "blocked").length : 0,
-    [c]
-  ), ue = (re = v.policy) == null ? void 0 : re.rows.filter((p) => p.status === "not_met").length, Q = ((we = (ce = v.dscr) == null ? void 0 : ce.scenarios.find((p) => p.stress_pct === 0)) == null ? void 0 : we.dscr) ?? null, M = (p) => {
-    K(p), _("evidence");
-  }, se = (p) => {
-    G(p), _("review");
-  }, F = (p) => {
-    W(p), _("agents");
-  }, ge = async (p, X, ke) => {
+  }, [O]);
+  const H = F(() => o ? sn(o) : {}, [o]), M = (o == null ? void 0 : o.review.filter((a) => a.status === "open")) ?? [], W = F(
+    () => o ? ve.filter((a) => De(o.results[a]) === "blocked").length : 0,
+    [o]
+  ), J = (ae = H.policy) == null ? void 0 : ae.rows.filter((a) => a.status === "not_met").length, B = ((_e = (Ne = H.dscr) == null ? void 0 : Ne.scenarios.find((a) => a.stress_pct === 0)) == null ? void 0 : _e.dscr) ?? null, te = (a) => {
+    m(a), E("evidence");
+  }, ye = (a) => {
+    Q(a), E("review");
+  }, we = (a) => {
+    U(a), E("agents");
+  }, oe = async (a, g, T) => {
     try {
-      return await l.post(`${qe}/cases/${t}/review/${p}`, { status: X, note: ke }), await g(), !0;
-    } catch (Ae) {
-      return h(ze(Ae)), !1;
+      return await d.post(`${Ie}/cases/${t}/review/${a}`, { status: g, note: T }), await O(), !0;
+    } catch (C) {
+      return u(be(C)), !1;
     }
-  }, $ = c == null ? void 0 : c.case, V = ($ == null ? void 0 : $.customer) ?? {}, A = ($ == null ? void 0 : $.request) ?? {}, P = V.name ? String(V.name) : void 0, le = ($ == null ? void 0 : $.flow) ?? "A", U = N.length > 0 || ne > 0;
-  L(() => {
-    u({ customerName: P, flow: le, hasIssues: U });
-  }, [P, le, U, u]);
-  const Z = () => m(`Chạy thẩm định hồ sơ ${t}, luồng ${le}.`, "prefill"), ye = (p, X) => m(
-    `Giải thích chi tiết kết quả, bằng chứng và điểm cần lưu ý của agent ${X} (${p}) trên hồ sơ ${t}.`,
+  }, k = o == null ? void 0 : o.case, G = (k == null ? void 0 : k.customer) ?? {}, $ = (k == null ? void 0 : k.request) ?? {}, ne = G.name ? String(G.name) : void 0, ce = (k == null ? void 0 : k.flow) ?? "A", de = M.length > 0 || W > 0;
+  K(() => {
+    f({ customerName: ne, flow: ce, hasIssues: de });
+  }, [ne, ce, de, f]);
+  const ie = () => h(`Chạy thẩm định hồ sơ ${t}, luồng ${ce}.`, "prefill"), ge = (a, g) => h(
+    `Giải thích chi tiết kết quả, bằng chứng và điểm cần lưu ý của agent ${g} (${a}) trên hồ sơ ${t}.`,
     "prefill"
-  ), fe = [
+  ), Le = F(() => {
+    var g;
+    const a = (g = o == null ? void 0 : o.checklist) == null ? void 0 : g.counts;
+    return a ? (a.MISSING_REQUIRED ?? 0) + (a.FAIL ?? 0) + (a.UNDETERMINED_CONDITION ?? 0) : 0;
+  }, [o]), ke = [
     { key: "overview", label: "Tổng quan" },
-    { key: "agents", label: "Kết quả agent", count: c ? Object.keys(c.results).length : void 0 },
-    { key: "evidence", label: "Bằng chứng", count: c ? Object.keys(c.evidence).length : void 0 },
-    { key: "review", label: "Rà soát", count: N.length || void 0 },
+    { key: "checklist", label: "Checklist & Đối chiếu", count: Le || void 0 },
+    { key: "agents", label: "Kết quả agent", count: o ? Object.keys(o.results).length : void 0 },
+    { key: "evidence", label: "Bằng chứng", count: o ? Object.keys(o.evidence).length : void 0 },
+    { key: "review", label: "Rà soát", count: M.length || void 0 },
     { key: "audit", label: "Audit" }
   ];
-  return /* @__PURE__ */ s("div", { className: "sme-scroll", style: { paddingTop: 16 }, children: [
-    /* @__PURE__ */ s("div", { className: "sme-hero", children: [
-      /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-        /* @__PURE__ */ s("button", { type: "button", className: "sme-back", onClick: i, children: [
-          /* @__PURE__ */ e(_t, { size: 14 }),
+  return /* @__PURE__ */ n("div", { className: "sme-scroll", style: { paddingTop: 16 }, children: [
+    /* @__PURE__ */ n("div", { className: "sme-hero", children: [
+      /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+        /* @__PURE__ */ n("button", { type: "button", className: "sme-back", onClick: i, children: [
+          /* @__PURE__ */ e(Et, { size: 14 }),
           " Tất cả hồ sơ"
         ] }),
-        /* @__PURE__ */ e("h1", { className: "sme-title", children: String(V.name ?? t) }),
-        /* @__PURE__ */ s("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
+        /* @__PURE__ */ e("h1", { className: "sme-title", children: String(G.name ?? t) }),
+        /* @__PURE__ */ n("div", { className: "sme-row sme-wrap", style: { gap: 6 }, children: [
           /* @__PURE__ */ e("span", { className: "sme-chip sme-mono", children: t }),
-          $ && /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+          k && /* @__PURE__ */ n("span", { className: "sme-chip", children: [
             "Luồng ",
-            $.flow
+            k.flow
           ] }),
-          V.industry_code && /* @__PURE__ */ s("span", { className: "sme-chip", children: [
+          (k == null ? void 0 : k.sales_handover) && /* @__PURE__ */ e(z, { t: "accent", children: "Nhận từ ĐVKD" }),
+          (o == null ? void 0 : o.checklist) && /* @__PURE__ */ n(z, { t: o.checklist.overall_status === "COMPLETE" ? "ok" : "warn", children: [
+            "Checklist ",
+            o.checklist.overall_status
+          ] }),
+          G.industry_code && /* @__PURE__ */ n("span", { className: "sme-chip", children: [
             "Ngành ",
-            String(V.industry_code)
+            String(G.industry_code)
           ] }),
-          A.purpose && /* @__PURE__ */ e("span", { className: "sme-chip", children: rt[A.purpose] ?? A.purpose }),
-          $ && /* @__PURE__ */ s("span", { className: "sme-small sme-muted", children: [
+          $.purpose && /* @__PURE__ */ e("span", { className: "sme-chip", children: lt[$.purpose] ?? $.purpose }),
+          k && /* @__PURE__ */ n("span", { className: "sme-small sme-muted", children: [
             "Tạo ",
-            oe($.created_at)
+            re(k.created_at)
           ] })
         ] })
       ] }),
-      /* @__PURE__ */ s("div", { className: "sme-row sme-wrap", children: [
-        /* @__PURE__ */ e(R, { onClick: () => g(), busy: z, title: "Tải lại dữ liệu", children: /* @__PURE__ */ e(et, { size: 14 }) }),
-        /* @__PURE__ */ s(
-          R,
+      /* @__PURE__ */ n("div", { className: "sme-row sme-wrap", children: [
+        /* @__PURE__ */ e(L, { onClick: () => O(), busy: _, title: "Tải lại dữ liệu", children: /* @__PURE__ */ e(nt, { size: 14 }) }),
+        /* @__PURE__ */ n(
+          L,
           {
-            className: n ? "sme-toggle-on" : void 0,
-            "aria-pressed": n,
-            onClick: a,
-            title: n ? "Thu gọn trợ lý thẩm định" : "Mở trợ lý thẩm định bên phải",
+            className: s ? "sme-toggle-on" : void 0,
+            "aria-pressed": s,
+            onClick: l,
+            title: s ? "Thu gọn trợ lý thẩm định" : "Mở trợ lý thẩm định bên phải",
             children: [
               /* @__PURE__ */ e($e, { size: 14 }),
               " Trợ lý thẩm định"
             ]
           }
         ),
-        /* @__PURE__ */ s(R, { primary: !0, onClick: Z, children: [
-          /* @__PURE__ */ e(nt, { size: 14 }),
+        /* @__PURE__ */ n(L, { primary: !0, onClick: ie, children: [
+          /* @__PURE__ */ e(it, { size: 14 }),
           " Chạy thẩm định"
         ] })
       ] })
     ] }),
-    w && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(Ze, { title: "Có lỗi khi làm việc với hồ sơ", children: w }) }),
-    !c && !w && /* @__PURE__ */ s("div", { className: "sme-card sme-stack", children: [
+    y && /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(tt, { title: "Có lỗi khi làm việc với hồ sơ", children: y }) }),
+    !o && !y && /* @__PURE__ */ n("div", { className: "sme-card sme-stack", children: [
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "50%" } }),
       /* @__PURE__ */ e("div", { className: "sme-skel" }),
       /* @__PURE__ */ e("div", { className: "sme-skel", style: { width: "70%" } })
     ] }),
-    c && $ && /* @__PURE__ */ s(Je, { children: [
-      /* @__PURE__ */ s("div", { className: "sme-kpis", style: { marginBottom: 12 }, children: [
+    o && k && /* @__PURE__ */ n(Ze, { children: [
+      /* @__PURE__ */ n("div", { className: "sme-kpis", style: { marginBottom: 12 }, children: [
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
-            icon: /* @__PURE__ */ e(St, { size: 18 }),
+            icon: /* @__PURE__ */ e(It, { size: 18 }),
             label: "Số tiền đề nghị",
-            value: Lt(A.amount).replace(" đ", ""),
-            hint: [A.term_months ? `${A.term_months} tháng` : null, A.annual_rate_pct ? `lãi ${j(A.annual_rate_pct)}%/năm` : null].filter(Boolean).join(" · ") || "VND"
+            value: Mt($.amount).replace(" đ", ""),
+            hint: [$.term_months ? `${$.term_months} tháng` : null, $.annual_rate_pct ? `lãi ${X($.annual_rate_pct)}%/năm` : null].filter(Boolean).join(" · ") || "VND"
           }
         ),
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
-            t: Q == null ? "muted" : ((be = v.dscr) == null ? void 0 : be.threshold) !== void 0 && Q < v.dscr.threshold ? "danger" : "ok",
-            icon: /* @__PURE__ */ e(Tt, { size: 18 }),
+            t: B == null ? "muted" : ((fe = H.dscr) == null ? void 0 : fe.threshold) !== void 0 && B < H.dscr.threshold ? "danger" : "ok",
+            icon: /* @__PURE__ */ e(At, { size: 18 }),
             label: "DSCR cơ sở",
-            value: j(Q),
-            hint: ((ie = v.dscr) == null ? void 0 : ie.threshold) !== void 0 ? `Ngưỡng ≥ ${j(v.dscr.threshold)}` : "Chưa có phân tích"
+            value: X(B),
+            hint: ((Ce = H.dscr) == null ? void 0 : Ce.threshold) !== void 0 ? `Ngưỡng ≥ ${X(H.dscr.threshold)}` : "Chưa có phân tích"
           }
         ),
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
-            t: ue == null ? "muted" : ue > 0 ? "danger" : "ok",
+            t: J == null ? "muted" : J > 0 ? "danger" : "ok",
             icon: /* @__PURE__ */ e(zt, { size: 18 }),
             label: "Điều kiện không đạt",
-            value: ue ?? "—",
-            hint: v.policy ? `${v.policy.rows.length} điều kiện · ${v.policy.product}` : "Chưa kiểm tra chính sách"
+            value: J ?? "—",
+            hint: H.policy ? `${H.policy.rows.length} điều kiện · ${H.policy.product}` : "Chưa kiểm tra chính sách"
           }
         ),
         /* @__PURE__ */ e(
-          ee,
+          se,
           {
-            t: N.length ? "warn" : "ok",
-            icon: /* @__PURE__ */ e(tt, { size: 18 }),
+            t: M.length ? "warn" : "ok",
+            icon: /* @__PURE__ */ e(st, { size: 18 }),
             label: "Chờ cán bộ rà soát",
-            value: N.length,
-            hint: `${c.review.length} mục tổng cộng`
+            value: M.length,
+            hint: `${o.review.length} mục tổng cộng`
           }
         )
       ] }),
-      /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(hn, { detail: c, flow: $.flow, onAgent: F }) }),
-      /* @__PURE__ */ s("div", { className: "sme-detail", children: [
-        /* @__PURE__ */ s("div", { style: { minWidth: 0 }, children: [
-          /* @__PURE__ */ e("div", { className: "sme-tabs", role: "tablist", children: fe.map((p) => /* @__PURE__ */ s(
+      /* @__PURE__ */ e("div", { style: { marginBottom: 16 }, children: /* @__PURE__ */ e(xn, { detail: o, flow: k.flow, onAgent: we }) }),
+      /* @__PURE__ */ n("div", { className: "sme-detail", children: [
+        /* @__PURE__ */ n("div", { style: { minWidth: 0 }, children: [
+          /* @__PURE__ */ e("div", { className: "sme-tabs", role: "tablist", children: ke.map((a) => /* @__PURE__ */ n(
             "button",
             {
               type: "button",
               role: "tab",
-              "aria-selected": b === p.key,
-              className: `sme-tab ${b === p.key ? "on" : ""}`,
-              onClick: () => _(p.key),
+              "aria-selected": b === a.key,
+              className: `sme-tab ${b === a.key ? "on" : ""}`,
+              onClick: () => E(a.key),
               children: [
-                p.label,
-                p.count !== void 0 && /* @__PURE__ */ e("span", { className: "sme-count", children: p.count })
+                a.label,
+                a.count !== void 0 && /* @__PURE__ */ e("span", { className: "sme-count", children: a.count })
               ]
             },
-            p.key
+            a.key
           )) }),
-          b === "overview" && /* @__PURE__ */ e(an, { detail: c, m: v, onEvidence: M, goAgents: () => _("agents") }),
+          b === "overview" && /* @__PURE__ */ e(hn, { detail: o, m: H, onEvidence: te, goAgents: () => E("agents") }),
+          b === "checklist" && /* @__PURE__ */ e(bn, { detail: o, onEvidence: te }),
           b === "agents" && /* @__PURE__ */ e(
-            ln,
+            un,
             {
-              detail: c,
-              openAgent: D,
-              onEvidence: M,
-              onRunAssessment: Z,
-              onAskAgent: ye
+              detail: o,
+              openAgent: P,
+              onEvidence: te,
+              onRunAssessment: ie,
+              onAskAgent: ge
             }
           ),
-          b === "evidence" && /* @__PURE__ */ e(cn, { detail: c, focus: S }),
-          b === "review" && /* @__PURE__ */ e(dn, { detail: c, focus: q, onDecide: ge, onEvidence: M }),
-          b === "audit" && /* @__PURE__ */ e(mn, { detail: c })
+          b === "evidence" && /* @__PURE__ */ e(gn, { detail: o, focus: I }),
+          b === "review" && /* @__PURE__ */ e(fn, { detail: o, focus: S, onDecide: oe, onEvidence: te }),
+          b === "audit" && /* @__PURE__ */ e(vn, { detail: o })
         ] }),
-        /* @__PURE__ */ s("aside", { className: "sme-aside", children: [
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 4 }, children: [
+        /* @__PURE__ */ n("aside", { className: "sme-aside", children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
+            /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 4 }, children: [
               /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Cần xử lý" }),
-              /* @__PURE__ */ e(B, { t: N.length ? "warn" : "ok", children: N.length })
+              /* @__PURE__ */ e(z, { t: M.length ? "warn" : "ok", children: M.length })
             ] }),
-            N.length === 0 && /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { padding: "8px 0" }, children: "Không còn mục chờ rà soát." }),
-            N.slice(0, 6).map((p) => {
-              const X = Oe[p.reason_code] ?? { label: p.reason_code, tone: "muted" };
-              return /* @__PURE__ */ s("button", { type: "button", className: "sme-todo", onClick: () => se(p.id), children: [
-                /* @__PURE__ */ e(B, { t: X.tone, children: p.id }),
-                /* @__PURE__ */ s("span", { className: "sme-todo-text", children: [
-                  /* @__PURE__ */ s("b", { children: [
-                    X.label,
+            M.length === 0 && /* @__PURE__ */ e("div", { className: "sme-small sme-muted", style: { padding: "8px 0" }, children: "Không còn mục chờ rà soát." }),
+            M.slice(0, 6).map((a) => {
+              const g = je[a.reason_code] ?? { label: a.reason_code, tone: "muted" };
+              return /* @__PURE__ */ n("button", { type: "button", className: "sme-todo", onClick: () => ye(a.id), children: [
+                /* @__PURE__ */ e(z, { t: g.tone, children: a.id }),
+                /* @__PURE__ */ n("span", { className: "sme-todo-text", children: [
+                  /* @__PURE__ */ n("b", { children: [
+                    g.label,
                     "."
                   ] }),
                   " ",
-                  p.detail
+                  a.detail
                 ] })
-              ] }, p.id);
+              ] }, a.id);
             }),
-            N.length > 6 && /* @__PURE__ */ s("button", { type: "button", className: "sme-ref", style: { marginTop: 6 }, onClick: () => _("review"), children: [
+            M.length > 6 && /* @__PURE__ */ n("button", { type: "button", className: "sme-ref", style: { marginTop: 6 }, onClick: () => E("review"), children: [
               "Xem thêm ",
-              N.length - 6,
+              M.length - 6,
               " mục"
             ] })
           ] }),
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
             /* @__PURE__ */ e("h3", { className: "sme-h3", style: { marginBottom: 6 }, children: "Khách hàng" }),
-            /* @__PURE__ */ e(Re, { label: "CIF", children: String(V.cif ?? "—") }),
-            /* @__PURE__ */ e(Re, { label: "Mã số thuế", children: String(V.tax_id ?? "—") }),
-            /* @__PURE__ */ e(Re, { label: "Số năm hoạt động", children: V.years_in_operation ?? "—" }),
-            A.proposal && /* @__PURE__ */ s("div", { className: "sme-small", style: { marginTop: 8 }, children: [
+            /* @__PURE__ */ e(Oe, { label: "CIF", children: String(G.cif ?? "—") }),
+            /* @__PURE__ */ e(Oe, { label: "Mã số thuế", children: String(G.tax_id ?? "—") }),
+            /* @__PURE__ */ e(Oe, { label: "Số năm hoạt động", children: G.years_in_operation ?? "—" }),
+            $.proposal && /* @__PURE__ */ n("div", { className: "sme-small", style: { marginTop: 8 }, children: [
               /* @__PURE__ */ e("div", { className: "sme-section-title", style: { marginBottom: 4 }, children: "Đề xuất ĐVKD" }),
-              String(A.proposal)
+              String($.proposal)
             ] })
           ] }),
-          /* @__PURE__ */ s("div", { className: "sme-card", children: [
-            /* @__PURE__ */ s("div", { className: "sme-between", style: { marginBottom: 6 }, children: [
+          /* @__PURE__ */ n("div", { className: "sme-card", children: [
+            /* @__PURE__ */ n("div", { className: "sme-between", style: { marginBottom: 6 }, children: [
               /* @__PURE__ */ e("h3", { className: "sme-h3", children: "Chứng từ" }),
-              /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: $.documents.length })
+              /* @__PURE__ */ e("span", { className: "sme-small sme-muted", children: k.documents.length })
             ] }),
-            $.documents.map((p) => /* @__PURE__ */ s("div", { className: "sme-row sme-small", style: { padding: "5px 0" }, children: [
+            k.documents.map((a) => /* @__PURE__ */ n("div", { className: "sme-row sme-small", style: { padding: "5px 0", gap: 6 }, children: [
               /* @__PURE__ */ e($t, { size: 14, className: "sme-muted" }),
-              /* @__PURE__ */ e("span", { style: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }, children: p.name }),
-              /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: p.id })
-            ] }, p.id))
+              /* @__PURE__ */ e("span", { style: { flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }, title: a.name, children: a.name }),
+              /* @__PURE__ */ e("span", { className: "sme-mono sme-muted", children: a.id }),
+              a.file && /* @__PURE__ */ e(L, { busy: w === a.id, onClick: () => R(a.id), title: "Xem hoặc tải chứng từ", children: /\.(pdf|png|jpe?g|webp|txt)$/i.test(a.name) ? /* @__PURE__ */ e(rt, { size: 12 }) : /* @__PURE__ */ e(Dt, { size: 12 }) })
+            ] }, a.id))
           ] }),
-          c.audit.length > 0 && /* @__PURE__ */ s("div", { className: "sme-small sme-muted sme-row", style: { padding: "0 4px" }, children: [
-            /* @__PURE__ */ e(Et, { size: 13 }),
+          o.audit.length > 0 && /* @__PURE__ */ n("div", { className: "sme-small sme-muted sme-row", style: { padding: "0 4px" }, children: [
+            /* @__PURE__ */ e(Lt, { size: 13 }),
             " Hoạt động gần nhất ",
-            oe(c.audit[c.audit.length - 1].ts)
+            re(o.audit[o.audit.length - 1].ts)
           ] })
         ] })
       ] })
     ] })
   ] });
 }
-Vt();
-const Ye = "sme-lending:assistant-open", Ue = "sme-lending:assistant-width", un = "sme-lending-chat-";
-function yn() {
-  const [t, n] = k(null), [r, i] = k(() => Bt(Ye)), [a, m] = k(() => qt(Ue)), [u, l] = k(null), [c, o] = k(null), [w, h] = k(null), z = H(0), { syncTick: d } = Ot(r, 3500), b = O((x) => {
-    i((C) => {
-      const g = typeof x == "function" ? x(C) : x;
-      return Kt(Ye, g), g;
+Xt();
+const Ye = "sme-lending:assistant-open", Je = "sme-lending:assistant-width", wn = "sme-lending-chat-";
+function Tn() {
+  const [t, s] = x(null), [r, i] = x(() => Bt(Ye)), [l, h] = x(() => Ft(Je)), [f, d] = x(null), [o, c] = x(null), [y, u] = x(null), _ = j(0), { syncTick: p } = Vt(r, 3500), b = q((w) => {
+    i((A) => {
+      const v = typeof w == "function" ? w(A) : w;
+      return qt(Ye, v), v;
     });
-  }, []), _ = O((x) => {
-    const C = Me(x);
-    m(C), Mt(Ue, C);
-  }, []), S = O((x, C = "prefill") => {
-    b(!0), l({ id: ++z.current, prompt: x, mode: C });
-  }, [b]), K = O(() => {
-    l(null);
-  }, []), q = O((x) => {
-    h(null), o(null), n(x);
-  }, []), G = O(() => {
-    o(null), n(null);
-  }, []), D = O((x) => {
-    o((C) => C === x || C && x && C.customerName === x.customerName && C.flow === x.flow && C.hasIssues === x.hasIssues ? C : x);
-  }, []), W = ae(() => {
+  }, []), E = q((w) => {
+    const A = Ve(w);
+    h(A), Ht(Je, A);
+  }, []), I = q((w, A = "prefill") => {
+    b(!0), d({ id: ++_.current, prompt: w, mode: A });
+  }, [b]), m = q(() => {
+    d(null);
+  }, []), S = q((w) => {
+    u(null), c(null), s(w);
+  }, []), Q = q(() => {
+    c(null), s(null);
+  }, []), P = q((w) => {
+    c((A) => A === w || A && w && A.customerName === w.customerName && A.flow === w.flow && A.hasIssues === w.hasIssues ? A : w);
+  }, []), U = F(() => {
     if (!t)
       return [{
         label: "Hồ sơ chờ xử lý",
         prompt: "Rà soát danh sách các hồ sơ thẩm định đang có mục chờ cán bộ xử lý hoặc kết quả bị chặn kiểm chứng."
       }];
-    const x = [
+    const w = [
       {
         label: "Chạy thẩm định",
-        prompt: `Chạy thẩm định hồ sơ ${t}, luồng ${(c == null ? void 0 : c.flow) ?? "A"}.`
+        prompt: `Chạy thẩm định hồ sơ ${t}, luồng ${(o == null ? void 0 : o.flow) ?? "A"}.`
       },
       {
         label: "Giải thích kết quả",
         prompt: `Giải thích tóm tắt kết quả thẩm định, các cảnh báo mức cao và mã bằng chứng chính của hồ sơ ${t}.`
       }
     ];
-    return c != null && c.hasIssues && x.push({
+    return o != null && o.hasIssues && w.push({
       label: "Phân tích mục chặn",
       prompt: `Phân tích các mục chờ rà soát và kết quả bị chặn kiểm chứng của hồ sơ ${t}, nêu rõ chứng từ cần đối chiếu.`
-    }), x;
-  }, [t, c]);
-  return /* @__PURE__ */ e("div", { className: "sme", style: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }, children: /* @__PURE__ */ s("div", { className: "sme-workspace", children: [
+    }), w;
+  }, [t, o]);
+  return /* @__PURE__ */ e("div", { className: "sme", style: { display: "flex", flexDirection: "column", flex: 1, minHeight: 0, height: "100%" }, children: /* @__PURE__ */ n("div", { className: "sme-workspace", children: [
     /* @__PURE__ */ e("div", { className: "sme-main", children: t ? /* @__PURE__ */ e(
-      pn,
+      yn,
       {
         caseId: t,
         assistantOpen: r,
-        syncTick: d,
-        onBack: G,
-        onToggleAssistant: () => b((x) => !x),
-        onAskAssistant: S,
-        onCaseMetaChange: D
+        syncTick: p,
+        onBack: Q,
+        onToggleAssistant: () => b((w) => !w),
+        onAskAssistant: I,
+        onCaseMetaChange: P
       }
     ) : /* @__PURE__ */ e(
-      tn,
+      on,
       {
-        onOpen: q,
+        onOpen: S,
         assistantOpen: r,
-        syncTick: d,
-        onToggleAssistant: () => b((x) => !x),
-        onAskAssistant: S,
-        onCreatedCase: h
+        syncTick: p,
+        onToggleAssistant: () => b((w) => !w),
+        onAskAssistant: I,
+        onCreatedCase: u
       }
     ) }),
     r && /* @__PURE__ */ e(
-      Ht,
+      Wt,
       {
         storagePrefix: "sme-lending",
-        chatPrefix: un,
-        agent: jt,
+        chatPrefix: wn,
+        agent: Qt,
         panelLabel: "Trợ lý thẩm định",
         newIntakePrompt: "Tạo hồ sơ thẩm định SME mới: ",
         newSessionTitle: "Hồ sơ SME mới",
         caseTitlePrefix: "Thẩm định",
-        chips: W,
+        chips: U,
         attachDefaultPrefix: t ? `Tôi gửi thêm chứng từ cho hồ sơ thẩm định ${t}: ` : void 0,
         embedPlaceholder: t ? `Hỏi trợ lý hoặc chạy thẩm định cho ${t}...` : "Cung cấp thông tin khách hàng hoặc chứng từ để tạo hồ sơ thẩm định...",
-        width: a,
-        onWidthChange: _,
+        width: l,
+        onWidthChange: E,
         onClose: () => b(!1),
         caseId: t,
-        customerName: t ? c == null ? void 0 : c.customerName : void 0,
-        intent: u,
-        onConsumeIntent: K,
-        createdCase: w,
-        onOpenCase: q,
-        onDismissCreatedCase: () => h(null)
+        customerName: t ? o == null ? void 0 : o.customerName : void 0,
+        intent: f,
+        onConsumeIntent: m,
+        createdCase: y,
+        onOpenCase: S,
+        onDismissCreatedCase: () => u(null)
       }
     )
   ] }) });
 }
 export {
-  yn as default
+  Tn as default
 };

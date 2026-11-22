@@ -5,11 +5,14 @@
 
 from __future__ import annotations
 
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from . import integrations
+from .checklist_engine import evaluate_checklist
 from .collateral import collateral_ltv
+from .crosscheck import evaluate_crosschecks
 from .finance import fin_ratios, repayment_capacity
 from .knowledge import Knowledge
 from .store import CaseStore
@@ -29,6 +32,8 @@ class LendingService:
             "collateral_ltv": lambda i: collateral_ltv(i["loan_amount"], i["assets"], i["as_of"],
                                                        self.kb.collateral_rules()),
             "policy_check": lambda i: self.kb.policy_check(i["product_code"], i["facts"], i["as_of"]),
+            "checklist_eval": lambda i: self.checklist_evaluate(i["case_id"], i.get("as_of", "")),
+            "crosscheck_eval": lambda i: self.crosscheck_evaluate(i["case_id"], i.get("as_of", "")),
         }
 
     # -- case --------------------------------------------------------------
@@ -89,6 +94,30 @@ class LendingService:
 
     def collateral_ltv(self, loan_amount: float, assets: list, as_of: str) -> dict:
         return collateral_ltv(loan_amount, assets, as_of, self.kb.collateral_rules())
+
+    def checklist_evaluate(self, case_id: str, as_of: str = "") -> dict[str, Any]:
+        """Evaluate the two-layer Master Checklist (Groups A-I) for a case."""
+        case = self.store.get_case(case_id)
+        day = as_of or self.store.clock()[:10]
+        return evaluate_checklist(
+            case,
+            self.kb.master_checklist(),
+            self.kb.documents(),
+            as_of=day,
+            products_meta=self.kb.products(),
+        )
+
+    def crosscheck_evaluate(self, case_id: str, as_of: str = "") -> dict[str, Any]:
+        """Run all 7 core cross-check rules (R1-R7) for a case."""
+        case = self.store.get_case(case_id)
+        ev = self.store.get_evidence(case_id)
+        day = as_of or self.store.clock()[:10]
+        return evaluate_crosschecks(
+            case,
+            evidence=ev,
+            as_of=day,
+            products_meta=self.kb.products(),
+        )
 
     # -- verification ------------------------------------------------------
     def verify_result(self, case_id: str, agent: str) -> dict:

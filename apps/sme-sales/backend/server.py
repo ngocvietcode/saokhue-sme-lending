@@ -114,15 +114,11 @@ class Api:
         return 200, {"draft": draft, "overview": self.svc.overview(case_id)}
 
     def mark_submitted(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
-        """Record a manual submission. Not ready is allowed only with a written reason."""
+        """Record submission and trigger the configured HandoverAdapter (local_lending / central_los)."""
         if refused := owner_only(claim):
             return refused
         note = _text(body, "note")
-        ov = self.svc.overview(case_id)
-        if not ov["readiness"]["ready"] and not note.strip():
-            raise ValueError("the dossier still has blocking items; give a reason to submit anyway")
-        self.svc.store.mark_submitted(case_id, claim["ownerId"], note)
-        return 200, {"overview": self.svc.overview(case_id)}
+        return 200, {"overview": self.svc.submit_dossier(case_id, claim["ownerId"], note)}
 
     def reopen_case(self, body: dict, claim: dict | None, case_id: str) -> tuple[int, Any]:
         if refused := owner_only(claim):

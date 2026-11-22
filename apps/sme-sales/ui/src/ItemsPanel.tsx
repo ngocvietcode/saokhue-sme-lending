@@ -1,23 +1,29 @@
 import { Btn } from '@kirocrew/app-sdk/ui'
-import { Check, CheckCircle2, Copy, RotateCcw, Send, SkipForward, X } from 'lucide-react'
+import { Check, CheckCircle2, Copy, Eye, EyeOff, RotateCcw, Send, SkipForward, X } from 'lucide-react'
 import { Fragment, useMemo, useState } from 'react'
-import { Empty, Pill } from '@sme-ui/ui'
-import { ITEM_STATUS, copyText, day, type Catalog, type CheckItem, type DraftChannel } from './model'
+import { Banner, Empty, Pill } from '@sme-ui/ui'
+import {
+  ITEM_STATUS, RULE_STATUS_META, copyText, day, isCustomerRequestable, isSkipped,
+  type Catalog, type CheckItem, type DraftChannel,
+} from './model'
 import { ChannelSelect, DueDateInline } from './parts'
 
 export type SetStatus = (key: string, status: 'open' | 'requested' | 'waived', note?: string, dueDate?: string) => Promise<boolean>
-type Filter = 'blocked' | 'waiting' | 'advisory' | 'done' | 'all'
+type Filter = 'customer' | 'rm' | 'undetermined' | 'fail' | 'waiting' | 'done' | 'all'
 
 const FILTERS: [Filter, string, (i: CheckItem) => boolean][] = [
-  ['blocked', 'Cần bổ sung', (i) => i.status === 'open' && i.blocking],
+  ['customer', 'Cần xin KH', (i) => i.status === 'open' && i.blocking && (i.owner_role ?? 'CUSTOMER') === 'CUSTOMER' && i.rule_status !== 'UNDETERMINED_CONDITION'],
+  ['rm', 'ĐVKD nội bộ', (i) => i.status === 'open' && i.blocking && i.owner_role === 'RM_INTERNAL'],
+  ['undetermined', 'Chờ XĐ điều kiện', (i) => i.status === 'open' && i.rule_status === 'UNDETERMINED_CONDITION'],
+  ['fail', 'Không đạt rule', (i) => i.status === 'open' && i.rule_status === 'FAIL'],
   ['waiting', 'Chờ khách', (i) => i.status === 'requested'],
-  ['advisory', 'Khuyến nghị', (i) => i.status === 'open' && !i.blocking],
   ['done', 'Đã đạt / Miễn', (i) => ['ok', 'resolved', 'waived'].includes(i.status)],
-  ['all', 'Tất cả', () => true],
+  ['all', 'Tất cả áp dụng', () => true],
 ]
 
-function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggle, onSet, onOpenDoc }: {
-  it: CheckItem; asOf: string; groupLabel: string; checked: boolean; selectable: boolean; readOnly: boolean
+function ItemRows({ it, asOf, groupLabel, checked, selectable, skippedView, readOnly, onToggle, onSet, onOpenDoc }: {
+  it: CheckItem; asOf: string; groupLabel: string; checked: boolean; selectable: boolean
+  skippedView: boolean; readOnly: boolean
   onToggle: () => void; onSet: SetStatus; onOpenDoc: (docId: string) => void
 }) {
   const [mode, setMode] = useState<'none' | 'request' | 'waive'>('none')
@@ -25,8 +31,10 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
   const [busy, setBusy] = useState(false)
   const [copiedAsk, setCopiedAsk] = useState(false)
   const st = ITEM_STATUS[it.status]
+  const rstMeta = it.rule_status ? RULE_STATUS_META[it.rule_status] : null
   const open = it.status === 'open'
   const overdue = it.status === 'requested' && !!it.due_date && it.due_date < asOf
+  const isRm = it.owner_role === 'RM_INTERNAL'
 
   const run = async (status: 'open' | 'requested' | 'waived', dueDate?: string) => {
     setBusy(true)
@@ -49,7 +57,7 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
   return (
     <Fragment>
       <tr>
-        {!readOnly && (
+        {!readOnly && !skippedView && (
           <td style={{ width: 28 }}>
             {selectable && (
               <input type="checkbox" className="ss-check" checked={checked} onChange={onToggle}
@@ -58,9 +66,29 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
           </td>
         )}
         <td>
-          <div className="sme-strong">{it.title}</div>
-          <div className="sme-small sme-muted">{groupLabel}{it.reason ? ` · ${it.reason}` : ''}</div>
-          {(open || it.status === 'requested') && it.ask && (
+          <div className="sme-row sme-wrap" style={{ gap: 6 }}>
+            <span className="sme-strong">{it.title}</span>
+            <Pill t={isRm ? 'accent' : 'muted'}>{isRm ? 'ĐVKD nội bộ' : 'Khách hàng'}</Pill>
+            {(it.crosscheck_refs ?? []).length > 0 && (
+              <span className="sme-chip sme-mono" title="Rule đối chiếu chéo liên quan">
+                {it.crosscheck_refs!.join(', ')}
+              </span>
+            )}
+          </div>
+          <div className="sme-small sme-muted" style={{ marginTop: 2 }}>
+            {groupLabel}{it.condition_label ? ` · ĐK: ${it.condition_label}` : ''}
+          </div>
+          {it.rule_label && (
+            <div className="sme-small sme-muted" style={{ marginTop: 2 }}>
+              Rule kiểm tra: {it.rule_label}
+            </div>
+          )}
+          {it.reason && it.rule_status !== 'MISSING_REQUIRED' && (
+            <div className="sme-small" style={{ marginTop: 3, color: it.rule_status === 'FAIL' ? 'var(--danger)' : undefined }}>
+              {it.reason}
+            </div>
+          )}
+          {!skippedView && (open || it.status === 'requested') && it.ask && (
             <div className="sme-item-ask sme-between" style={{ gap: 8 }}>
               <span><b>Nội dung yêu cầu KH:</b> {it.ask}</span>
               <Btn onClick={copyAsk} title="Sao chép nội dung yêu cầu">
@@ -68,7 +96,7 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
               </Btn>
             </div>
           )}
-          {(open || it.status === 'requested') && it.alternatives.length > 0 && (
+          {!skippedView && (open || it.status === 'requested') && it.alternatives.length > 0 && (
             <div className="sme-small sme-muted" style={{ marginTop: 4 }}>
               Chứng từ thay thế: {it.alternatives.join('; ')}
             </div>
@@ -85,8 +113,9 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
         </td>
         <td>
           <div className="sme-row sme-wrap" style={{ gap: 4 }}>
-            <Pill t={st.tone}>{st.label}</Pill>
-            {it.blocking && (open || it.status === 'requested') && <Pill t="danger">Bắt buộc</Pill>}
+            {rstMeta ? <Pill t={rstMeta.tone}>{rstMeta.label}</Pill> : <Pill t={st.tone}>{st.label}</Pill>}
+            {!skippedView && it.status === 'requested' && <Pill t="info">Đã yêu cầu KH</Pill>}
+            {!skippedView && it.status === 'waived' && <Pill t="muted">Xin miễn</Pill>}
             {overdue && <Pill t="danger">Quá hạn ({day(it.due_date)})</Pill>}
           </div>
           {it.status === 'requested' && (
@@ -98,10 +127,10 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
             <div className="sme-small sme-muted" style={{ marginTop: 4 }}>Lý do: {it.note}</div>
           )}
         </td>
-        {!readOnly && (
+        {!readOnly && !skippedView && (
           <td style={{ whiteSpace: 'nowrap' }}>
             <div className="sme-row" style={{ gap: 4 }}>
-              {open && it.ask && (
+              {open && isCustomerRequestable(it) && (
                 <Btn busy={busy} onClick={() => setMode(mode === 'request' ? 'none' : 'request')} title="Đánh dấu đã yêu cầu khách">
                   <Send size={13} /> Đã yêu cầu
                 </Btn>
@@ -121,7 +150,7 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
           </td>
         )}
       </tr>
-      {!readOnly && mode === 'request' && (
+      {!readOnly && !skippedView && mode === 'request' && (
         <tr className="ss-inline-panel">
           <td colSpan={5}>
             <DueDateInline label="Hạn khách hàng bổ sung" confirmLabel="Xác nhận đã yêu cầu" busy={busy}
@@ -129,7 +158,7 @@ function ItemRows({ it, asOf, groupLabel, checked, selectable, readOnly, onToggl
           </td>
         </tr>
       )}
-      {!readOnly && mode === 'waive' && (
+      {!readOnly && !skippedView && mode === 'waive' && (
         <tr className="ss-inline-panel">
           <td colSpan={5}>
             <div className="sme-stack" style={{ gap: 8 }}>
@@ -156,18 +185,28 @@ export default function ItemsPanel({
   onOpenDoc: (docId: string) => void
 }) {
   const baseItems = useMemo(() => (groupFilter ? items.filter((i) => i.group === groupFilter) : items), [items, groupFilter])
-  const counts = Object.fromEntries(FILTERS.map(([k, , f]) => [k, baseItems.filter(f).length])) as Record<Filter, number>
-  const first = (FILTERS.find(([k]) => k !== 'all' && counts[k] > 0)?.[0] ?? 'done') as Filter
+  const applicableItems = useMemo(() => baseItems.filter((i) => !isSkipped(i)), [baseItems])
+  const skippedItems = useMemo(() => baseItems.filter(isSkipped), [baseItems])
+
+  const counts = Object.fromEntries(FILTERS.map(([k, , f]) => [k, applicableItems.filter(f).length])) as Record<Filter, number>
+  const first = (FILTERS.find(([k]) => k !== 'all' && counts[k] > 0)?.[0] ?? 'all') as Filter
   const [filter, setFilter] = useState<Filter | null>(null)
+  const [showSkipped, setShowSkipped] = useState(false)
   const active = filter ?? first
-  const shown = baseItems.filter(FILTERS.find(([k]) => k === active)![2])
+  const shown = showSkipped ? skippedItems : applicableItems.filter(FILTERS.find(([k]) => k === active)![2])
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [bulkDue, setBulkDue] = useState(false)
   const [bulkBusy, setBulkBusy] = useState(false)
 
-  const selectableShown = useMemo(() => shown.filter((i) => i.status === 'open' || i.status === 'requested'), [shown])
-  const selectableKeys = useMemo(() => new Set(baseItems.filter((i) => i.status === 'open' || i.status === 'requested').map((i) => i.key)), [baseItems])
+  const selectableShown = useMemo(
+    () => (showSkipped ? [] : shown.filter((i) => isCustomerRequestable(i) && (i.status === 'open' || i.status === 'requested'))),
+    [shown, showSkipped],
+  )
+  const selectableKeys = useMemo(
+    () => new Set(applicableItems.filter((i) => isCustomerRequestable(i) && (i.status === 'open' || i.status === 'requested')).map((i) => i.key)),
+    [applicableItems],
+  )
   const activeSelected = useMemo(() => [...selected].filter((k) => selectableKeys.has(k)), [selected, selectableKeys])
 
   const toggleKey = (key: string) => {
@@ -199,34 +238,48 @@ export default function ItemsPanel({
   }
 
   const groups = catalog?.documents.groups ?? {}
-  const selectedItems = baseItems.filter((i) => activeSelected.includes(i.key))
+  const selectedItems = applicableItems.filter((i) => activeSelected.includes(i.key))
   const allSelectedRequested = selectedItems.length > 0 && selectedItems.every((i) => i.status === 'requested')
 
   return (
     <div className="sme-stack">
-      <div className="sme-between sme-wrap">
+      <div className="sme-between sme-wrap" style={{ gap: 8 }}>
         <div className="sme-filters" role="tablist" aria-label="Lọc hạng mục">
           {FILTERS.map(([k, l]) => (
-            <button key={k} type="button" role="tab" aria-selected={active === k}
-              className={`sme-filter ${active === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} ({counts[k]})</button>
+            <button key={k} type="button" role="tab" aria-selected={!showSkipped && active === k}
+              className={`sme-filter ${!showSkipped && active === k ? 'on' : ''}`}
+              onClick={() => { setShowSkipped(false); setFilter(k) }}>{l} ({counts[k]})</button>
           ))}
         </div>
         <div className="sme-row sme-wrap" style={{ gap: 6 }}>
-          {groupFilter && (
-            <Btn onClick={onClearGroup} title="Bỏ lọc nhóm">
-              Nhóm: {groups[groupFilter] ?? groupFilter} <X size={12} />
+          {skippedItems.length > 0 && (
+            <Btn className={showSkipped ? 'sme-toggle-on' : undefined} onClick={() => setShowSkipped((v) => !v)}
+              title="Các mục SKIPPED được ẩn mặc định; bấm để xem lý do không áp dụng">
+              {showSkipped ? <EyeOff size={13} /> : <Eye size={13} />}
+              {showSkipped ? 'Quay lại mục áp dụng' : `Mục không áp dụng (${skippedItems.length})`}
             </Btn>
           )}
-          {!readOnly && selectableShown.length > 0 && (
-            <Btn onClick={toggleAllShown}>{allShownSelected ? 'Bỏ chọn' : `Chọn tất cả (${selectableShown.length})`}</Btn>
+          {groupFilter && (
+            <Btn onClick={onClearGroup} title="Bỏ lọc nhóm">
+              {groups[groupFilter] ?? groupFilter} <X size={12} />
+            </Btn>
+          )}
+          {!readOnly && !showSkipped && selectableShown.length > 0 && (
+            <Btn onClick={toggleAllShown}>{allShownSelected ? 'Bỏ chọn' : `Chọn KH (${selectableShown.length})`}</Btn>
           )}
         </div>
       </div>
 
-      {!readOnly && activeSelected.length > 0 && (
+      {showSkipped && (
+        <Banner t="info">
+          Đang hiển thị <b>{skippedItems.length} hạng mục SKIPPED</b> (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt cho bộ hồ sơ này).
+        </Banner>
+      )}
+
+      {!readOnly && !showSkipped && activeSelected.length > 0 && (
         <div className="ss-bulk">
           <div className="sme-between sme-wrap" style={{ gap: 8 }}>
-            <span className="sme-strong sme-small">Đã chọn {activeSelected.length} hạng mục</span>
+            <span className="sme-strong sme-small">Đã chọn {activeSelected.length} hạng mục xin khách hàng</span>
             <div className="sme-row sme-wrap" style={{ gap: 6 }}>
               <ChannelSelect onPick={(ch) => onDraft(activeSelected, ch, allSelectedRequested)} />
               <Btn onClick={() => setBulkDue((v) => !v)}><Send size={13} /> Đã yêu cầu</Btn>
@@ -247,18 +300,18 @@ export default function ItemsPanel({
           <table className="sme-table">
             <thead>
               <tr>
-                {!readOnly && <th aria-label="Chọn" style={{ width: 28 }} />}
-                <th>Hạng mục &amp; Quy định</th>
+                {!readOnly && !showSkipped && <th aria-label="Chọn" style={{ width: 28 }} />}
+                <th>Hạng mục, Điều kiện (Lớp 1) &amp; Rule (Lớp 2)</th>
                 <th>Chứng từ</th>
-                <th>Trạng thái</th>
-                {!readOnly && <th>Thao tác</th>}
+                <th>Kết quả</th>
+                {!readOnly && !showSkipped && <th>Thao tác</th>}
               </tr>
             </thead>
             <tbody>
               {shown.map((it) => (
                 <ItemRows key={it.key} it={it} asOf={asOf} groupLabel={groups[it.group] ?? it.group}
-                  selectable={it.status === 'open' || it.status === 'requested'}
-                  checked={selected.has(it.key)} readOnly={readOnly}
+                  selectable={isCustomerRequestable(it) && (it.status === 'open' || it.status === 'requested')}
+                  checked={selected.has(it.key)} skippedView={showSkipped} readOnly={readOnly}
                   onToggle={() => toggleKey(it.key)} onSet={onSet} onOpenDoc={onOpenDoc} />
               ))}
             </tbody>

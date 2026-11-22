@@ -79,23 +79,39 @@ def extraction(case: dict[str, Any], catalog: dict[str, Any], doc_id: str | None
 
 
 def group_progress(items: list[dict[str, Any]], catalog: dict[str, Any]) -> list[dict[str, Any]]:
-    """Done / total per document group, in catalogue order."""
+    """Done / total per applicable group (A -> I), tracking skipped items separately."""
     names = catalog.get("groups", {})
     order = list(names) + sorted({i["group"] for i in items} - set(names))
     out = []
     for g in order:
-        mine = [i for i in items if i["group"] == g and i["kind"] != "policy_precheck"]
+        all_g = [i for i in items if i["group"] == g and i["kind"] != "policy_precheck"]
+        skipped = sum(1 for i in all_g if not i.get("applicable", True) or i.get("rule_status") == "SKIPPED")
+        mine = [i for i in all_g if i.get("applicable", True) and i.get("rule_status") != "SKIPPED"]
         if not mine:
             continue
         done = sum(1 for i in mine if i["status"] in ("ok", "resolved", "waived"))
         blocked = sum(1 for i in mine if i["status"] == "open" and i["blocking"])
-        out.append({"group": g, "label": names.get(g, _humanize(g)), "done": done, "total": len(mine), "blocked": blocked})
+        out.append({
+            "group": g,
+            "label": names.get(g, _humanize(g)),
+            "done": done,
+            "total": len(mine),
+            "blocked": blocked,
+            "skipped": skipped,
+        })
     return out
 
 
-def next_actions(case: dict[str, Any], items: list[dict[str, Any]], readiness: dict[str, Any], stage: str,
-                 as_of: str, catalog: dict[str, Any]) -> list[dict[str, Any]]:
-    """The dossier's to-do list, most urgent first."""
+def next_actions(
+    case: dict[str, Any],
+    items: list[dict[str, Any]],
+    readiness: dict[str, Any],
+    stage: str,
+    as_of: str,
+    catalog: dict[str, Any],
+    crosschecks: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """The dossier's to-do list, separating Customer requests vs RM internal & rule clarifications."""
     today = date.fromisoformat(as_of)
     cid = case["case_id"]
     docs = case.get("documents") or []
@@ -111,22 +127,57 @@ def next_actions(case: dict[str, Any], items: list[dict[str, Any]], readiness: d
 
     if not docs:
         add("first_upload", "accent", "Gửi chứng từ khách đã có cho trợ lý",
-            detail=["Đính kèm file vào chat; trợ lý tự phân loại, đọc thông tin và cập nhật danh sách còn thiếu."],
+            detail=["Đính kèm file vào chat; trợ lý tự phân loại, đọc thông tin và đối chiếu Master Checklist A-I."],
             prompt=f"Tôi gửi chứng từ của khách cho hồ sơ {cid}: ")
 
-    overdue = [i for i in items if i["status"] == "requested" and i.get("due_date")
+    active = [i for i in items if i.get("applicable", True) and i.get("rule_status") != "SKIPPED"]
+
+    overdue = [i for i in active if i["status"] == "requested" and i.get("due_date")
                and _days_since(i["due_date"], today) is not None and _days_since(i["due_date"], today) > 0]
     if overdue:
         add("remind", "danger", f"Nhắc khách: {len(overdue)} mục đã quá hạn",
             detail=[f"{i['title']} (hạn {i['due_date']})" for i in overdue], keys=[i["key"] for i in overdue],
             cta="draft")
 
-    to_ask = [i for i in items if i["status"] == "open" and i["blocking"] and i.get("ask")]
+    undetermined = [i for i in active if i["status"] == "open" and i.get("rule_status") == "UNDETERMINED_CONDITION"]
+    if undetermined:
+        missing_fields = list(dict.fromkeys(
+            f for i in undetermined for f in (i.get("missing_condition_fields") or [])
+        ))
+        add("clarify_conditions", "warn",
+            f"Xác định thêm dữ kiện điều kiện để mở/loại {len(undetermined)} hạng mục",
+            detail=[i["title"] for i in undetermined[:4]],
+            keys=[i["key"] for i in undetermined],
+            prompt=f"Cập nhật các dữ kiện điều kiện còn thiếu của hồ sơ {cid} ({', '.join(missing_fields[:4])}): ")
+
+    xcheck_fails = [r for r in (crosschecks or {}).get("rules", []) if r["status"] == "FAIL"]
+    doc_fails = [i for i in active if i["status"] == "open" and i.get("rule_status") == "FAIL"
+                 and i.get("kind") != "policy_precheck"]
+    if doc_fails or xcheck_fails:
+        fail_details = [f"{i['title']}: {i.get('reason', '')}" for i in doc_fails[:3]]
+        fail_details += [f"[{r['id']}] {r['detail']}" for r in xcheck_fails[:3]]
+        add("crosscheck_fix", "danger",
+            f"Kiểm tra lại {len(doc_fails) + len(xcheck_fails)} lỗi rule / đối chiếu chéo",
+            detail=fail_details,
+            keys=[i["key"] for i in doc_fails],
+            prompt=f"Kiểm tra và xử lý các lỗi rule / đối chiếu chéo trên hồ sơ {cid}.")
+
+    to_ask = [i for i in active if i["status"] == "open" and i["blocking"]
+              and i.get("owner_role", "CUSTOMER") == "CUSTOMER"
+              and i.get("rule_status") in ("MISSING_REQUIRED", "FAIL")
+              and i.get("ask")]
     if to_ask:
-        add("request_docs", "danger", f"Xin khách {len(to_ask)} chứng từ còn thiếu",
+        add("request_docs", "danger", f"Xin khách {len(to_ask)} chứng từ còn thiếu / cần bổ sung",
             detail=[i["title"] for i in to_ask], keys=[i["key"] for i in to_ask], cta="draft")
 
-    info = [i for i in items if i["status"] == "open" and i["blocking"] and not i.get("ask")]
+    rm_docs = [i for i in active if i["status"] == "open" and i["blocking"]
+               and i.get("owner_role") == "RM_INTERNAL" and i.get("kind") == "document"]
+    if rm_docs:
+        add("rm_internal", "warn", f"ĐVKD tự hoàn thiện {len(rm_docs)} chứng từ / phê duyệt nội bộ",
+            detail=[i["title"] for i in rm_docs], keys=[i["key"] for i in rm_docs],
+            prompt=f"Bổ sung chứng từ nội bộ ĐVKD cho hồ sơ {cid} ({', '.join(i['title'] for i in rm_docs[:3])}): ")
+
+    info = [i for i in active if i["status"] == "open" and i["blocking"] and i.get("kind") in ("field", "fact")]
     if info:
         add("fill_info", "warn", f"Bổ sung {len(info)} thông tin hồ sơ",
             detail=[i["title"] for i in info], keys=[i["key"] for i in info],
@@ -147,32 +198,33 @@ def next_actions(case: dict[str, Any], items: list[dict[str, Any]], readiness: d
             prompt=f"Đọc lại {', '.join(e['document_id'] for e in pending)} của hồ sơ {cid} và ghi các thông tin còn trống; "
                    "thông tin nào chứng từ không ghi thì đánh dấu không có.")
 
-    breaches = [i for i in items if i["kind"] == "policy_precheck" and i["status"] == "open"]
+    breaches = [i for i in active if i["kind"] == "policy_precheck" and i["status"] == "open"]
     if breaches:
         add("review_proposal", "warn", "Đề xuất chưa đạt điều kiện sơ bộ",
             detail=[i["reason"] for i in breaches], keys=[i["key"] for i in breaches],
             prompt=f"Hồ sơ {cid} chưa đạt điều kiện sơ bộ: " + "; ".join(i["title"] for i in breaches)
                    + ". Gợi ý cách cơ cấu lại đề xuất.")
 
-    waiting = [i for i in items if i["status"] == "requested" and i not in overdue]
+    waiting = [i for i in active if i["status"] == "requested" and i not in overdue]
     stale = [i for i in waiting if (_days_since(i.get("requested_at"), today) or 0) >= WAIT_NUDGE_DAYS]
     if stale:
         add("follow_up", "info", f"Theo dõi {len(stale)} mục khách chưa gửi sau {WAIT_NUDGE_DAYS}+ ngày",
             detail=[i["title"] for i in stale], keys=[i["key"] for i in stale], cta="draft")
 
-    advisory = [i for i in items if i["status"] == "open" and not i["blocking"] and i["kind"] != "policy_precheck"]
+    advisory = [i for i in active if i["status"] == "open" and not i["blocking"] and i["kind"] != "policy_precheck"]
     if advisory:
         add("advisory", "muted", f"Nên bổ sung {len(advisory)} mục (không chặn nộp)",
             detail=[i["title"] for i in advisory], keys=[i["key"] for i in advisory],
             prompt=f"Hồ sơ {cid}: kiểm tra giúp các mục nên bổ sung: " + "; ".join(i["title"] for i in advisory))
 
     if readiness["ready"]:
-        detail = ["Không còn mục chặn nộp."]
+        detail = ["Master Checklist & đối chiếu sơ bộ sẵn sàng."]
         if readiness["waived"]:
-            detail.append(f"{len(readiness['waived'])} mục đã bỏ qua sẽ đi kèm giải trình.")
+            detail.append(f"{len(readiness['waived'])} mục đã xin miễn sẽ đi kèm giải trình.")
         if breaches:
-            detail.append(f"Lưu ý: có {len(breaches)} cảnh báo điều kiện sơ bộ nên rà lại trước khi nộp.")
-        acts.insert(0, {"id": "submit-0", "kind": "submit", "tone": "ok", "title": "Hồ sơ đủ điều kiện: nộp Thẩm định",
+            detail.append(f"Lưu ý: có {len(breaches)} cảnh báo điều kiện sơ bộ nên rà lại trước khi bàn giao.")
+        acts.insert(0, {"id": "submit-0", "kind": "submit", "tone": "ok",
+                        "title": "Hồ sơ đủ điều kiện: bàn giao Thẩm định",
                         "detail": detail, "keys": [], "cta": "submit", "prompt": ""})
     elif waiting and not stale and not overdue:
         add("waiting", "info", f"Đang chờ khách {len(waiting)} mục", detail=[i["title"] for i in waiting], cta="none")

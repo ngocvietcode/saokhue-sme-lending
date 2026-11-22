@@ -9,7 +9,8 @@
     "@sme-lending:lending/sme_evidence_get",
     "@sme-lending:lending/sme_review_add",
     "@sme-lending:lending/sme_case_put_result",
-    "@sme-lending:lending/sme_collateral_ltv"
+    "@sme-lending:lending/sme_collateral_ltv",
+    "@sme-lending:lending/sme_crosscheck_evaluate"
   ],
   "allowedTools": [
     "@sme-lending:lending/sme_case_get",
@@ -17,7 +18,8 @@
     "@sme-lending:lending/sme_evidence_get",
     "@sme-lending:lending/sme_review_add",
     "@sme-lending:lending/sme_case_put_result",
-    "@sme-lending:lending/sme_collateral_ltv"
+    "@sme-lending:lending/sme_collateral_ltv",
+    "@sme-lending:lending/sme_crosscheck_evaluate"
   ],
   "resources": [
     "skill://{APP_ROOT}/skills/sme-collateral/SKILL.md"

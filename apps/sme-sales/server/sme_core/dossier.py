@@ -24,7 +24,6 @@ from __future__ import annotations
 
 import base64
 import json
-import mimetypes
 import re
 from datetime import date
 from pathlib import Path
@@ -42,11 +41,27 @@ _KEY = re.compile(r"^[a-z][a-z0-9_]{1,47}$")
 _SAFE = re.compile(r"[^A-Za-z0-9._-]+")
 _NUMERIC_FIELDS = {
     "amount", "term_months", "charter_capital", "years_in_operation", "equity_contribution_pct",
-    "loan_amount", "planned_revenue", "revenue_last_year", "net_income_last_year",
-    "total_assets_last_year", "equity_last_year", "vat_revenue_12m", "output_contracts_value",
-    "project_total_investment", "asset_purchase_value", "collateral_value",
+    "loan_amount", "total_exposure", "existing_exposure", "planned_revenue", "revenue_last_year",
+    "net_income_last_year", "total_assets_last_year", "equity_last_year", "vat_revenue_12m",
+    "output_contracts_value", "project_total_investment", "asset_purchase_value", "collateral_value",
 }
 _DATE_FIELDS = {"customer.established", "facts.valuation_date"}
+
+
+def validate_doc_meta(meta: dict[str, Any] | None) -> dict[str, Any]:
+    """Validate structured document metadata (`doc.meta`): flat snake_case -> scalar/None."""
+    if not meta:
+        return {}
+    if not isinstance(meta, dict):
+        raise ValueError("document meta must be an object")
+    out: dict[str, Any] = {}
+    for k, v in meta.items():
+        if not isinstance(k, str) or not _KEY.match(k):
+            raise ValueError(f"invalid document meta field: {k!r}")
+        if isinstance(v, (dict, list)):
+            raise ValueError(f"meta.{k} must be a single value")
+        out[k] = v
+    return out
 
 
 def _iso_date(value: str, field: str = "date") -> str:
@@ -160,7 +175,8 @@ class DossierStore(CaseStore):
 
     # -- documents -----------------------------------------------------------
     def import_file(self, case_id: str, src: str, *, roots: list[Path], doc_type: str = "",
-                    issued_date: str | None = None, summary: str = "", actor: str) -> dict[str, Any]:
+                    issued_date: str | None = None, summary: str = "", meta: dict[str, Any] | None = None,
+                    actor: str) -> dict[str, Any]:
         """Copy a file the Sale attached in chat into the dossier.
 
         Only a regular file of an accepted type inside one of `roots` (the
@@ -181,13 +197,14 @@ class DossierStore(CaseStore):
         if path.stat().st_size > MAX_FILE_BYTES:
             raise ValueError("file is larger than 25 MB")
         return self.add_document(case_id, name=path.name, doc_type=doc_type, issued_date=issued_date,
-                                 data=path.read_bytes(), summary=summary, actor=actor)
+                                 data=path.read_bytes(), summary=summary, meta=meta, actor=actor)
 
     def add_document(self, case_id: str, *, name: str, doc_type: str, issued_date: str | None,
                      content_b64: str | None = None, data: bytes | None = None, summary: str = "",
-                     actor: str) -> dict[str, Any]:
+                     meta: dict[str, Any] | None = None, actor: str) -> dict[str, Any]:
         if issued_date:
             issued_date = _iso_date(str(issued_date), "issued_date")
+        norm_meta = {k: v for k, v in validate_doc_meta(meta).items() if v is not None and v != ""}
         d = self._dir(case_id)
         if data is None and content_b64:
             data = base64.b64decode(content_b64, validate=True)
@@ -205,6 +222,8 @@ class DossierStore(CaseStore):
                 doc["issued_date"] = issued_date
             if summary and summary.strip():
                 doc["summary"] = summary.strip()[:300]
+            if norm_meta:
+                doc["meta"] = norm_meta
             if data is not None:
                 p = Path(name)
                 suf = p.suffix[:12]
@@ -220,8 +239,9 @@ class DossierStore(CaseStore):
         return doc
 
     def update_document(self, case_id: str, doc_id: str, patch: dict[str, Any], actor: str) -> dict[str, Any]:
-        """Set a document's type, issue date, name or a one-line summary of what it shows."""
+        """Set a document's type, issue date, summary, structured meta, or not_stated."""
         d = self._dir(case_id)
+        norm_meta = validate_doc_meta(patch.get("meta")) if "meta" in patch else {}
         with self._lock(d):
             case = _read_json(d / "case.json", {})
             _ensure_editable(case)
@@ -245,6 +265,17 @@ class DossierStore(CaseStore):
                 if not isinstance(paths, list) or not all(isinstance(p, str) and "." in p for p in paths):
                     raise ValueError("not_stated must list field paths like customer.address")
                 doc["not_stated"] = sorted(set(doc.get("not_stated") or []) | set(paths))
+            if "meta" in patch:
+                merged_meta = dict(doc.get("meta") or {})
+                for mk, mv in norm_meta.items():
+                    if mv is None or mv == "":
+                        merged_meta.pop(mk, None)
+                    else:
+                        merged_meta[mk] = mv
+                if merged_meta:
+                    doc["meta"] = merged_meta
+                else:
+                    doc.pop("meta", None)
             _write_json(d / "case.json", case)
             self._audit(d, "document_update", {"id": doc_id, "fields": sorted(patch), "actor": actor})
         return doc
@@ -266,28 +297,6 @@ class DossierStore(CaseStore):
             self._audit(d, "document_remove", {"id": doc_id, "name": doc.get("name"),
                                                "actor": actor, "note": note.strip()})
         return doc
-
-    def document_path(self, case_id: str, doc_id: str) -> Path | None:
-        d = self._dir(case_id)
-        doc = next((x for x in _read_json(d / "case.json", {}).get("documents", []) if x.get("id") == doc_id), None)
-        if not doc or not doc.get("file"):
-            return None
-        return d / "files" / doc["file"]
-
-    def document_file(self, case_id: str, doc_id: str) -> dict[str, Any]:
-        """Return stored file bytes as base64 + mime for preview or download."""
-        d = self._dir(case_id)
-        doc = next((x for x in _read_json(d / "case.json", {}).get("documents", []) if x.get("id") == doc_id), None)
-        if not doc or not doc.get("file"):
-            raise KeyError(f"file not found for document: {doc_id}")
-        path = d / "files" / doc["file"]
-        if not path.is_file():
-            raise KeyError(f"file missing on disk: {doc_id}")
-        raw = path.read_bytes()
-        name = str(doc.get("name") or doc["file"])
-        mime = mimetypes.guess_type(name)[0] or "application/octet-stream"
-        return {"id": doc_id, "name": name, "mime": mime, "size": len(raw),
-                "content_b64": base64.b64encode(raw).decode()}
 
     # -- requirements --------------------------------------------------------
     def requirement_states(self, case_id: str) -> dict[str, dict[str, Any]]:
@@ -390,14 +399,19 @@ class DossierStore(CaseStore):
         return draft
 
     # -- stage ---------------------------------------------------------------
-    def mark_submitted(self, case_id: str, actor: str, note: str) -> dict[str, Any]:
+    def mark_submitted(self, case_id: str, actor: str, note: str,
+                       handover: dict[str, Any] | None = None) -> dict[str, Any]:
         d = self._dir(case_id)
         with self._lock(d):
             case = _read_json(d / "case.json", {})
             _ensure_editable(case)
-            case["submitted"] = {"by": actor, "at": self.clock(), "note": note.strip()}
+            sub: dict[str, Any] = {"by": actor, "at": self.clock(), "note": note.strip()}
+            if handover is not None:
+                sub["handover"] = handover
+            case["submitted"] = sub
             _write_json(d / "case.json", case)
-            self._audit(d, "case_submitted", {"actor": actor})
+            self._audit(d, "case_submitted", {"actor": actor,
+                                               **({"handover_status": handover.get("status")} if handover else {})})
         return case
 
     def reopen_case(self, case_id: str, actor: str, note: str) -> dict[str, Any]:

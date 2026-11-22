@@ -3,17 +3,19 @@ import { Check, ClipboardCheck, Copy, Download, Eye, FileSearch, History, Mail, 
 import { Fragment, useEffect, useState } from 'react'
 import { Banner, Empty, Pill, tone } from '@sme-ui/ui'
 import {
-  AUDIT_LABEL, CHANNEL, actor, copyText, day, describeAudit, formatFactValue, showValue, when,
+  AUDIT_LABEL, CHANNEL, RULE_STATUS_META, XCHECK_META, actor, copyText, day, describeAudit, formatFactValue, showValue, when,
   type Action, type CaseDetail, type Catalog, type CheckItem, type Doc, type Draft, type DraftChannel,
   type PolicyCheckRow, type ProfileField,
 } from './model'
 import { ChannelSelect, DueDateInline } from './parts'
 
 const SECTION: Record<string, string> = {
-  customer: 'Pháp lý & Định danh',
+  customer: 'Pháp lý & Định danh (Lớp 1)',
   request: 'Phương án đề xuất vay',
-  facts: 'Chỉ tiêu tài chính & TSBĐ',
+  facts: 'Điều kiện kích hoạt & Tài chính / TSBĐ',
 }
+
+const XCHECK_OVERALL_TONE = { PASS: 'ok', INCOMPLETE: 'warn', FAIL: 'danger' } as const
 
 const POLICY_ST: Record<PolicyCheckRow['status'], { label: string; t: 'ok' | 'danger' | 'warn' | 'muted' }> = {
   met: { label: 'Đạt', t: 'ok' },
@@ -40,7 +42,12 @@ export function OverviewTab({
       {c.submitted && (
         <Banner t="info">
           Hồ sơ đã bàn giao Thẩm định lúc <b>{when(c.submitted.at)}</b> bởi {actor(c.submitted.by)}
-          {c.submitted.note ? ` · Ghi chú: ${c.submitted.note}` : ''}. Dữ liệu ở chế độ chỉ đọc.
+          {c.submitted.note ? ` · Ghi chú: ${c.submitted.note}` : ''}.
+          {c.submitted.handover?.status === 'transferred'
+            ? ` Đã đồng bộ sang app Thẩm định SME (${c.submitted.handover.files_copied ?? 0} file đính kèm).`
+            : c.submitted.handover?.message
+              ? ` ${c.submitted.handover.message}`
+              : ''}
         </Banner>
       )}
       {!c.submitted && pendingDraftsCount > 0 && (
@@ -120,6 +127,38 @@ export function OverviewTab({
         </div>
       )}
 
+      {(ov.crosschecks?.rules?.length ?? 0) > 0 && (
+        <div className="sme-card">
+          <div className="sme-between" style={{ marginBottom: 8 }}>
+            <h3 className="sme-h3">7 Quy tắc đối chiếu chéo trọng yếu</h3>
+            <Pill t={XCHECK_OVERALL_TONE[ov.crosschecks!.overall_status]}>
+              {ov.crosschecks!.overall_status}
+            </Pill>
+          </div>
+          <table className="sme-table">
+            <thead>
+              <tr><th style={{ width: 48 }}>Mã</th><th>Nội dung đối chiếu</th><th>Chứng từ</th><th>Kết quả</th></tr>
+            </thead>
+            <tbody>
+              {ov.crosschecks!.rules.filter((r) => r.status !== 'SKIPPED').map((r) => {
+                const st = XCHECK_META[r.status]
+                return (
+                  <tr key={r.id}>
+                    <td className="sme-mono">{r.id}</td>
+                    <td>
+                      <div className="sme-strong">{r.title}</div>
+                      <div className="sme-small sme-muted">{r.detail}</div>
+                    </td>
+                    <td className="sme-mono sme-small">{r.document_refs.length ? r.document_refs.join(', ') : '—'}</td>
+                    <td><Pill t={st.tone}>{st.label}</Pill></td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {ov.actions.length > 0 && (
         <div className="sme-card">
           <h3 className="sme-h3" style={{ marginBottom: 6 }}>Hành động đề xuất ({ov.actions.length})</h3>
@@ -153,10 +192,10 @@ export function OverviewTab({
 
 function docValidity(d: Doc, items: CheckItem[], catalog: Catalog | null): { label: string; t: 'ok' | 'warn' | 'danger' | 'muted' } {
   if (!d.type) return { label: 'Chưa phân loại', t: 'warn' }
-  const exp = items.find((i) => i.key === `expired:${d.type}`)
-  if (exp) return exp.status === 'open' || exp.status === 'requested'
-    ? { label: 'Hết hiệu lực', t: 'danger' }
-    : { label: 'Còn hiệu lực', t: 'ok' }
+  const expired = items.some(
+    (i) => i.rule_status === 'FAIL' && i.document_refs.includes(d.id) && (i.fail_reasons ?? []).some((r) => /hết hiệu lực/i.test(r)),
+  )
+  if (expired) return { label: 'Hết hiệu lực', t: 'danger' }
   const dt = items.find((i) => i.key === `date:${d.type}`)
   if (dt && (dt.status === 'open' || dt.status === 'requested')) return { label: 'Thiếu ngày lập', t: 'warn' }
   const months = catalog?.documents.types[d.type]?.validity_months

@@ -8,8 +8,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Kpi, Pill } from '@sme-ui/ui'
 import ItemsPanel from './ItemsPanel'
 import {
-  API, PURPOSE, buildDraftPrompt, buildLosHandoverText, copyText, errMsg, money, showValue,
-  when, type Action, type CaseDetail, type Catalog, type DocumentFilePayload, type DraftChannel,
+  API, PURPOSE, buildDraftPrompt, buildLosHandoverText, copyText, errMsg, isCustomerRequestable, isSkipped,
+  money, showValue, when, type Action, type CaseDetail, type Catalog, type DocumentFilePayload, type DraftChannel,
 } from './model'
 import { GroupStepper, StagePill } from './parts'
 import { AuditTab, DocsTab, DraftsTab, OverviewTab } from './SidePanels'
@@ -173,7 +173,8 @@ export default function DossierView({
     }
   }
 
-  const mandatoryItems = useMemo(() => (ov?.items ?? []).filter((i) => i.blocking), [ov])
+  const applicableItems = useMemo(() => (ov?.items ?? []).filter((i) => !isSkipped(i)), [ov])
+  const mandatoryItems = useMemo(() => applicableItems.filter((i) => i.blocking), [applicableItems])
   const mandatoryDone = useMemo(
     () => mandatoryItems.filter((i) => ['ok', 'resolved', 'waived'].includes(i.status)).length,
     [mandatoryItems],
@@ -182,24 +183,24 @@ export default function DossierView({
     ?? mandatoryItems.filter((i) => i.status === 'open').length
   const waitingCount = ov?.readiness.waiting_blocking?.length
     ?? mandatoryItems.filter((i) => i.status === 'requested').length
-  const openTabCount = useMemo(() => (ov?.items ?? []).filter((i) => i.status === 'open' || i.status === 'requested').length, [ov])
+  const openTabCount = useMemo(() => applicableItems.filter((i) => i.status === 'open' || i.status === 'requested').length, [applicableItems])
   const pendingDrafts = useMemo(() => (detail?.drafts ?? []).filter((d) => d.status === 'draft'), [detail])
-  const waivedItems = useMemo(() => (ov?.items ?? []).filter((i) => i.status === 'waived'), [ov])
+  const waivedItems = useMemo(() => applicableItems.filter((i) => i.status === 'waived'), [applicableItems])
   const policyChecks = ov?.policy_checks ?? []
   const policyBreaches = useMemo(() => policyChecks.filter((p) => p.status === 'not_met'), [policyChecks])
   const purposeWarn = useMemo(() => (ov?.items ?? []).find((i) => i.key === 'policy:purpose'), [ov])
   const expiredDocs = useMemo(
-    () => (ov?.items ?? []).filter((i) => i.kind === 'document_expired' && (i.status === 'open' || i.status === 'requested')).length,
-    [ov],
+    () => applicableItems.filter((i) => i.rule_status === 'FAIL' && i.status === 'open').length,
+    [applicableItems],
   )
   const unclassifiedDocs = useMemo(() => (c?.documents ?? []).filter((d) => !d.type).length, [c])
   const todoItems = useMemo(
-    () => (ov?.items ?? []).filter((i) => (i.status === 'open' && i.blocking) || (i.status === 'requested' && i.due_date && i.due_date < (ov?.as_of ?? ''))),
-    [ov],
+    () => applicableItems.filter((i) => (i.status === 'open' && i.blocking) || (i.status === 'requested' && i.due_date && i.due_date < (ov?.as_of ?? ''))),
+    [applicableItems, ov],
   )
   const selectableOpenKeys = useMemo(
-    () => (ov?.items ?? []).filter((i) => (i.status === 'open' || i.status === 'requested') && i.ask).map((i) => i.key),
-    [ov],
+    () => applicableItems.filter((i) => isCustomerRequestable(i) && (i.status === 'open' || i.status === 'requested')).map((i) => i.key),
+    [applicableItems],
   )
 
   useEffect(() => {
@@ -231,6 +232,11 @@ export default function DossierView({
           <h1 className="sme-title">{name}</h1>
           <div className="sme-row sme-wrap" style={{ gap: 6 }}>
             {ov && <StagePill stage={ov.stage} />}
+            {ov?.checklist_overall && (
+              <Pill t={ov.checklist_overall === 'COMPLETE' ? 'ok' : 'warn'}>
+                Checklist {ov.checklist_overall}
+              </Pill>
+            )}
             <span className="sme-chip sme-mono">{caseId}</span>
             {c && <span className="sme-chip">Luồng {c.flow}</span>}
             {customer.tax_id && <span className="sme-chip">MST {String(customer.tax_id)}</span>}
@@ -272,14 +278,14 @@ export default function DossierView({
               value={request.amount ? money(request.amount).replace(' đ', '') : '—'}
               hint={[request.term_months ? `${request.term_months} tháng` : null, request.product_code, 'VND'].filter(Boolean).join(' · ')} />
             <Kpi t={ov.readiness.ready ? 'ok' : actionableCount > 0 ? 'danger' : 'warn'}
-              icon={<ClipboardList size={18} />} label="Hạng mục bắt buộc"
+              icon={<ClipboardList size={18} />} label="Master Checklist (A-I)"
               value={`${mandatoryDone} / ${mandatoryItems.length}`}
-              hint={ov.readiness.ready
-                ? (waivedItems.length ? `Đủ đk (${waivedItems.length} xin miễn)` : 'Đủ điều kiện trình')
+              hint={ov.checklist_counts
+                ? `PASS ${ov.checklist_counts.PASS} · MISSING ${ov.checklist_counts.MISSING_REQUIRED} · FAIL ${ov.checklist_counts.FAIL}`
                 : `${actionableCount} cần bổ sung · ${waitingCount} chờ KH`} />
             <Kpi t={expiredDocs ? 'danger' : unclassifiedDocs ? 'warn' : c.documents.length ? 'ok' : 'muted'}
               icon={<FileText size={18} />} label="Chứng từ lưu trữ" value={c.documents.length}
-              hint={expiredDocs ? `${expiredDocs} chứng từ hết hạn` : unclassifiedDocs ? `${unclassifiedDocs} chưa phân loại` : 'Đã đối chiếu danh mục'} />
+              hint={expiredDocs ? `${expiredDocs} không đạt rule` : unclassifiedDocs ? `${unclassifiedDocs} chưa phân loại` : 'Đã đối chiếu danh mục'} />
             <Kpi t={policyChecks.length === 0 ? 'muted' : policyBreaches.length > 0 ? 'danger' : 'ok'}
               icon={<ShieldCheck size={18} />} label="Điều kiện chính sách"
               value={policyChecks.length === 0 ? '—' : policyBreaches.length > 0 ? `${policyBreaches.length} chưa đạt` : 'Đạt sơ bộ'}
@@ -320,8 +326,9 @@ export default function DossierView({
                 </Btn>
               </div>
               <div className="sme-small sme-muted" style={{ margin: '6px 0 8px' }}>
-                Hạng mục bắt buộc: <b>{mandatoryDone}/{mandatoryItems.length}</b> · Chứng từ: <b>{c.documents.length}</b> ·
+                Hạng mục áp dụng: <b>{mandatoryDone}/{mandatoryItems.length}</b> · Chứng từ: <b>{c.documents.length}</b> ·
                 Xin miễn: <b>{waivedItems.length}</b> · Cảnh báo sơ bộ: <b>{policyBreaches.length}</b>.
+                Hệ thống sẽ đồng bộ hồ sơ và chứng từ sang ứng dụng <b>Thẩm định SME</b> qua Handover Adapter.
                 {ov.readiness.ready ? ' Ghi chú bàn giao không bắt buộc.' : ` Còn ${ov.readiness.blocking_open.length} mục chặn nên bắt buộc ghi giải trình.`}
               </div>
               {waivedItems.length > 0 && (

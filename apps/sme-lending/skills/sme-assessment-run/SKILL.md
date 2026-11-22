@@ -15,6 +15,7 @@ always: false
 4. Theo dõi bằng `workflow_status`; xong thì đọc `workflow_result`.
 
 ## Trình bày kết quả
-5. Tách 3 phần: **Đã xác minh**, **Vấn đề mở và ngoại lệ**, **Hàng đợi rà soát** (`sme_review_list`). Mỗi nhận định kèm mã bằng chứng E###.
-6. Kết quả bị Verification chặn: nói rõ agent nào, lỗi gì, cán bộ cần làm gì.
-7. Không bao giờ nói hồ sơ "được duyệt" hay "bị từ chối". Quyết định là của cán bộ.
+5. Gọi `sme_checklist_evaluate` và `sme_crosscheck_evaluate` để nêu rõ trạng thái Master Checklist A-I (`COMPLETE/INCOMPLETE`), 7 rule đối chiếu chéo (`R1-R7`) và các mục ĐVKD xin miễn (nếu nhận từ `sme-sales`).
+6. Tách 3 phần: **Đã xác minh**, **Vấn đề mở và ngoại lệ**, **Hàng đợi rà soát** (`sme_review_list`). Mỗi nhận định kèm mã bằng chứng E###.
+7. Kết quả bị Verification chặn: nói rõ agent nào, lỗi gì, cán bộ cần làm gì.
+8. Không bao giờ nói hồ sơ "được duyệt" hay "bị từ chối". Quyết định là của cán bộ.

@@ -36,10 +36,10 @@ export function GroupStepper({ groups, activeGroup, onSelectGroup }: {
               <span className="sme-phase-name">{g.label}</span>
               <button type="button"
                 className={`sme-node ${tone(t)} ${on ? 'ss-active-node' : ''}`}
-                title={`${g.label}: ${g.done}/${g.total} hạng mục đạt${g.blocked ? `, ${g.blocked} chặn` : ''}`}
+                title={`${g.label}: ${g.done}/${g.total} hạng mục đạt${g.blocked ? `, ${g.blocked} chặn` : ''}${g.skipped ? `, ${g.skipped} không áp dụng (ẩn)` : ''}`}
                 onClick={() => onSelectGroup(on ? null : g.group)}>
                 <span className="dot"><GroupStateIcon g={g} /></span>
-                <span>{g.done}/{g.total} hạng mục{on ? ' · lọc' : ''}</span>
+                <span>{g.done}/{g.total}{on ? ' · lọc' : ''}</span>
               </button>
             </div>
           )

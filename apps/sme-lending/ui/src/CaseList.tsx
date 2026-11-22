@@ -42,8 +42,12 @@ function CaseCard({ c, onOpen }: { c: CaseSummary; onOpen: () => void }) {
         })}
       </div>
       <div className="sme-between sme-small sme-muted">
-        <span className="sme-row" style={{ gap: 6 }}>
+        <span className="sme-row sme-wrap" style={{ gap: 6 }}>
           <span className="sme-chip">Luồng {c.flow}</span>
+          {c.from_sales && <Pill t="accent">Từ ĐVKD</Pill>}
+          {c.checklist_overall && (
+            <Pill t={c.checklist_overall === 'COMPLETE' ? 'ok' : 'warn'}>{c.checklist_overall}</Pill>
+          )}
           {(c.high_findings ?? 0) > 0 && <Pill t="danger">{c.high_findings} cảnh báo cao</Pill>}
           {c.agents_blocked > 0 && <Pill t="danger">{c.agents_blocked} bị chặn</Pill>}
         </span>

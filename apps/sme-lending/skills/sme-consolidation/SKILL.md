@@ -6,10 +6,10 @@ always: false
 # sme-consolidation
 
 ## Các bước
-1. `sme_results_get` lấy kết quả mới nhất của mọi agent cùng trạng thái verification.
-2. Chỉ đưa vào phần "đã xác minh" các kết quả có `verification.passed = true`. Kết quả chưa đạt nêu ở `open_issues`.
+1. `sme_results_get`, `sme_checklist_evaluate` và `sme_crosscheck_evaluate` lấy kết quả mới nhất của mọi agent, trạng thái Master Checklist A-I (`COMPLETE/INCOMPLETE`) và 7 rule đối chiếu chéo (`R1-R7`).
+2. Chỉ đưa vào phần "đã xác minh" các kết quả có `verification.passed = true`. Kết quả chưa đạt hoặc mục ĐVKD xin miễn (`sales_handover.waivers`) nêu rõ ở `open_issues`.
 3. Kiểm tra trùng và mâu thuẫn giữa các agent. Mâu thuẫn thì `data_conflict`, không tự chọn bên đúng.
-4. Hợp nhất theo chủ đề: khách hàng, nhu cầu và sản phẩm, tài chính, chính sách và ngoại lệ, rủi ro, TSBĐ, ngành.
+4. Hợp nhất theo chủ đề: khách hàng, Master Checklist & Đối chiếu chéo, nhu cầu và sản phẩm, tài chính, chính sách và ngoại lệ (bao gồm Nhóm H/I), rủi ro, TSBĐ (Prosland), ngành.
 5. `sme_review_list` để liệt kê toàn bộ hàng đợi rà soát vào `open_issues`.
 6. Đặt dữ liệu Genform trong `calculations` với `kind` = `genform`, `inputs` = {}, `outputs` = các trường tờ trình.
 

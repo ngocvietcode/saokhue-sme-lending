@@ -81,19 +81,31 @@ def sme_case_get(case_id: str) -> Any:
 
 @mcp.tool()
 def sme_dossier_gaps(case_id: str) -> Any:
-    """What the dossier still lacks: score (0-100), ready (bool), stage, and each open item with key, title,
-    reason, the customer-facing `ask`, approved `alternatives`, `blocking` and status (open or requested).
-    Computed by rules, not by a model: report these items, do not invent others."""
+    """Two-layer Master Checklist (A-I) and 7 cross-check preview: returns checklist_overall (COMPLETE/INCOMPLETE),
+    checklist_counts (PASS/MISSING_REQUIRED/FAIL/SKIPPED/UNDETERMINED_CONDITION), crosscheck_overall,
+    open_customer_items (to ask customer), open_rm_items (internal bank docs/approvals), and
+    undetermined_items (missing condition inputs). Computed deterministically by rules."""
     return _safe(svc.gap_analysis, case_id)
+
+
+@mcp.tool()
+def sme_crosscheck_preview(case_id: str) -> Any:
+    """Preview the 7 core cross-check rules (R1-R7) across currently uploaded documents and fields."""
+    return _safe(svc.crosscheck_preview, case_id)
 
 
 @mcp.tool()
 def sme_case_update(case_id: str, customer: dict | None = None, request: dict | None = None,
                     facts: dict | None = None, labels: dict | None = None, flow: str = "") -> Any:
     """Set dossier fields the Sale told you or a document states. Keys are free-form snake_case, values single
-    (text, number, date); null removes a field. flow can switch between "A" and "B". Facts the rules use:
-    years_in_operation, equity_contribution_pct. labels maps "section.key" to a Vietnamese display label for a
-    key the catalogue does not name (e.g. {"customer.so_lao_dong": "Số lao động"}). Never invent a value."""
+    (text, number, bool, date); null removes a field. flow switches between "A" and "B".
+    Master Checklist condition keys include: customer.legal_type (LLC_1/LLC_2/JSC/PRIVATE/PARTNERSHIP/COOP),
+    customer.signer_is_legal_rep, customer.borrower_is_branch, customer.is_fdi, customer.is_construction,
+    customer.is_conditional_industry; request.case_type (NEW/RENEWAL/AMEND_CONDITION), request.sub_purpose
+    (mmtb/ptvt/xay_dung/mua_bds/du_an); facts.has_collateral, facts.collateral_types (csv: real_estate,vehicle),
+    facts.has_fixed_assets, facts.has_other_bank_tx, facts.vat_filing_cycle (quarterly/monthly),
+    facts.total_exposure, facts.has_deposit_paid, facts.is_imported, facts.vehicle_registered.
+    Never invent a value."""
     patch: dict[str, Any] = {
         k: v for k, v in (("customer", customer), ("request", request), ("facts", facts), ("labels", labels)) if v
     }
@@ -107,25 +119,27 @@ def sme_case_update(case_id: str, customer: dict | None = None, request: dict | 
 
 @mcp.tool()
 def sme_document_import(case_id: str, path: str, doc_type: str = "", issued_date: str = "",
-                        summary: str = "") -> Any:
-    """Add a file the Sale attached in chat (the path after `[attached_file N]`) to the dossier. Read the file
-    first, then pass doc_type (a key of sme_documents_catalog types, empty if none fits), issued_date
-    (YYYY-MM-DD) and a one-line summary of what it shows. Only chat upload folders are accepted.
-    The result's `extract_next` lists the fields this document type should give that the dossier still
-    lacks: right after, call sme_case_update with every one the document states, and sme_document_classify
-    with not_stated for the ones it does not."""
+                        summary: str = "", meta: dict | None = None) -> Any:
+    """Import a file the Sale attached in chat (path after `[attached_file N]`). Read the file first, then pass
+    doc_type (from sme_documents_catalog types), issued_date (YYYY-MM-DD), a one-line summary, and optional
+    structured scalar `meta` for Layer 2 rules & cross-checks (e.g. VAT: tax_id, filing_cycle, periods_count,
+    signature_valid, continuous_chain, reported_revenue; Contracts: customer_role='seller'|'buyer',
+    contract_count, counterparty_tax_id, vat_invoice_matched; Bank statement: months_covered;
+    Site photos: photo_count; Collateral/Prosland: owner_name, asset_code).
+    Right after, handle all `extract_next` fields via sme_case_update or sme_document_classify(not_stated=...)."""
     return _safe(svc.import_document, case_id, path, doc_type=doc_type, issued_date=issued_date,
-                 summary=summary, actor=f"agent:{AGENT}")
+                 summary=summary, meta=meta, actor=f"agent:{AGENT}")
 
 
 @mcp.tool()
 def sme_document_classify(case_id: str, document_id: str, doc_type: str = "", issued_date: str = "",
-                          summary: str = "", not_stated: list[str] | None = None) -> Any:
-    """Set an existing document's type (a key of sme_documents_catalog types), issue date (YYYY-MM-DD),
-    one-line summary, and not_stated: field paths from extract_next that this document does not state (so
-    they stop being asked for). Returns the document and its remaining extract_next."""
+                          summary: str = "", not_stated: list[str] | None = None,
+                          meta: dict | None = None) -> Any:
+    """Update an existing document's type, issued_date (YYYY-MM-DD), summary, not_stated paths, or structured
+    scalar `meta` (for VAT period counts/signature, contract roles/MST, bank statement months, photo_count, etc.).
+    Returns the updated document and remaining extract_next."""
     return _safe(svc.classify_document, case_id, document_id, doc_type=doc_type, issued_date=issued_date,
-                 summary=summary, not_stated=not_stated, actor=f"agent:{AGENT}")
+                 summary=summary, not_stated=not_stated, meta=meta, actor=f"agent:{AGENT}")
 
 
 @mcp.tool()

@@ -1,48 +1,31 @@
 ---
-description: "Quy trình Document & Evidence: phân loại, OCR, chuẩn hóa, đối chiếu chéo, lập Evidence Map cho hồ sơ SME"
+description: "Quy trình Document & Evidence: kiểm tra Master Checklist 2 lớp (A-I), OCR, chuẩn hóa, 7 rule đối chiếu chéo R1-R7 và lập Evidence Map"
 always: false
 ---
 
 # sme-document-evidence
 
 ## Đầu vào
-Danh sách file và metadata trong hồ sơ (`sme_case_get`), kết quả OCR EDA (`sme_ocr_extract`), checklist theo sản phẩm/luồng (`sme_knowledge_checklist`).
+Hồ sơ (`sme_case_get`), OCR EDA (`sme_ocr_extract`), Master Checklist hai lớp (`sme_checklist_evaluate`) và 7 rule đối chiếu chéo (`sme_crosscheck_evaluate`).
 
 ## Các bước
-1. Đọc hồ sơ. Với từng file: xác định loại chứng từ, kỳ, phiên bản.
-2. Gọi `sme_ocr_extract` cho từng file. Kết quả `status: "sample"` là dữ liệu mẫu: vẫn dùng được, nhưng `source` của bằng chứng phải có chữ "DỮ LIỆU MẪU" và nêu trong `summary`. `not_configured` thì gọi `sme_review_add` reason `system_error`. Ghi nhận chất lượng OCR; trường trọng yếu có độ tin cậy thấp thì gọi `sme_review_add` reason `low_confidence`.
-3. Chuẩn hóa dữ liệu trích xuất (đơn vị VND, ngày ISO, MST/CIF).
-4. Đăng ký mỗi dữ kiện dùng làm căn cứ bằng `sme_evidence_add` (nguồn = file + trang/ô, giá trị, ngày). Ghi lại mã E### trả về.
-5. Đối chiếu chéo tên, MST, địa chỉ, người đại diện giữa ĐKKD, BCTC, hợp đồng, sao kê. Lệch thì ghi finding và `data_conflict`.
-6. So với checklist: chứng từ thiếu ghi vào `missing_information` và `missing_document`.
+1. Gọi `sme_case_get` để đọc thông tin định danh, `facts`, chứng từ hiện có và ghi chú bàn giao từ ĐVKD (`sales_handover`, kể cả các mục xin miễn `waivers`).
+2. Với từng file: gọi `sme_ocr_extract`. Nếu `status: "sample"`, mọi bằng chứng liên quan phải ghi rõ `"DỮ LIỆU MẪU"` trong `source` và nêu ở `summary`. Nếu `not_configured`, gọi `sme_review_add` reason `system_error`. Trường trọng yếu độ tin cậy thấp -> `low_confidence`.
+3. Đăng ký các dữ kiện dùng làm căn cứ bằng `sme_evidence_add` (nguồn = file + trang/ô/meta, giá trị, ngày) và lưu lại các mã `E###`.
+4. Gọi `sme_checklist_evaluate(case_id)` để xác định trạng thái Master Checklist A → I (`PASS`, `MISSING_REQUIRED`, `FAIL`, `SKIPPED`, `UNDETERMINED_CONDITION` và kết quả tổng thể `COMPLETE`/`INCOMPLETE`). Mục thiếu -> `missing_information` và `sme_review_add(missing_document)`. Mục chưa đủ dữ liệu xác định điều kiện -> nêu rõ ở `open_issues`.
+5. Gọi `sme_crosscheck_evaluate(case_id)` kiểm tra **7 rule đối chiếu chéo**:
+   - `R1`: ĐKKD gốc (tên DN, MST, ĐDPL, vốn điều lệ).
+   - `R2`: Điều lệ + Sổ cổ đông/HĐTV + CCCD + Biên bản họp/Ủy quyền.
+   - `R3`: Hợp đồng đầu ra (bên bán) / đầu vào (bên mua).
+   - `R4`: Hợp đồng đối chiếu hóa đơn VAT theo MST đối tác.
+   - `R5`: BCTC & VAT (MST, chuỗi kỳ 8 quý/24 tháng, chữ ký số/XML, doanh thu).
+   - `R6`: Sao kê đối chiếu KHLQ, công nợ và dòng tiền.
+   - `R7`: TSBĐ đối chiếu Prosland.
+   Rule ở trạng thái `FAIL` -> finding mức `high` + `sme_review_add(data_conflict` hoặc `rule_fail)`.
+6. Lưu kết quả qua `sme_case_put_result`, đính kèm trong `calculations` cả `{"kind": "checklist_eval", "inputs": {"case_id": case_id}, "outputs": ...}` và `{"kind": "crosscheck_eval", "inputs": {"case_id": case_id}, "outputs": ...}` (chỉ trích các trường tool trả về; giữ nguyên độ dài list `groups`/`rules`).
 
 ## Đầu ra bắt buộc
-Document Inventory (finding topic `inventory`), dữ liệu trích xuất (nằm trong evidence), Evidence Map (các mã E###), Missing Documents & Data Conflicts.
-
-## Schema kết quả chung (gửi qua `sme_case_put_result`)
-
-```json
-{
-  "agent": "<tên agent>",
-  "case_id": "<mã hồ sơ>",
-  "summary": "Tóm tắt 2-4 câu",
-  "findings": [
-    {"id": "F1", "topic": "...", "statement": "...",
-     "severity": "info|low|medium|high", "evidence_refs": ["E001"]}
-  ],
-  "missing_information": ["..."],
-  "open_issues": ["..."],
-  "calculations": [
-    {"kind": "fin_ratios|repayment_capacity|collateral_ltv|policy_check|genform",
-     "inputs": {}, "outputs": {}}
-  ],
-  "confidence": "low|medium|high"
-}
-```
-
-- `calculations` chép nguyên `inputs` đã gửi. `outputs` có thể chỉ trích các trường bạn dùng, nhưng mỗi giá trị phải đúng như tool trả về, không thêm trường tool không có, và list (vd. `matrix`) phải giữ đủ số dòng. Verification tính lại và so sánh từng giá trị bạn báo.
-- `sme_case_put_result` từ chối kết quả sai schema hoặc finding không có bằng chứng: sửa rồi gửi lại, không lách.
+Document Inventory, Evidence Map (`E###`), Master Checklist Summary (`COMPLETE/INCOMPLETE`), Cross-Check Summary (`R1-R7`), Missing Documents & Data Conflicts.
 
 ## Mã lý do khi gọi `sme_review_add`
-
 `missing_document`, `data_conflict`, `rule_fail`, `low_confidence`, `exception_needed`, `expert_review`, `system_error`.

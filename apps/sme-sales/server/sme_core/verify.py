@@ -13,7 +13,10 @@ from typing import Any, Callable
 
 SEVERITIES = ("info", "low", "medium", "high")
 CONFIDENCE = ("low", "medium", "high")
-CALC_KINDS = ("fin_ratios", "repayment_capacity", "collateral_ltv", "policy_check", "genform")
+CALC_KINDS = (
+    "fin_ratios", "repayment_capacity", "collateral_ltv", "policy_check",
+    "genform", "checklist_eval", "crosscheck_eval",
+)
 REL_TOL = 1e-6
 
 # A result states facts and flags; it never carries a credit decision.

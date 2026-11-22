@@ -6,10 +6,10 @@ always: false
 # sme-risk-compliance
 
 ## Các bước
-1. Gọi `sme_cic_report` và `sme_nclos_exposure` cho khách hàng và bên liên quan được khai báo.
+1. Gọi `sme_cic_report`, `sme_nclos_exposure` và `sme_crosscheck_evaluate` cho khách hàng và bên liên quan được khai báo.
 2. Tool báo chưa cấu hình tích hợp: ghi `missing_information`, gọi `sme_review_add` reason `system_error`, KHÔNG suy đoán.
-3. Đối chiếu dư nợ CIC với dư nợ khai báo và BCTC; lệch thì `data_conflict`.
-4. Kết quả kiểm tra (nhóm nợ, nợ xấu, giới hạn cấp tín dụng) lấy nguyên từ NCLOS/rule engine. Bạn chỉ tổng hợp và nêu câu hỏi rà soát.
+3. Đối chiếu dư nợ CIC với dư nợ khai báo và BCTC; kiểm tra kết quả đối chiếu `R2` (sở hữu/thẩm quyền Điều lệ - Cổ đông/HĐTV - CCCD) và `R6` (sao kê đối chiếu KHLQ, công nợ, dòng tiền) và hồ sơ MTXH (Nhóm C). Phát hiện giao dịch KHLQ chưa khai báo hoặc lệch dư nợ -> `data_conflict`.
+4. Kết quả kiểm tra (nhóm nợ, nợ xấu, giới hạn cấp tín dụng, điều kiện thẩm quyền phê duyệt Nhóm H >= 50/70 tỷ hoặc >= 150/200 tỷ) lấy nguyên từ NCLOS/rule engine. Bạn chỉ tổng hợp và nêu câu hỏi rà soát.
 5. Kết hợp cảnh báo từ `financial-analysis` và `policy-exception`.
 
 ## Đầu ra bắt buộc
