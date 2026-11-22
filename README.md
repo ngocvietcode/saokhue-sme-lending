@@ -36,7 +36,7 @@ cd ui && npm install && npm run build
 
 ## Luồng chạy
 
-1. Cán bộ trò chuyện với Bot dựng từ `sme-lending--sme-assistant`, Bot tạo hồ sơ bằng `sme_case_create`.
+1. Cán bộ trò chuyện với agent `sme-assistant` (hoặc Bot dựng từ nó), Bot tạo hồ sơ bằng `sme_case_create`.
 2. Bot gọi `workflow_run(workflow="sme-credit-assessment", args={"case_id": ..., "flow": "A"})`.
 3. Workflow chạy Documents, Product, Specialists (song song; Industry chỉ ở luồng B), Policy, Consolidate.
    Sau mỗi agent, `verifier` kiểm tra; nếu lỗi sửa được thì agent chạy lại (mặc định 1 lần, tối đa 2).
@@ -54,7 +54,7 @@ Sau đó:
 
 - Lưu `workflows/sme_credit_assessment.py` trong tab Workflows với slug `sme-credit-assessment`.
   Thư viện workflow chỉ nhận bản lưu do người dùng thực hiện.
-- Tạo Bot mới trên trang Crew Members, mục Built from chọn `sme-lending--sme-assistant`.
+- Tạo Bot mới trên trang Crew Members, mục Built from chọn `sme-assistant`.
 - Dữ liệu hồ sơ nằm ở `$SME_LENDING_DATA`, mặc định là `<app>/data`. Nên đặt biến này ra ngoài thư mục app để bản cập nhật không xoá dữ liệu.
 
 ## Phát triển

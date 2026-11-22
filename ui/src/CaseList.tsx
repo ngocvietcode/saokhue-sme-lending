@@ -1,10 +1,11 @@
-import { useAppApi, useChatLauncher } from '@kirocrew/app-sdk'
+import { useAppApi } from '@kirocrew/app-sdk'
 import { Btn, ErrorNotice, PageHeader } from '@kirocrew/app-sdk/ui'
 import { AlertOctagon, ClipboardList, FolderOpen, Plus, RefreshCw, Search, ShieldAlert } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  AGENT_ORDER, API, ASSISTANT, PURPOSE, STATE_META, agentLabel, ago, errMsg, moneyShort, type CaseSummary,
+  AGENT_ORDER, API, PURPOSE, STATE_META, agentLabel, ago, errMsg, moneyShort, type CaseSummary,
 } from './model'
+import { useAssistantChat } from './assistantChat'
 import { Empty, Kpi, Pill, tone } from './ui'
 
 type Filter = 'all' | 'review' | 'blocked'
@@ -54,9 +55,9 @@ function CaseCard({ c, onOpen }: { c: CaseSummary; onOpen: () => void }) {
 
 export default function CaseList({ onOpen }: { onOpen: (id: string) => void }) {
   const api = useAppApi()
-  const { openChat } = useChatLauncher()
   const [cases, setCases] = useState<CaseSummary[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const openAssistant = useAssistantChat(setError)
   const [q, setQ] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [busy, setBusy] = useState(false)
@@ -91,7 +92,8 @@ export default function CaseList({ onOpen }: { onOpen: (id: string) => void }) {
     })
   }, [cases, q, filter])
 
-  const newCase = () => openChat({ agent: ASSISTANT, autoSend: false, message: 'Tạo hồ sơ thẩm định SME mới.' })
+  const newCase = () =>
+    openAssistant('Tạo hồ sơ thẩm định SME mới.', `new-${Date.now()}`, 'Hồ sơ SME mới')
 
   return (
     <>

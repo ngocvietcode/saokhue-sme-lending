@@ -1,5 +1,4 @@
 export const API = '/apps/sme-lending/api'
-export const ASSISTANT = 'sme-lending--sme-assistant'
 
 export type Tone = 'ok' | 'warn' | 'danger' | 'info' | 'muted' | 'accent'
 export type AgentState = 'passed' | 'blocked' | 'unverified'

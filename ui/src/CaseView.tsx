@@ -1,13 +1,14 @@
-import { useAppApi, useChatLauncher } from '@kirocrew/app-sdk'
+import { useAppApi } from '@kirocrew/app-sdk'
 import { Btn, ErrorNotice } from '@kirocrew/app-sdk/ui'
 import {
   Activity, ArrowLeft, ClipboardList, FileText, Gauge, Landmark, MessageSquare, Play, RefreshCw, ShieldCheck,
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  API, ASSISTANT, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
+  API, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
   type CaseDetail,
 } from './model'
+import { useAssistantChat } from './assistantChat'
 import { AgentsTab, AuditTab, EvidenceTab, OverviewTab, ReviewTab } from './tabs'
 import { Kpi, Pill, StateIcon, tone } from './ui'
 
@@ -49,9 +50,9 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
 
 export default function CaseView({ caseId, onBack }: { caseId: string; onBack: () => void }) {
   const api = useAppApi()
-  const { openChat } = useChatLauncher()
   const [detail, setDetail] = useState<CaseDetail | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const openAssistant = useAssistantChat(setError)
   const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState<Tab>('overview')
   const [focusEv, setFocusEv] = useState<string | null>(null)
@@ -90,10 +91,10 @@ export default function CaseView({ caseId, onBack }: { caseId: string; onBack: (
       return false
     }
   }
-  const run = () => openChat({ agent: ASSISTANT, autoSend: false,
-    message: `Chạy thẩm định hồ sơ ${caseId}, luồng ${detail?.case.flow ?? 'A'}.` })
-  const ask = () => openChat({ agent: ASSISTANT, autoSend: false,
-    message: `Giải thích kết quả thẩm định hồ sơ ${caseId}: ` })
+  const chatTitle = `Thẩm định ${detail?.case.customer?.name ?? caseId}`
+  const run = () => openAssistant(
+    `Chạy thẩm định hồ sơ ${caseId}, luồng ${detail?.case.flow ?? 'A'}.`, caseId, chatTitle)
+  const ask = () => openAssistant(`Giải thích kết quả thẩm định hồ sơ ${caseId}: `, caseId, chatTitle)
 
   const c = detail?.case
   const customer = c?.customer ?? {}
