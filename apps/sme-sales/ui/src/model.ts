@@ -1,14 +1,14 @@
 import { PURPOSE, day, money, moneyShort, num, type Tone } from '@sme-ui/format'
 export * from '@sme-ui/format'
+export * from '@sme-ui/checklist'
+import type { CrossCheckStatus, RuleStatus } from '@sme-ui/checklist'
 
 export const API = '/apps/sme-sales/api'
 
 export type Stage = 'draft' | 'collecting' | 'ready' | 'submitted'
 export type ItemStatus = 'open' | 'requested' | 'waived' | 'resolved' | 'ok'
-export type RuleStatus = 'PASS' | 'MISSING_REQUIRED' | 'FAIL' | 'SKIPPED' | 'UNDETERMINED_CONDITION'
 export type OwnerRole = 'CUSTOMER' | 'RM_INTERNAL'
 export type ChecklistOverall = 'COMPLETE' | 'INCOMPLETE'
-export type CrossCheckStatus = 'PASS' | 'FAIL' | 'MISSING_DATA' | 'SKIPPED'
 
 export type CrossCheckRule = {
   id: string; code: string; title: string; status: CrossCheckStatus
@@ -41,7 +41,14 @@ export type GroupProgress = {
   group: string; label: string; done: number; total: number; blocked: number; skipped?: number
 }
 export type ProfileField = { path: string; section: string; label: string; value: unknown }
+/** The one completion figure (backend `completion()`): blocking vs optional applicable items. */
+export type Progress = {
+  mandatory_done: number; mandatory_total: number; optional_done: number; optional_total: number
+  to_request: number; waiting: number
+}
+
 export type Overview = {
+  progress?: Progress
   case_id: string; as_of: string; stage: Stage
   readiness: {
     score: number; ready: boolean; blocking_open: string[]; waived: string[]
@@ -87,7 +94,7 @@ export type DossierRow = {
   crosscheck_overall?: 'PASS' | 'FAIL' | 'INCOMPLETE'
   blocking_open: number; actionable_blocking?: number; requested: number; overdue: number; stale?: number
   unclassified_docs?: number; policy_breaches?: number; next_due_date?: string | null; pending_drafts?: number
-  open_items: number; groups: GroupProgress[]
+  open_items: number; groups: GroupProgress[]; progress?: Progress
   next_action: Pick<Action, 'kind' | 'tone' | 'title' | 'cta'> | null
   actions: Action[]
   items_open: (Pick<CheckItem, 'key' | 'title' | 'status' | 'blocking' | 'group' | 'kind' | 'owner_role' | 'rule_status'> & { due_date?: string })[]
@@ -117,19 +124,6 @@ export const ITEM_STATUS: Record<ItemStatus, { label: string; tone: Tone }> = {
   waived: { label: 'Xin miễn / Bổ sung sau', tone: 'muted' },
   resolved: { label: 'Đạt', tone: 'ok' },
   ok: { label: 'Đạt', tone: 'ok' },
-}
-export const RULE_STATUS_META: Record<RuleStatus, { label: string; tone: Tone }> = {
-  PASS: { label: 'PASS', tone: 'ok' },
-  MISSING_REQUIRED: { label: 'MISSING_REQUIRED', tone: 'warn' },
-  FAIL: { label: 'FAIL', tone: 'danger' },
-  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
-  UNDETERMINED_CONDITION: { label: 'UNDETERMINED_CONDITION', tone: 'info' },
-}
-export const XCHECK_META: Record<CrossCheckStatus, { label: string; tone: Tone }> = {
-  PASS: { label: 'Khớp', tone: 'ok' },
-  FAIL: { label: 'Không đạt', tone: 'danger' },
-  MISSING_DATA: { label: 'Thiếu căn cứ', tone: 'warn' },
-  SKIPPED: { label: 'Không áp dụng', tone: 'muted' },
 }
 export const CHANNEL: Record<DraftChannel, string> = { email: 'Email', zalo: 'Zalo', phone_script: 'Kịch bản gọi' }
 export const AUDIT_LABEL: Record<string, string> = {

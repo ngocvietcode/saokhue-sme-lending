@@ -44,7 +44,7 @@ function DossierCard({ r, onOpen }: { r: DossierRow; onOpen: () => void }) {
             .filter(Boolean).join(' · ')}
         </span>
       </div>
-      <div className="sme-pipe" aria-label={`${done}/${total} hạng mục đạt`}>
+      <div className="sme-pipe" aria-label={`${done}/${total} hạng mục bắt buộc đã đạt`}>
         {r.groups.map((g) => {
           const gt = groupTone(g)
           return (
@@ -56,7 +56,7 @@ function DossierCard({ r, onOpen }: { r: DossierRow; onOpen: () => void }) {
       <div className="sme-between sme-small sme-muted">
         <span className="sme-row" style={{ gap: 6 }}>
           <span className="sme-chip">Luồng {r.flow}</span>
-          <span className="sme-mono">{done}/{total} mục</span>
+          <span className="sme-mono" title="Hạng mục bắt buộc đã đạt">{done}/{total} bắt buộc</span>
           {(r.policy_breaches ?? 0) > 0 && <Pill t="danger">{r.policy_breaches} lệch chuẩn</Pill>}
         </span>
         <span title={r.updated_at}>Cập nhật {ago(r.updated_at)}</span>
@@ -144,8 +144,8 @@ export default function DossierList({
     const live = list.filter((r) => r.stage !== 'submitted')
     const submitted = list.length - live.length
     const ready = live.filter((r) => r.ready).length
-    const actionNeeded = live.filter((r) => (r.actionable_blocking ?? r.blocking_open) > 0 || (r.unclassified_docs ?? 0) > 0).length
-    const actionableItems = live.reduce((n, r) => n + (r.actionable_blocking ?? r.blocking_open), 0)
+    const actionNeeded = live.filter((r) => (r.progress?.to_request ?? r.actionable_blocking ?? r.blocking_open) > 0 || (r.unclassified_docs ?? 0) > 0).length
+    const actionableItems = live.reduce((n, r) => n + (r.progress?.to_request ?? r.actionable_blocking ?? r.blocking_open), 0)
     const waitingCases = live.filter((r) => r.requested > 0 && r.overdue === 0).length
     const overdueCases = live.filter((r) => r.overdue > 0).length
     return { live: live.length, submitted, ready, actionNeeded, actionableItems, waitingCases, overdueCases }
@@ -156,7 +156,7 @@ export default function DossierList({
     return (rows ?? []).filter((r) => {
       if (filter === 'submitted' && r.stage !== 'submitted') return false
       if (filter !== 'submitted' && filter !== 'all' && r.stage === 'submitted') return false
-      if (filter === 'action' && (r.actionable_blocking ?? r.blocking_open) === 0 && (r.unclassified_docs ?? 0) === 0) return false
+      if (filter === 'action' && (r.progress?.to_request ?? r.actionable_blocking ?? r.blocking_open) === 0 && (r.unclassified_docs ?? 0) === 0) return false
       if (filter === 'waiting' && r.requested === 0) return false
       if (filter === 'overdue' && r.overdue === 0) return false
       if (filter === 'ready' && !r.ready) return false

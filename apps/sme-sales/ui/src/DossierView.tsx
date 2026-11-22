@@ -10,6 +10,7 @@ import ItemsPanel from './ItemsPanel'
 import {
   API, PURPOSE, buildDraftPrompt, buildLosHandoverText, copyText, errMsg, isCustomerRequestable, isSkipped,
   money, showValue, when, type Action, type CaseDetail, type Catalog, type DocumentFilePayload, type DraftChannel,
+  checklistSummary, overallStatus,
 } from './model'
 import { GroupStepper, StagePill } from './parts'
 import { AuditTab, DocsTab, DraftsTab, OverviewTab } from './SidePanels'
@@ -174,15 +175,23 @@ export default function DossierView({
   }
 
   const applicableItems = useMemo(() => (ov?.items ?? []).filter((i) => !isSkipped(i)), [ov])
-  const mandatoryItems = useMemo(() => applicableItems.filter((i) => i.blocking), [applicableItems])
-  const mandatoryDone = useMemo(
-    () => mandatoryItems.filter((i) => ['ok', 'resolved', 'waived'].includes(i.status)).length,
-    [mandatoryItems],
-  )
-  const actionableCount = ov?.readiness.actionable_blocking?.length
-    ?? mandatoryItems.filter((i) => i.status === 'open').length
-  const waitingCount = ov?.readiness.waiting_blocking?.length
-    ?? mandatoryItems.filter((i) => i.status === 'requested').length
+  // One completion figure, computed by the backend (`completion()`), so this page,
+  // the dossier card and the table can never disagree.
+  // An older backend sends no `progress`; recompute it the same way (`_counted`) then.
+  const progress = useMemo(() => {
+    if (ov?.progress) return ov.progress
+    const mand = applicableItems.filter((i) => i.kind !== 'policy_precheck' && i.blocking)
+    return {
+      mandatory_total: mand.length,
+      mandatory_done: mand.filter((i) => ['ok', 'resolved', 'waived'].includes(i.status)).length,
+      to_request: mand.filter((i) => i.status === 'open').length,
+      waiting: mand.filter((i) => i.status === 'requested').length,
+    }
+  }, [ov, applicableItems])
+  const mandatoryTotal = progress.mandatory_total
+  const mandatoryDone = progress.mandatory_done
+  const actionableCount = progress.to_request
+  const waitingCount = progress.waiting
   const openTabCount = useMemo(() => applicableItems.filter((i) => i.status === 'open' || i.status === 'requested').length, [applicableItems])
   const pendingDrafts = useMemo(() => (detail?.drafts ?? []).filter((d) => d.status === 'draft'), [detail])
   const waivedItems = useMemo(() => applicableItems.filter((i) => i.status === 'waived'), [applicableItems])
@@ -233,8 +242,9 @@ export default function DossierView({
           <div className="sme-row sme-wrap" style={{ gap: 6 }}>
             {ov && <StagePill stage={ov.stage} />}
             {ov?.checklist_overall && (
-              <Pill t={ov.checklist_overall === 'COMPLETE' ? 'ok' : 'warn'}>
-                Checklist {ov.checklist_overall}
+              <Pill t={overallStatus(ov.checklist_overall).tone}
+                title={`Kiểm tra quy tắc Master Checklist: ${checklistSummary(ov.checklist_counts)}`}>
+                {overallStatus(ov.checklist_overall).label}
               </Pill>
             )}
             <span className="sme-chip sme-mono">{caseId}</span>
@@ -278,11 +288,9 @@ export default function DossierView({
               value={request.amount ? money(request.amount).replace(' đ', '') : '—'}
               hint={[request.term_months ? `${request.term_months} tháng` : null, request.product_code, 'VND'].filter(Boolean).join(' · ')} />
             <Kpi t={ov.readiness.ready ? 'ok' : actionableCount > 0 ? 'danger' : 'warn'}
-              icon={<ClipboardList size={18} />} label="Master Checklist (A-I)"
-              value={`${mandatoryDone} / ${mandatoryItems.length}`}
-              hint={ov.checklist_counts
-                ? `PASS ${ov.checklist_counts.PASS} · MISSING ${ov.checklist_counts.MISSING_REQUIRED} · FAIL ${ov.checklist_counts.FAIL}`
-                : `${actionableCount} cần bổ sung · ${waitingCount} chờ KH`} />
+              icon={<ClipboardList size={18} />} label="Hạng mục bắt buộc (A–I)"
+              value={`${mandatoryDone} / ${mandatoryTotal}`}
+              hint={`${actionableCount} cần bổ sung · ${waitingCount} chờ KH`} />
             <Kpi t={expiredDocs ? 'danger' : unclassifiedDocs ? 'warn' : c.documents.length ? 'ok' : 'muted'}
               icon={<FileText size={18} />} label="Chứng từ lưu trữ" value={c.documents.length}
               hint={expiredDocs ? `${expiredDocs} không đạt rule` : unclassifiedDocs ? `${unclassifiedDocs} chưa phân loại` : 'Đã đối chiếu danh mục'} />
@@ -326,7 +334,7 @@ export default function DossierView({
                 </Btn>
               </div>
               <div className="sme-small sme-muted" style={{ margin: '6px 0 8px' }}>
-                Hạng mục áp dụng: <b>{mandatoryDone}/{mandatoryItems.length}</b> · Chứng từ: <b>{c.documents.length}</b> ·
+                Hạng mục áp dụng: <b>{mandatoryDone}/{mandatoryTotal}</b> · Chứng từ: <b>{c.documents.length}</b> ·
                 Xin miễn: <b>{waivedItems.length}</b> · Cảnh báo sơ bộ: <b>{policyBreaches.length}</b>.
                 Hệ thống sẽ đồng bộ hồ sơ và chứng từ sang ứng dụng <b>Thẩm định SME</b> qua Handover Adapter.
                 {ov.readiness.ready ? ' Ghi chú bàn giao không bắt buộc.' : ` Còn ${ov.readiness.blocking_open.length} mục chặn nên bắt buộc ghi giải trình.`}

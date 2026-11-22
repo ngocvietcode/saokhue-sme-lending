@@ -7,7 +7,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
-from .actions import extraction, group_progress, next_actions, profile
+from .actions import completion, extraction, group_progress, next_actions, profile
 from .crosscheck import evaluate_crosschecks
 from .dossier import DossierStore, validate_case_patch
 from .gaps import FACT_LABELS, analyse, known_facts, readiness
@@ -113,6 +113,7 @@ class SalesService(LendingService):
             "items": items,
             "policy_checks": policy_checks,
             "groups": group_progress(items, catalog),
+            "progress": completion(items),
             "actions": next_actions(case, items, ready, stage, as_of, catalog, crosschecks=xchecks),
             "profile": profile(case, catalog),
         }
@@ -208,6 +209,7 @@ class SalesService(LendingService):
                 "pending_drafts": sum(1 for d in drafts if d.get("status") == "draft"),
                 "open_items": len(open_items),
                 "groups": ov["groups"],
+                "progress": ov["progress"],
                 "next_action": first and {k: first[k] for k in ("kind", "tone", "title", "cta")},
                 "actions": ov["actions"],
                 "items_open": [

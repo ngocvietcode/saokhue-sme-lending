@@ -41,10 +41,16 @@ def field_label(path: str, case: dict[str, Any], catalog: dict[str, Any]) -> str
 
 
 def profile(case: dict[str, Any], catalog: dict[str, Any]) -> list[dict[str, Any]]:
-    """Every field the dossier holds, labelled; nothing is assumed about which exist."""
+    """Every field the dossier holds, labelled; nothing is assumed about which exist.
+
+    `sample_*` keys are integration sample data (integrations.py: sample CIC/NCLOS
+    answers), not facts about the customer, so the profile leaves them out.
+    """
     out = []
     for section in ("customer", "request", "facts"):
         for key, value in (case.get(section) or {}).items():
+            if key.startswith("sample_"):
+                continue
             path = f"{section}.{key}"
             out.append({"path": path, "section": section, "label": field_label(path, case, catalog), "value": value})
     return out
@@ -78,6 +84,35 @@ def extraction(case: dict[str, Any], catalog: dict[str, Any], doc_id: str | None
     return out
 
 
+DONE_STATUSES = ("ok", "resolved", "waived")
+
+
+def _counted(item: dict[str, Any]) -> bool:
+    """The items completion is measured over: applicable checklist items, not policy prechecks."""
+    return (item["kind"] != "policy_precheck" and item.get("applicable", True)
+            and item.get("rule_status") != "SKIPPED")
+
+
+def completion(items: list[dict[str, Any]]) -> dict[str, int]:
+    """The one completion figure every view shows, over the same items as `group_progress`.
+
+    `mandatory_*` are the blocking items (a dossier cannot be handed over while one
+    is open); `optional_*` the nice-to-have ones. `to_request` are open blocking items
+    the RM still has to ask for, `waiting` the ones already requested from the customer.
+    """
+    mine = [i for i in items if _counted(i)]
+    mand = [i for i in mine if i["blocking"]]
+    opt = [i for i in mine if not i["blocking"]]
+    return {
+        "mandatory_done": sum(1 for i in mand if i["status"] in DONE_STATUSES),
+        "mandatory_total": len(mand),
+        "optional_done": sum(1 for i in opt if i["status"] in DONE_STATUSES),
+        "optional_total": len(opt),
+        "to_request": sum(1 for i in mand if i["status"] == "open"),
+        "waiting": sum(1 for i in mand if i["status"] == "requested"),
+    }
+
+
 def group_progress(items: list[dict[str, Any]], catalog: dict[str, Any]) -> list[dict[str, Any]]:
     """Done / total per applicable group (A -> I), tracking skipped items separately."""
     names = catalog.get("groups", {})
@@ -86,10 +121,10 @@ def group_progress(items: list[dict[str, Any]], catalog: dict[str, Any]) -> list
     for g in order:
         all_g = [i for i in items if i["group"] == g and i["kind"] != "policy_precheck"]
         skipped = sum(1 for i in all_g if not i.get("applicable", True) or i.get("rule_status") == "SKIPPED")
-        mine = [i for i in all_g if i.get("applicable", True) and i.get("rule_status") != "SKIPPED"]
+        mine = [i for i in all_g if _counted(i)]
         if not mine:
             continue
-        done = sum(1 for i in mine if i["status"] in ("ok", "resolved", "waived"))
+        done = sum(1 for i in mine if i["status"] in DONE_STATUSES)
         blocked = sum(1 for i in mine if i["status"] == "open" and i["blocking"])
         out.append({
             "group": g,

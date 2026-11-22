@@ -1,5 +1,5 @@
 import { useChatLauncher } from '@kirocrew/app-sdk'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 100)
 
@@ -13,9 +13,15 @@ const safe = (s: string) => s.replace(/[^A-Za-z0-9._-]/g, '-').slice(0, 100)
  * `agent` is the agent's spec `name`; `keyPrefix` must equal `chatLaunch.keyPrefix`.
  */
 export function useAgentChat(agent: string, keyPrefix: string, onError?: (message: string) => void) {
-  const launcher = useChatLauncher()
+  // useChatLauncher() is a new object each render; a ref keeps this callback stable.
+  const current = useChatLauncher()
+  const launcherRef = useRef(current)
+  launcherRef.current = current
+  const onErrorRef = useRef(onError)
+  onErrorRef.current = onError
   return useCallback(
     async (message: string, topic: string, title: string) => {
+      const launcher = launcherRef.current
       const { openChat } = launcher
       const createChat = (launcher as { createChat?: (o: Record<string, unknown>) => Promise<string> }).createChat
       if (!createChat) {
@@ -27,9 +33,9 @@ export function useAgentChat(agent: string, keyPrefix: string, onError?: (messag
         const slotKey = await createChat({ slotKey: keyPrefix + safe(topic), agent, title })
         openChat({ slotKey, autoSend: false, message })
       } catch (e) {
-        onError?.(`Không mở được chat với trợ lý: ${e instanceof Error ? e.message : String(e)}`)
+        onErrorRef.current?.(`Không mở được chat với trợ lý: ${e instanceof Error ? e.message : String(e)}`)
       }
     },
-    [launcher, agent, keyPrefix, onError],
+    [agent, keyPrefix],
   )
 }

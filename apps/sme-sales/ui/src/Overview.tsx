@@ -6,13 +6,15 @@ export function dossierStatus(r: DossierRow): { label: string; t: Tone } {
   if (r.stage === 'submitted') return { label: 'Đã bàn giao', t: 'info' }
   if (r.overdue > 0) return { label: `${r.overdue} quá hạn`, t: 'danger' }
   if (r.ready) return { label: 'Đủ điều kiện trình', t: 'ok' }
-  const actionable = r.actionable_blocking ?? r.blocking_open
+  const actionable = r.progress?.to_request ?? r.actionable_blocking ?? r.blocking_open
   if (actionable > 0) return { label: `Thiếu ${actionable} mục chặn`, t: 'warn' }
   if (r.requested > 0) return { label: `Chờ KH (${r.requested})`, t: 'info' }
   return { label: 'Khởi tạo', t: 'muted' }
 }
 
+/** Mandatory items done / total: the same figure the dossier page shows. */
 export function groupTotals(r: DossierRow): { done: number; total: number } {
+  if (r.progress) return { done: r.progress.mandatory_done, total: r.progress.mandatory_total }
   let done = 0
   let total = 0
   for (const g of r.groups) {
@@ -45,7 +47,7 @@ export function DetailTable({ rows, onOpen }: { rows: DossierRow[]; onOpen: (cas
           {rows.map((r) => {
             const st = dossierStatus(r)
             const { done, total } = groupTotals(r)
-            const actionable = r.actionable_blocking ?? r.blocking_open
+            const actionable = r.progress?.to_request ?? r.actionable_blocking ?? r.blocking_open
             return (
               <tr key={r.case_id} className="click" onClick={() => onOpen(r.case_id)}>
                 <td className="sme-mono" style={{ whiteSpace: 'nowrap' }}>{r.case_id}</td>

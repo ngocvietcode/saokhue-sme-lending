@@ -259,6 +259,31 @@ class ActionsTest(unittest.TestCase):
             self.assertEqual(rows[0]["overdue"], 1)
             self.assertEqual(svc.today(rows)["overdue"], [cid])
 
+    def test_one_completion_figure_for_list_card_and_dossier_page(self):
+        """The list card, the table and the dossier KPI all read `progress`."""
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _svc(tmp)
+            cid = svc.case_create(
+                {"name": "Công ty TNHH MTV A", "tax_id": "1", "legal_type": "LLC_1"},
+                {"product_code": "SME-WC", "purpose": "working_capital"},
+                [],
+                "A",
+            )["case_id"]
+            svc.overview(cid)
+            svc.store.set_requirement(cid, "doc:dieu_le", "requested", "đã xin", actor="sale")
+            ov = svc.overview(cid)
+            row = svc.list_dossiers()[0]
+        p = ov["progress"]
+        self.assertEqual(row["progress"], p)
+        counted = [i for i in ov["items"] if i["kind"] != "policy_precheck"
+                   and i.get("applicable", True) and i.get("rule_status") != "SKIPPED"]
+        self.assertEqual(p["mandatory_total"] + p["optional_total"], sum(g["total"] for g in ov["groups"]))
+        self.assertEqual(p["mandatory_done"] + p["optional_done"], sum(g["done"] for g in ov["groups"]))
+        self.assertEqual(p["mandatory_total"], sum(1 for i in counted if i["blocking"]))
+        self.assertEqual(p["waiting"], 1)
+        self.assertEqual(p["to_request"], sum(1 for i in counted if i["blocking"] and i["status"] == "open"))
+        self.assertLessEqual(p["to_request"] + p["waiting"], len(ov["readiness"]["blocking_open"]))
+
     def test_group_progress_counts_waived_as_done(self):
         with tempfile.TemporaryDirectory() as tmp:
             svc = _svc(tmp)

@@ -254,7 +254,7 @@ export default function ItemsPanel({
         <div className="sme-row sme-wrap" style={{ gap: 6 }}>
           {skippedItems.length > 0 && (
             <Btn className={showSkipped ? 'sme-toggle-on' : undefined} onClick={() => setShowSkipped((v) => !v)}
-              title="Các mục SKIPPED được ẩn mặc định; bấm để xem lý do không áp dụng">
+              title="Các mục không áp dụng được ẩn mặc định; bấm để xem lý do không áp dụng">
               {showSkipped ? <EyeOff size={13} /> : <Eye size={13} />}
               {showSkipped ? 'Quay lại mục áp dụng' : `Mục không áp dụng (${skippedItems.length})`}
             </Btn>
@@ -272,7 +272,7 @@ export default function ItemsPanel({
 
       {showSkipped && (
         <Banner t="info">
-          Đang hiển thị <b>{skippedItems.length} hạng mục SKIPPED</b> (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt cho bộ hồ sơ này).
+          Đang hiển thị <b>{skippedItems.length} hạng mục không áp dụng</b> (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt cho bộ hồ sơ này).
         </Banner>
       )}
 

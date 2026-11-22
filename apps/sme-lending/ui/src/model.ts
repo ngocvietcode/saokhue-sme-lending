@@ -2,9 +2,9 @@ export const API = '/apps/sme-lending/api'
 
 import { num, pct, type Tone } from '@sme-ui/format'
 export * from '@sme-ui/format'
+export * from '@sme-ui/checklist'
+import type { CrossCheckStatus, RuleStatus } from '@sme-ui/checklist'
 export type AgentState = 'passed' | 'blocked' | 'unverified'
-export type RuleStatus = 'PASS' | 'MISSING_REQUIRED' | 'FAIL' | 'SKIPPED' | 'UNDETERMINED_CONDITION'
-export type CrossCheckStatus = 'PASS' | 'FAIL' | 'MISSING_DATA' | 'SKIPPED'
 
 export type Finding = { id: string; topic: string; statement: string; severity: string; evidence_refs: string[] }
 export type Verification = { passed: boolean; errors: string[]; version?: number; checked_at?: string } | null
@@ -99,19 +99,6 @@ export const STATE_META: Record<AgentState | 'none', { label: string; tone: Tone
   unverified: { label: 'Chưa kiểm chứng', tone: 'warn' },
   none: { label: 'Chưa chạy', tone: 'muted' },
 }
-export const RULE_STATUS_META: Record<RuleStatus, { label: string; tone: Tone }> = {
-  PASS: { label: 'PASS', tone: 'ok' },
-  MISSING_REQUIRED: { label: 'MISSING_REQUIRED', tone: 'warn' },
-  FAIL: { label: 'FAIL', tone: 'danger' },
-  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
-  UNDETERMINED_CONDITION: { label: 'UNDETERMINED_CONDITION', tone: 'info' },
-}
-export const XCHECK_META: Record<CrossCheckStatus, { label: string; tone: Tone }> = {
-  PASS: { label: 'PASS', tone: 'ok' },
-  FAIL: { label: 'FAIL', tone: 'danger' },
-  MISSING_DATA: { label: 'MISSING_DATA', tone: 'warn' },
-  SKIPPED: { label: 'SKIPPED', tone: 'muted' },
-}
 export const SEVERITY: Record<string, { label: string; tone: Tone; rank: number }> = {
   high: { label: 'Cao', tone: 'danger', rank: 0 },
   medium: { label: 'Trung bình', tone: 'warn', rank: 1 },
@@ -170,7 +157,7 @@ export function metrics(detail: CaseDetail): Metrics {
   const m: Metrics = {}
   const policy = calc(detail, 'policy-exception', 'policy_check') ?? calc(detail, 'risk-compliance', 'policy_check')
   if (policy?.outputs?.matrix) {
-    m.policy = { version: policy.outputs.policy_version, product: policy.outputs.product_code, rows: policy.outputs.matrix }
+    m.policy = { version: policy.outputs.policy_version, product: policy.outputs.product_code ?? policy.inputs?.product_code ?? detail.case.request?.product_code, rows: policy.outputs.matrix }
   }
   const rc = calc(detail, 'financial-analysis', 'repayment_capacity')
   if (rc?.outputs?.scenarios) {

@@ -6,6 +6,7 @@ import {
   AUDIT_LABEL, CHANNEL, RULE_STATUS_META, XCHECK_META, actor, copyText, day, describeAudit, formatFactValue, showValue, when,
   type Action, type CaseDetail, type Catalog, type CheckItem, type Doc, type Draft, type DraftChannel,
   type PolicyCheckRow, type ProfileField,
+  overallStatus,
 } from './model'
 import { ChannelSelect, DueDateInline } from './parts'
 
@@ -15,7 +16,6 @@ const SECTION: Record<string, string> = {
   facts: 'Điều kiện kích hoạt & Tài chính / TSBĐ',
 }
 
-const XCHECK_OVERALL_TONE = { PASS: 'ok', INCOMPLETE: 'warn', FAIL: 'danger' } as const
 
 const POLICY_ST: Record<PolicyCheckRow['status'], { label: string; t: 'ok' | 'danger' | 'warn' | 'muted' }> = {
   met: { label: 'Đạt', t: 'ok' },
@@ -131,8 +131,8 @@ export function OverviewTab({
         <div className="sme-card">
           <div className="sme-between" style={{ marginBottom: 8 }}>
             <h3 className="sme-h3">7 Quy tắc đối chiếu chéo trọng yếu</h3>
-            <Pill t={XCHECK_OVERALL_TONE[ov.crosschecks!.overall_status]}>
-              {ov.crosschecks!.overall_status}
+            <Pill t={overallStatus(ov.crosschecks!.overall_status).tone}>
+              {overallStatus(ov.crosschecks!.overall_status).label}
             </Pill>
           </div>
           <table className="sme-table">

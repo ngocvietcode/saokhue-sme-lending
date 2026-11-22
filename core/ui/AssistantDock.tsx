@@ -216,12 +216,17 @@ export default function AssistantDock({
   const [slotError, setSlotError] = useState<string | null>(null)
   const readySlotRef = useRef<string | null>(null)
   readySlotRef.current = readySlot
+  // useChatLauncher() returns a new object on every render, so it must not be an
+  // effect dependency: the page re-renders on each data refresh, and depending on
+  // it re-sent POST /api/chat/slots every time. Read it through a ref instead.
+  const launcherRef = useRef(launcher)
+  launcherRef.current = launcher
 
   useEffect(() => {
     let cancelled = false
     setSlotError(null)
     const isSameSlot = readySlotRef.current === desiredSlot
-    const createChat = (launcher as { createChat?: (o: Record<string, unknown>) => Promise<string> }).createChat
+    const createChat = (launcherRef.current as { createChat?: (o: Record<string, unknown>) => Promise<string> }).createChat
     if (!createChat) {
       if (!isSameSlot) setReadySlot(desiredSlot)
       return
@@ -238,7 +243,7 @@ export default function AssistantDock({
         if (!isSameSlot) setSlotError(errMsg(e))
       })
     return () => { cancelled = true }
-  }, [desiredSlot, agent, sessionTitle, launcher])
+  }, [desiredSlot, agent, sessionTitle])
 
   const dockRef = useRef<HTMLElement>(null)
   const lastIntentIdRef = useRef<number>(0)
