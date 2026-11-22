@@ -1,0 +1,60 @@
+{
+  "name": "sme-sales",
+  "version": "0.1.0",
+  "displayName": "Hoàn thiện hồ sơ SME",
+  "description": "Trợ lý cho Sale/RM rà soát bộ hồ sơ vay SME của khách hàng, chỉ ra chỗ còn thiếu, soạn yêu cầu bổ sung gửi khách và kiểm tra hồ sơ đã đủ để nộp Thẩm định chưa.",
+  "author": "Sao Khue",
+  "license": "Proprietary",
+  "tags": ["lending", "sme", "sales", "banking"],
+  "highlights": [
+    "Danh sách còn thiếu tính bằng quy tắc tất định từ checklist sản phẩm, hiệu lực chứng từ và điều kiện chính sách: Sale và Thẩm định thấy cùng một danh sách",
+    "Điểm hoàn thiện và kiểm tra sẵn sàng nộp; mục bỏ qua phải có lý do và đi kèm hồ sơ",
+    "Agent dossier-coach soạn thư xin bổ sung theo đúng mục còn thiếu, không bao giờ hứa kết quả; Sale tự gửi"
+  ],
+  "useCases": [
+    "Khi khách gửi bộ hồ sơ đầu tiên, tải chứng từ lên trang Hoàn thiện hồ sơ SME để biết ngay còn thiếu gì và điểm hoàn thiện bao nhiêu",
+    "Khi cần xin khách bổ sung, nhờ agent dossier-coach soạn thư theo các mục đã chọn, sửa rồi tự gửi qua email hoặc Zalo",
+    "Trước khi nộp Thẩm định, mở kiểm tra sẵn sàng nộp để chắc không còn mục chặn"
+  ],
+  "configuration": [
+    "Thay knowledge/documents.json, checklists.json và policies.json bằng quy định có hiệu lực (đang là dữ liệu mẫu)",
+    "Nộp hồ sơ lên hệ thống trung tâm chưa tích hợp: đánh dấu Đã nộp sau khi nộp thủ công"
+  ],
+  "agents": ["agents/dossier-coach.json"],
+  "skills": ["skills/sme-dossier-coach", "skills/sme-customer-request"],
+  "mcpServers": {
+    "sales": {
+      "command": "python",
+      "args": ["server/server.py"]
+    }
+  },
+  "backend": {
+    "entryPoint": "backend/server.py",
+    "type": "python",
+    "port": "auto",
+    "healthCheck": "/health",
+    "signedPrincipal": true
+  },
+  "ui": {
+    "entry": "dist/index.mjs",
+    "pages": [
+      {
+        "route": "/apps/sme-sales",
+        "label": "Hoàn thiện hồ sơ",
+        "icon": "ClipboardCheck"
+      }
+    ],
+    "loading": { "layout": "page" }
+  },
+  "platform": {
+    "os": ["macos", "linux", "windows"]
+  },
+  "permissions": {
+    "api": ["/apps/sme-sales/api"],
+    "chatLaunch": {
+      "keyPrefix": "sme-sales-chat-",
+      "agents": ["dossier-coach"],
+      "folder": "Hoàn thiện hồ sơ SME"
+    }
+  }
+}

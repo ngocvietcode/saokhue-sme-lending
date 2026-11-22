@@ -1,0 +1,27 @@
+{
+  "_note": "DU LIEU MAU. Thay bang danh muc san pham co hieu luc truoc khi dung that.",
+  "version": "sample-0.1",
+  "products": [
+    {
+      "code": "SME-WC",
+      "name": "Cho vay bổ sung vốn lưu động SME",
+      "purposes": ["working_capital"],
+      "max_term_months": 12,
+      "requires_collateral": false
+    },
+    {
+      "code": "SME-INV",
+      "name": "Cho vay đầu tư tài sản cố định SME",
+      "purposes": ["fixed_asset", "expansion"],
+      "max_term_months": 84,
+      "requires_collateral": true
+    },
+    {
+      "code": "SME-LC",
+      "name": "Hạn mức tín dụng ngắn hạn SME",
+      "purposes": ["working_capital", "trade_finance"],
+      "max_term_months": 12,
+      "requires_collateral": true
+    }
+  ]
+}

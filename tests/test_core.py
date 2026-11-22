@@ -11,7 +11,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "server"))
+CORE = ROOT / "core"
+UW = ROOT / "apps" / "sme-lending"
+sys.path.insert(0, str(CORE))
 
 from sme_core.collateral import collateral_ltv  # noqa: E402
 from sme_core.finance import fin_ratios, repayment_capacity  # noqa: E402
@@ -23,7 +25,7 @@ FIXED_NOW = "2026-11-21T08:00:00+00:00"
 
 
 def _service(tmp: str) -> LendingService:
-    svc = LendingService(Path(tmp), ROOT / "knowledge")
+    svc = LendingService(Path(tmp), CORE / "knowledge")
     svc.store.clock = lambda: FIXED_NOW
     return svc
 
@@ -215,15 +217,15 @@ class PackagingTest(unittest.TestCase):
     """The manifest, agents, skills and MCP server must agree with each other."""
 
     def _server_tools(self) -> set[str]:
-        tree = ast.parse((ROOT / "server" / "server.py").read_text(encoding="utf-8"))
+        tree = ast.parse((UW / "server" / "server.py").read_text(encoding="utf-8"))
         return {n.name for n in tree.body if isinstance(n, ast.FunctionDef) and n.name.startswith("sme_")}
 
     def test_every_agent_tool_and_skill_exists(self):
-        manifest = json.loads((ROOT / "app.json").read_text(encoding="utf-8"))
+        manifest = json.loads((UW / "app.json").read_text(encoding="utf-8"))
         tools = self._server_tools()
         skills = {Path(s).name for s in manifest["skills"]}
         for rel in manifest["agents"]:
-            spec = json.loads((ROOT / rel).read_text(encoding="utf-8"))
+            spec = json.loads((UW / rel).read_text(encoding="utf-8"))
             self.assertEqual(spec["model"], "auto", rel)
             for ref in spec["tools"]:
                 if ref.startswith("@sme-lending:lending/"):
@@ -231,22 +233,22 @@ class PackagingTest(unittest.TestCase):
             for res in spec.get("resources", []):
                 self.assertIn(res.split("/")[-2], skills, rel)
         for s in manifest["skills"]:
-            text = (ROOT / s / "SKILL.md").read_text(encoding="utf-8")
+            text = (UW / s / "SKILL.md").read_text(encoding="utf-8")
             desc = next(line for line in text.splitlines() if line.startswith("description: "))
             # An unquoted value holding ": " is a YAML error, so the skill would not load.
             self.assertTrue(desc[13:].startswith('"'), s)
             json.loads(desc[13:])
 
         for rel in manifest["agents"]:
-            spec = json.loads((ROOT / rel).read_text(encoding="utf-8"))
+            spec = json.loads((UW / rel).read_text(encoding="utf-8"))
             for res in spec.get("resources", []):
                 # `~/` expands against the home dir, not a relocated data home.
                 self.assertTrue(res.startswith("skill://{APP_ROOT}/skills/"), rel)
 
     def test_workflow_names_only_declared_agents(self):
-        manifest = json.loads((ROOT / "app.json").read_text(encoding="utf-8"))
+        manifest = json.loads((UW / "app.json").read_text(encoding="utf-8"))
         declared = {Path(a).stem for a in manifest["agents"]}
-        src = (ROOT / "workflows" / "sme_credit_assessment.py").read_text(encoding="utf-8")
+        src = (UW / "workflows" / "sme_credit_assessment.py").read_text(encoding="utf-8")
         self.assertTrue(src.isascii())
         named = set(re.findall(r'run_verified\("([a-z-]+)"', src)) | {"verifier"}
         named |= set(re.findall(r'"(financial-analysis|risk-compliance|collateral|industry)"', src))

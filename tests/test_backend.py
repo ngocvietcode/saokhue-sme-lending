@@ -18,12 +18,12 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "server"))
+sys.path.insert(0, str(ROOT / "core"))
 
 from sme_core.service import LendingService  # noqa: E402
 
 # Loaded by path: `server` alone is also the MCP server module under server/.
-_spec = importlib.util.spec_from_file_location("sme_backend", ROOT / "backend" / "server.py")
+_spec = importlib.util.spec_from_file_location("sme_backend", ROOT / "apps" / "sme-lending" / "backend" / "server.py")
 backend = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(backend)
 
@@ -50,7 +50,7 @@ def _principal(method: str, target: str, body: bytes, kind: str, owner: str = ""
 class BackendTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.svc = LendingService(Path(self.tmp.name), ROOT / "knowledge")
+        self.svc = LendingService(Path(self.tmp.name), ROOT / "core" / "knowledge")
         self.svc.store.clock = lambda: "2026-11-21T08:00:00+00:00"
         self.case_id = self.svc.case_create({"name": "Cong ty A"}, {"amount": 5e9}, [], "A")["case_id"]
         self.svc.review_add(self.case_id, "data_conflict", "Doanh thu lệch", "financial-analysis")

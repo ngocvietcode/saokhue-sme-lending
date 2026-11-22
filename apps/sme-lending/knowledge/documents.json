@@ -1,0 +1,91 @@
+{
+  "_note": "DU LIEU MAU. Thoi han hieu luc, cau xin khach va chung tu thay the phai duoc Risk/OPS duyet truoc khi dung that.",
+  "version": "sample-0.1",
+  "groups": {
+    "phap_ly": "Pháp lý doanh nghiệp",
+    "nhu_cau": "Nhu cầu vay",
+    "tai_chinh": "Tài chính",
+    "tsbd": "Tài sản bảo đảm",
+    "nganh": "Ngành"
+  },
+  "types": {
+    "dkkd": {
+      "label": "Giấy chứng nhận đăng ký doanh nghiệp", "group": "phap_ly", "validity_months": null,
+      "ask": "Bản sao Giấy chứng nhận đăng ký doanh nghiệp, bản đăng ký thay đổi gần nhất",
+      "alternatives": []
+    },
+    "dieu_le": {
+      "label": "Điều lệ công ty", "group": "phap_ly", "validity_months": null,
+      "ask": "Điều lệ công ty đang có hiệu lực",
+      "alternatives": []
+    },
+    "de_nghi_vay": {
+      "label": "Giấy đề nghị vay vốn", "group": "nhu_cau", "validity_months": 3,
+      "ask": "Giấy đề nghị vay vốn có chữ ký người đại diện theo pháp luật",
+      "alternatives": []
+    },
+    "pavv": {
+      "label": "Phương án vay vốn / phương án kinh doanh", "group": "nhu_cau", "validity_months": 6,
+      "ask": "Phương án vay vốn nêu rõ mục đích, nguồn trả nợ và kế hoạch doanh thu",
+      "alternatives": []
+    },
+    "bctc_2_ky": {
+      "label": "Báo cáo tài chính 2 năm gần nhất", "group": "tai_chinh", "validity_months": 15,
+      "ask": "Báo cáo tài chính 2 năm gần nhất (bảng cân đối, kết quả kinh doanh, lưu chuyển tiền tệ, thuyết minh)",
+      "alternatives": ["BCTC nội bộ có chữ ký kế toán trưởng kèm tờ khai quyết toán thuế TNDN"]
+    },
+    "to_khai_vat": {
+      "label": "Tờ khai thuế GTGT 12 tháng gần nhất", "group": "tai_chinh", "validity_months": 3,
+      "ask": "Tờ khai thuế GTGT 12 tháng gần nhất",
+      "alternatives": ["Xác nhận nghĩa vụ thuế của cơ quan thuế"]
+    },
+    "hop_dong_dau_ra": {
+      "label": "Hợp đồng đầu ra / đơn đặt hàng", "group": "nhu_cau", "validity_months": 12,
+      "ask": "Các hợp đồng bán hàng hoặc đơn đặt hàng đang thực hiện, chứng minh nhu cầu vốn",
+      "alternatives": ["Hoá đơn bán hàng 3 tháng gần nhất"]
+    },
+    "ke_hoach_kinh_doanh": {
+      "label": "Kế hoạch kinh doanh năm", "group": "nhu_cau", "validity_months": 12,
+      "ask": "Kế hoạch kinh doanh năm nay (doanh thu, chi phí, nhu cầu vốn lưu động)",
+      "alternatives": []
+    },
+    "du_an_dau_tu": {
+      "label": "Hồ sơ dự án đầu tư", "group": "nhu_cau", "validity_months": 12,
+      "ask": "Hồ sơ dự án đầu tư: tổng vốn, cơ cấu nguồn vốn, tiến độ, hiệu quả dự kiến",
+      "alternatives": []
+    },
+    "bao_gia_tai_san": {
+      "label": "Báo giá / hợp đồng mua tài sản đầu tư", "group": "nhu_cau", "validity_months": 3,
+      "ask": "Báo giá hoặc hợp đồng mua tài sản sẽ đầu tư",
+      "alternatives": []
+    },
+    "ho_so_tsbd": {
+      "label": "Hồ sơ pháp lý tài sản bảo đảm", "group": "tsbd", "validity_months": null,
+      "ask": "Hồ sơ pháp lý tài sản bảo đảm (giấy chứng nhận quyền sở hữu/sử dụng, đăng ký xe...)",
+      "alternatives": []
+    },
+    "chung_thu_dinh_gia": {
+      "label": "Chứng thư định giá tài sản bảo đảm", "group": "tsbd", "validity_months": 12,
+      "ask": "Chứng thư định giá tài sản bảo đảm còn hiệu lực",
+      "alternatives": []
+    },
+    "bao_cao_nganh": {
+      "label": "Báo cáo am hiểu ngành", "group": "nganh", "validity_months": 12,
+      "ask": "Thông tin về thị trường, đối thủ và vị thế của doanh nghiệp trong ngành",
+      "alternatives": []
+    }
+  },
+  "fields": {
+    "customer.name": {"label": "Tên khách hàng", "group": "phap_ly"},
+    "customer.tax_id": {"label": "Mã số thuế", "group": "phap_ly"},
+    "customer.industry_code": {"label": "Mã ngành", "group": "nganh"},
+    "request.product_code": {"label": "Sản phẩm đề xuất", "group": "nhu_cau"},
+    "request.amount": {"label": "Số tiền vay", "group": "nhu_cau"},
+    "request.purpose": {"label": "Mục đích vay", "group": "nhu_cau"},
+    "request.term_months": {"label": "Kỳ hạn (tháng)", "group": "nhu_cau"}
+  },
+  "sales_facts": {
+    "years_in_operation": {"label": "Số năm hoạt động", "group": "phap_ly"},
+    "equity_contribution_pct": {"label": "Tỷ lệ vốn tự có tham gia (%)", "group": "nhu_cau"}
+  }
+}
