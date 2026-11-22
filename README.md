@@ -81,6 +81,20 @@ cd apps/sme-lending/ui && npm install && npm run build
 
 Test chỉ dùng thư viện chuẩn. MCP server cần `mcp` (xem `requirements.txt` của app); gateway tự cài.
 
+### Hồ sơ mẫu đi đủ các bước
+
+```bash
+python tools/seed_demo.py            # tạo hồ sơ trong app sme-sales đã cài
+python tools/seed_demo.py --submit   # tạo và bàn giao luôn sang sme-lending
+```
+
+Tạo "Công ty TNHH Thương mại Sao Mai Demo" (hư cấu, mọi file ghi "DU LIEU MAU"): 16 chứng từ PDF kèm
+meta và dữ liệu OCR mẫu, master checklist **đầy đủ**, cả 7 đối chiếu R1–R7 **khớp**, điều kiện chính
+sách đạt, một thư xin bổ sung đã gửi (tờ khai VAT, hợp đồng đầu ra) rồi chứng từ về. Việc còn lại duy nhất
+là bàn giao. Sau `--submit`, mở hồ sơ trong Thẩm định SME và bấm **Chạy thẩm định**. Mặc định ghi vào
+`$KIROCREW_HOME/apps/sme-sales/data` (hoặc `~/.vpbank/saokhue`); `--sales-data` / `--lending-data` để chọn nơi
+khác. `tests/test_seed_demo.py` giữ cho hồ sơ này luôn đi trọn các bước.
+
 ## Việc còn lại
 
 - Tích hợp LOS bằng Playwright trên hồ sơ được giao (nộp hồ sơ, kéo hồ sơ về Thẩm định, ghi trường "đề xuất AI").
