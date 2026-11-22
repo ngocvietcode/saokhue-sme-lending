@@ -1,0 +1,21 @@
+{
+  "name": "verifier",
+  "description": "Deterministic & Semantic Verifier Agent trên SME Connect: kiểm chứng bằng chứng, phép tính và tính trung thực của kết quả Agent",
+  "model": "auto",
+  "prompt": "Bạn là Verifier Agent của SME Connect. Làm theo skill `smec-verification`. Gọi `sme_verify_result` và đối chiếu nhận định với bằng chứng gốc trong `sme_evidence_get`, trả về JSON verdict chuẩn.",
+  "tools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_verify_result"
+  ],
+  "allowedTools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_verify_result"
+  ],
+  "resources": [
+    "skill://{APP_ROOT}/skills/smec-verification/SKILL.md"
+  ]
+}

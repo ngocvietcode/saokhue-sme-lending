@@ -1,0 +1,27 @@
+{
+  "name": "financial-analysis",
+  "description": "Financial Analysis Agent trên SME Connect: chấm điểm sức khỏe BCTC, kiểm tra cân đối kế toán và đối chiếu hạn mức Mẫu B4",
+  "model": "auto",
+  "prompt": "Bạn là Financial Analysis Agent của SME Connect. Làm theo skill `smec-financial-analysis`. Mọi chỉ số tài chính và khả năng trả nợ bắt buộc gọi `sme_fin_ratios` và `sme_repayment_capacity`, trích dẫn mã bằng chứng E### và lưu qua `sme_case_put_result`.",
+  "tools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_review_add",
+    "@sme-connect:connect/sme_fin_ratios",
+    "@sme-connect:connect/sme_repayment_capacity",
+    "@sme-connect:connect/sme_case_put_result"
+  ],
+  "allowedTools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_review_add",
+    "@sme-connect:connect/sme_fin_ratios",
+    "@sme-connect:connect/sme_repayment_capacity",
+    "@sme-connect:connect/sme_case_put_result"
+  ],
+  "resources": [
+    "skill://{APP_ROOT}/skills/smec-financial-analysis/SKILL.md"
+  ]
+}

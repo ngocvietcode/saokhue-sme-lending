@@ -1,0 +1,49 @@
+{
+  "_note": "DU LIEU MAU. Nguong duoi day khong phai chinh sach that; thay bang bo chinh sach co hieu luc va owner cap nhat.",
+  "policies": [
+    {
+      "product_code": "SME-WC",
+      "version": "sample-0.1",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "conditions": [
+        {"id": "C1", "fact": "years_in_operation", "op": ">=", "value": 2, "clause": "Mẫu - Điều 5.1"},
+        {"id": "C2", "fact": "loan_amount", "op": "<=", "value": 10000000000, "clause": "Mẫu - Điều 6.2"},
+        {"id": "C3", "fact": "term_months", "op": "<=", "value": 12, "clause": "Mẫu - Điều 6.3"},
+        {"id": "C4", "fact": "dscr", "op": ">=", "value": 1.2, "clause": "Mẫu - Điều 8.1"},
+        {"id": "C5", "fact": "cic_debt_group", "op": "<=", "value": 1, "clause": "Mẫu - Điều 9.1"}
+      ]
+    },
+    {
+      "product_code": "SME-INV",
+      "version": "sample-0.1",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "conditions": [
+        {"id": "C1", "fact": "years_in_operation", "op": ">=", "value": 3, "clause": "Mẫu - Điều 5.1"},
+        {"id": "C2", "fact": "term_months", "op": "<=", "value": 84, "clause": "Mẫu - Điều 6.3"},
+        {"id": "C3", "fact": "dscr", "op": ">=", "value": 1.25, "clause": "Mẫu - Điều 8.1"},
+        {"id": "C4", "fact": "ltv_pct", "op": "<=", "value": 70, "clause": "Mẫu - Điều 10.2"},
+        {"id": "C5", "fact": "equity_contribution_pct", "op": ">=", "value": 30, "clause": "Mẫu - Điều 7.1"},
+        {"id": "C6", "fact": "cic_debt_group", "op": "<=", "value": 1, "clause": "Mẫu - Điều 9.1"}
+      ]
+    },
+    {
+      "product_code": "SME-LC",
+      "version": "sample-0.1",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "conditions": [
+        {"id": "C1", "fact": "years_in_operation", "op": ">=", "value": 2, "clause": "Mẫu - Điều 5.1"},
+        {"id": "C2", "fact": "loan_amount", "op": "<=", "value": 15000000000, "clause": "Mẫu - Điều 6.2"},
+        {"id": "C3", "fact": "term_months", "op": "<=", "value": 12, "clause": "Mẫu - Điều 6.3"},
+        {"id": "C4", "fact": "ltv_pct", "op": "<=", "value": 70, "clause": "Mẫu - Điều 10.2"},
+        {"id": "C5", "fact": "cic_debt_group", "op": "<=", "value": 1, "clause": "Mẫu - Điều 9.1"}
+      ]
+    }
+  ],
+  "collateral": {
+    "valuation_validity_months": {"real_estate": 12, "vehicle": 6, "machinery": 6, "deposit": 120, "other": 6},
+    "max_ltv_pct": {"real_estate": 70, "vehicle": 60, "machinery": 50, "deposit": 95, "other": 50}
+  }
+}

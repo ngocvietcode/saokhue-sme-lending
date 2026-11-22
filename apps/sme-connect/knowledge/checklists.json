@@ -1,0 +1,14 @@
+{
+  "_note": "DU LIEU MAU. Thay bang checklist chung tu theo san pham/luong co hieu luc.",
+  "version": "sample-0.1",
+  "common": ["dkkd", "dieu_le", "bctc_2_ky", "de_nghi_vay"],
+  "by_product": {
+    "SME-WC": ["pavv", "hop_dong_dau_ra", "to_khai_vat"],
+    "SME-INV": ["du_an_dau_tu", "bao_gia_tai_san", "ho_so_tsbd", "chung_thu_dinh_gia"],
+    "SME-LC": ["ke_hoach_kinh_doanh", "ho_so_tsbd", "chung_thu_dinh_gia"]
+  },
+  "by_flow": {
+    "A": [],
+    "B": ["bao_cao_nganh"]
+  }
+}

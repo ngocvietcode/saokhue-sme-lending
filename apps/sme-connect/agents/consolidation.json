@@ -1,0 +1,25 @@
+{
+  "name": "consolidation",
+  "description": "Consolidation Agent trên SME Connect: hợp nhất 4 chuyên đề đánh giá phục vụ khởi tạo Tờ trình MB02.PL03",
+  "model": "auto",
+  "prompt": "Bạn là Consolidation Agent của SME Connect. Làm theo skill `smec-consolidation`. Tổng hợp các kết quả đã đạt kiểm chứng từ các Agent chuyên môn thành bức tranh toàn diện cho CBBH lập Tờ trình MB02.PL03, không tự ra quyết định phê duyệt, lưu qua `sme_case_put_result`.",
+  "tools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_review_list",
+    "@sme-connect:connect/sme_review_add",
+    "@sme-connect:connect/sme_case_put_result"
+  ],
+  "allowedTools": [
+    "@sme-connect:connect/sme_case_get",
+    "@sme-connect:connect/sme_results_get",
+    "@sme-connect:connect/sme_evidence_get",
+    "@sme-connect:connect/sme_review_list",
+    "@sme-connect:connect/sme_review_add",
+    "@sme-connect:connect/sme_case_put_result"
+  ],
+  "resources": [
+    "skill://{APP_ROOT}/skills/smec-consolidation/SKILL.md"
+  ]
+}
