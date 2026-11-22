@@ -8,6 +8,7 @@ import type { AssistantIntent } from '@sme-ui/AssistantDock'
 import {
   AGENT_ORDER, API, PHASES, PURPOSE, REASON, STATE_META, agentLabel, agentState, errMsg, metrics, money, num, when,
   type CaseDetail, type DocumentFilePayload,
+  checklistSummary, overallStatus,
 } from './model'
 import { AgentsTab, AuditTab, ChecklistTab, EvidenceTab, OverviewTab, ReviewTab } from './tabs'
 import { Kpi, Pill, tone } from '@sme-ui/ui'
@@ -203,8 +204,9 @@ export default function CaseView({
             {c && <span className="sme-chip">Luồng {c.flow}</span>}
             {c?.sales_handover && <Pill t="accent">Nhận từ ĐVKD</Pill>}
             {detail?.checklist && (
-              <Pill t={detail.checklist.overall_status === 'COMPLETE' ? 'ok' : 'warn'}>
-                Checklist {detail.checklist.overall_status}
+              <Pill t={overallStatus(detail.checklist.overall_status).tone}
+                title={`Kiểm tra quy tắc Master Checklist: ${checklistSummary(detail.checklist.counts)}`}>
+                {overallStatus(detail.checklist.overall_status).label}
               </Pill>
             )}
             {customer.industry_code && <span className="sme-chip">Ngành {String(customer.industry_code)}</span>}
@@ -239,7 +241,7 @@ export default function CaseView({
               hint={m.dscr?.threshold !== undefined ? `Ngưỡng ≥ ${num(m.dscr.threshold)}` : 'Chưa có phân tích'} />
             <Kpi t={notMet == null ? 'muted' : notMet > 0 ? 'danger' : 'ok'} icon={<ShieldCheck size={18} />}
               label="Điều kiện không đạt" value={notMet ?? '—'}
-              hint={m.policy ? `${m.policy.rows.length} điều kiện · ${m.policy.product}` : 'Chưa kiểm tra chính sách'} />
+              hint={m.policy ? [`${m.policy.rows.length} điều kiện`, m.policy.product].filter(Boolean).join(' · ') : 'Chưa kiểm tra chính sách'} />
             <Kpi t={openReview.length ? 'warn' : 'ok'} icon={<ClipboardList size={18} />} label="Chờ cán bộ rà soát"
               value={openReview.length} hint={`${detail.review.length} mục tổng cộng`} />
           </div>
@@ -256,7 +258,7 @@ export default function CaseView({
                   </button>
                 ))}
               </div>
-              {tab === 'overview' && <OverviewTab detail={detail} m={m} onEvidence={goEvidence} goAgents={() => setTab('agents')} />}
+              {tab === 'overview' && <OverviewTab detail={detail} m={m} syncTick={syncTick} onEvidence={goEvidence} goAgents={() => setTab('agents')} />}
               {tab === 'checklist' && <ChecklistTab detail={detail} onEvidence={goEvidence} />}
               {tab === 'agents' && <AgentsTab detail={detail} openAgent={focusAgent} onEvidence={goEvidence}
                 onRunAssessment={run} onAskAgent={askAgent} />}

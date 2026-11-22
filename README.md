@@ -54,6 +54,11 @@ với request gateway ký là `owner-session`. `sme_draft_save` từ chối thư
 | OCR EDA, NCLOS, CIC | `core/sme_core/integrations.py` (chưa nối; có chế độ dữ liệu mẫu) |
 | Trang Thẩm định SME | kết quả từng agent, bằng chứng, hàng đợi rà soát (cán bộ quyết định), audit |
 
+**Tiến độ thẩm định**: mỗi agent báo bước đang làm qua `sme_progress` (ghi `progress.jsonl` của hồ sơ; lưu kết quả
+thành công được tự ghi là hoàn tất). Tab Tổng quan hiện các bước này, tự cập nhật trong lúc chạy. Đây là tiến độ agent tự
+báo, không phải đo. Agent Chứng từ đọc mọi file một lần qua `sme_document_pack`; `sme_checklist_evaluate` mặc định trả bản
+gọn (chỉ mục chưa đạt), `detail="full"` cho bản đầy đủ.
+
 Agent `sme-assistant` chạy workflow; nếu thư viện chưa có `sme-credit-assessment` thì nó lấy source qua
 `sme_workflow_source` và chạy trực tiếp.
 

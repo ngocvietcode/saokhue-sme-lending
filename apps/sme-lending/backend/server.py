@@ -28,6 +28,7 @@ _DOC = r"(D[0-9]+)"
 ROUTES: list[appserver.Route] = [
     ("GET", re.compile(r"^/api/cases$"), "list_cases", SMALL),
     ("GET", re.compile(rf"^/api/cases/{_CASE}$"), "get_case", SMALL),
+    ("GET", re.compile(rf"^/api/cases/{_CASE}/progress$"), "get_progress", SMALL),
     ("GET", re.compile(rf"^/api/cases/{_CASE}/documents/{_DOC}/file$"), "document_file", SMALL),
     ("POST", re.compile(rf"^/api/cases/{_CASE}/review/(R[0-9]{{3}})$"), "decide_review", SMALL),
 ]
@@ -54,6 +55,9 @@ class Api:
             "checklist": self.svc.checklist_evaluate(case_id),
             "crosschecks": self.svc.crosscheck_evaluate(case_id),
         }
+
+    def get_progress(self, _body: dict, _claim: dict | None, case_id: str) -> tuple[int, Any]:
+        return 200, self.svc.store.read_progress(case_id)
 
     def document_file(self, _body: dict, _claim: dict | None, case_id: str, doc_id: str) -> tuple[int, Any]:
         return 200, self.svc.store.document_file(case_id, doc_id)

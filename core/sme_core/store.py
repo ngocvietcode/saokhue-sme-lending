@@ -116,6 +116,34 @@ class CaseStore:
         with open(case_dir / "audit.jsonl", "a", encoding="utf-8") as fh:
             fh.write(line + "\n")
 
+    # -- progress ----------------------------------------------------------
+    PROGRESS_STATES = ("running", "done", "failed")
+
+    def add_progress(self, case_id: str, agent: str, step: str, detail: str = "",
+                     state: str = "running") -> dict[str, Any]:
+        """Append one self-reported step of an agent run (not an audit record: no lock, bounded text)."""
+        d = self._dir(case_id)
+        if state not in self.PROGRESS_STATES:
+            raise ValueError(f"state must be one of {self.PROGRESS_STATES}")
+        row = {"ts": self.clock(), "agent": str(agent)[:60], "step": str(step)[:160],
+               "detail": str(detail)[:400], "state": state}
+        with open(d / "progress.jsonl", "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+        return row
+
+    def read_progress(self, case_id: str, since: int = 0, limit: int = 400) -> dict[str, Any]:
+        """Rows after the first `since` ones; `next` is the cursor for the following read."""
+        path = self._dir(case_id) / "progress.jsonl"
+        rows: list[dict[str, Any]] = []
+        if path.exists():
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    rows.append(json.loads(line))
+                except ValueError:
+                    continue
+        since = max(int(since or 0), 0)
+        return {"rows": rows[since:since + limit], "next": min(len(rows), since + limit)}
+
     # -- cases -------------------------------------------------------------
     def create_case(self, customer: dict[str, Any], request: dict[str, Any],
                     documents: list[dict[str, Any]], flow: str) -> dict[str, Any]:
@@ -200,10 +228,14 @@ class CaseStore:
             known = set(_read_json(d / "evidence.json", {}))
             errors = validate_result(payload, agent=agent, case_id=case_id, known_evidence=known)
             if errors:
+                self.add_progress(case_id, agent, "Kết quả bị từ chối, đang sửa",
+                                  "; ".join(errors[:2]), "running")
                 return {"accepted": False, "errors": errors}
             v = (self._versions(d, agent) or [0])[-1] + 1
             _write_json(d / "results" / agent / f"v{v}.json", {**payload, "_version": v, "_saved_at": self.clock()})
             self._audit(d, "result_put", {"agent": agent, "version": v, "rerun_reason": rerun_reason})
+            self.add_progress(case_id, agent, f"Đã lưu kết quả v{v}",
+                              f"{len(payload.get('findings', []))} phát hiện", "done")
         return {"accepted": True, "version": v}
 
     def get_results(self, case_id: str, agent: str | None = None) -> dict[str, Any]:

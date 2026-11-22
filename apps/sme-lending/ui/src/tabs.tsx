@@ -5,9 +5,11 @@ import {
   AGENT_ORDER, AUDIT_LABEL, CONFIDENCE, FACT_LABEL, POLICY_STATUS, RATIO_LABEL, REASON, REVIEW_STATUS,
   RULE_STATUS_META, SEVERITY, XCHECK_META, agentLabel, agentState, moneyShort, num, sortFindings, text, when,
   type AgentResult, type CaseDetail, type Finding, type Metrics,
+  checklistSummary, overallStatus,
 } from './model'
 import { Banner, Empty, Pill, Refs, tone } from '@sme-ui/ui'
 import { StatePill } from './agentUi'
+import { ProgressPanel } from './ProgressPanel'
 
 function FindingRow({ f, onEvidence }: { f: Finding; onEvidence: (id: string) => void }) {
   const s = SEVERITY[f.severity] ?? SEVERITY.info
@@ -107,8 +109,8 @@ function RatiosCard({ periods }: { periods: NonNullable<Metrics['ratios']> }) {
   )
 }
 
-export function OverviewTab({ detail, m, onEvidence, goAgents }: {
-  detail: CaseDetail; m: Metrics; onEvidence: (id: string) => void; goAgents: () => void
+export function OverviewTab({ detail, m, syncTick, onEvidence, goAgents }: {
+  detail: CaseDetail; m: Metrics; syncTick: number; onEvidence: (id: string) => void; goAgents: () => void
 }) {
   const report = detail.results['consolidation']
   const high = AGENT_ORDER.flatMap((a) => (detail.results[a]?.findings ?? [])
@@ -119,6 +121,7 @@ export function OverviewTab({ detail, m, onEvidence, goAgents }: {
       {sample && (
         <Banner>Hồ sơ đang dùng <b>dữ liệu mẫu</b> (OCR, CIC hoặc NCLOS chưa nối hệ thống thật). Không dùng kết quả này cho quyết định tín dụng.</Banner>
       )}
+      <ProgressPanel caseId={detail.case.case_id} syncTick={syncTick} />
       <div className="sme-card">
         <div className="sme-between" style={{ marginBottom: 8 }}>
           <h3 className="sme-h3">Tóm tắt thẩm định</h3>
@@ -441,9 +444,7 @@ export function ChecklistTab({ detail, onEvidence }: {
         <div className="sme-card tight" style={{ overflowX: 'auto' }}>
           <div className="sme-between sme-wrap" style={{ padding: '12px 14px 8px' }}>
             <h3 className="sme-h3">7 Quy tắc đối chiếu chéo trọng yếu (R1 → R7)</h3>
-            <Pill t={xc.overall_status === 'PASS' ? 'ok' : xc.overall_status === 'FAIL' ? 'danger' : 'warn'}>
-              {xc.overall_status}
-            </Pill>
+            <Pill t={overallStatus(xc.overall_status).tone}>{overallStatus(xc.overall_status).label}</Pill>
           </div>
           <table className="sme-table">
             <thead>
@@ -478,15 +479,15 @@ export function ChecklistTab({ detail, onEvidence }: {
           <div className="sme-between sme-wrap" style={{ padding: '12px 14px 8px', gap: 8 }}>
             <div className="sme-row sme-wrap" style={{ gap: 8 }}>
               <h3 className="sme-h3">SME Master Checklist 2 lớp (Nhóm A → I)</h3>
-              <Pill t={cl.overall_status === 'COMPLETE' ? 'ok' : 'danger'}>{cl.overall_status}</Pill>
+              <Pill t={overallStatus(cl.overall_status).tone}>{overallStatus(cl.overall_status).label}</Pill>
               <span className="sme-small sme-muted">
-                PASS {cl.counts.PASS} · MISSING {cl.counts.MISSING_REQUIRED} · FAIL {cl.counts.FAIL} · UNDETERMINED {cl.counts.UNDETERMINED_CONDITION}
+                {checklistSummary(cl.counts)}
               </span>
             </div>
             <div className="sme-row sme-wrap" style={{ gap: 6 }}>
               {skippedItems.length > 0 && (
                 <Btn className={showSkipped ? 'sme-toggle-on' : undefined} onClick={() => setShowSkipped((v) => !v)}
-                  title="Các mục SKIPPED được ẩn mặc định">
+                  title="Các mục không áp dụng được ẩn mặc định">
                   {showSkipped ? <EyeOff size={13} /> : <Eye size={13} />}
                   {showSkipped ? 'Quay lại mục áp dụng' : `Hiện mục không áp dụng (${skippedItems.length})`}
                 </Btn>
@@ -497,14 +498,14 @@ export function ChecklistTab({ detail, onEvidence }: {
           <div className="sme-between sme-wrap" style={{ padding: '0 14px 10px', gap: 8 }}>
             {!showSkipped ? (
               <div className="sme-filters" role="tablist">
-                {([['open', `Cần lưu ý (${issueCount})`], ['pass', `PASS (${cl.counts.PASS})`], ['all', `Tất cả áp dụng (${applicableItems.length})`]] as [CFilter, string][])
+                {([['open', `Cần lưu ý (${issueCount})`], ['pass', `Đạt (${cl.counts.PASS ?? 0})`], ['all', `Tất cả áp dụng (${applicableItems.length})`]] as [CFilter, string][])
                   .map(([k, l]) => (
                     <button key={k} type="button" role="tab" aria-selected={filter === k}
                       className={`sme-filter ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>
                   ))}
               </div>
             ) : (
-              <span className="sme-small sme-muted">Đang hiển thị {skippedItems.length} mục SKIPPED (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt).</span>
+              <span className="sme-small sme-muted">Đang hiển thị {skippedItems.length} mục không áp dụng (mặc định ẩn vì điều kiện Lớp 1 không kích hoạt).</span>
             )}
             <div className="sme-filters" role="group" aria-label="Nhóm checklist">
               <button type="button" className={`sme-filter ${groupCode === 'ALL' ? 'on' : ''}`} onClick={() => setGroupCode('ALL')}>A–I</button>

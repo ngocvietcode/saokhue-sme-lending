@@ -107,6 +107,18 @@ class LendingService:
             products_meta=self.kb.products(),
         )
 
+    def checklist_brief(self, case_id: str, as_of: str = "") -> dict[str, Any]:
+        """The checklist verdict without the 50-odd per-item rows: counts, groups and the items needing attention.
+
+        A full evaluation is ~45 KB, which every agent turn then re-reads; the officer-facing answer is
+        the status, the groups and the few items that are not PASS/SKIPPED."""
+        full = self.checklist_evaluate(case_id, as_of)
+        attention = [{k: it.get(k) for k in ("code", "group", "title", "rule_status", "fail_reasons",
+                                              "missing_condition_fields", "document_refs")}
+                     for it in full.get("items", []) if it.get("rule_status") not in ("PASS", "SKIPPED")]
+        return {**{k: v for k, v in full.items() if k != "items"}, "items_total": len(full.get("items", [])),
+                "attention_items": attention}
+
     def crosscheck_evaluate(self, case_id: str, as_of: str = "") -> dict[str, Any]:
         """Run all 7 core cross-check rules (R1-R7) for a case."""
         case = self.store.get_case(case_id)
@@ -136,6 +148,24 @@ class LendingService:
         verdict = {"agent": agent, "passed": not errors, "errors": errors}
         verdict["version"] = self.store.set_verification(case_id, agent, verdict)
         return verdict
+
+    # -- progress and batched reads ----------------------------------------
+    def progress_add(self, case_id: str, agent: str, step: str, detail: str = "", state: str = "running") -> dict:
+        return self.store.add_progress(case_id, agent, step, detail, state)
+
+    def progress_list(self, case_id: str, since: int = 0) -> dict:
+        return self.store.read_progress(case_id, since)
+
+    def document_pack(self, case_id: str, as_of: str = "") -> dict[str, Any]:
+        """Everything the document agent reads, in one call: OCR of every file, checklist and cross-checks."""
+        case = self.store.get_case(case_id)
+        documents = []
+        for doc in case.get("documents", []):
+            documents.append({"id": doc.get("id"), "name": doc.get("name"), "type": doc.get("type"),
+                              "ocr": self.ocr_extract(case_id, doc.get("id"))})
+        return {"case_id": case_id, "documents": documents,
+                "checklist": self.checklist_brief(case_id, as_of),
+                "crosschecks": self.crosscheck_evaluate(case_id, as_of)}
 
     # -- existing bank services --------------------------------------------
     def ocr_extract(self, case_id: str, document_id: str) -> dict:

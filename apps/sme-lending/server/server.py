@@ -100,11 +100,13 @@ def sme_knowledge_checklist(product_code: str, flow: str) -> Any:
 
 
 @mcp.tool()
-def sme_checklist_evaluate(case_id: str, as_of: str = "") -> Any:
+def sme_checklist_evaluate(case_id: str, as_of: str = "", detail: str = "brief") -> Any:
     """Evaluate the unified two-layer SME Master Checklist (Groups A-I, 53 items) for a case: returns
     overall_status (COMPLETE/INCOMPLETE), counts (PASS/MISSING_REQUIRED/FAIL/SKIPPED/UNDETERMINED_CONDITION),
-    group statuses and per-item condition -> rule -> status breakdown."""
-    return _safe(svc.checklist_evaluate, case_id, as_of)
+    group statuses. detail="brief" (default, about 5 KB) lists only the items that are not PASS/SKIPPED;
+    detail="full" adds every item's condition -> rule -> status breakdown (about 45 KB, ask for it only
+    when you must quote one item)."""
+    return _safe(svc.checklist_evaluate if detail == "full" else svc.checklist_brief, case_id, as_of)
 
 
 @mcp.tool()
@@ -171,6 +173,21 @@ def sme_nclos_exposure(case_id: str, customer_ids: list[str]) -> Any:
 def sme_cic_report(case_id: str, customer_ids: list[str]) -> Any:
     """CIC credit report for the customer and related parties."""
     return _safe(svc.cic_report, case_id, customer_ids)
+
+
+@mcp.tool()
+def sme_progress(case_id: str, agent: str, step: str, detail: str = "", state: str = "running") -> Any:
+    """Tell the officer what you are doing right now. Call it at each main step, in one short Vietnamese
+    sentence (for example "Đang đối chiếu 7 rule R1-R7"), at most about 8 times per run. state: running,
+    done, failed. Self-reported progress only: never put a credit decision or a customer secret in it."""
+    return _safe(svc.progress_add, case_id, agent, step, detail, state)
+
+
+@mcp.tool()
+def sme_document_pack(case_id: str, as_of: str = "") -> Any:
+    """One call for the whole document stage: OCR extraction of every file of the case, the Master Checklist
+    evaluation and the R1-R7 cross-checks. Use it instead of calling sme_ocr_extract file by file."""
+    return _safe(svc.document_pack, case_id, as_of)
 
 
 @mcp.tool()
