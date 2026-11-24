@@ -90,6 +90,8 @@ export const AGENT_LABEL: Record<string, string> = {
   industry: 'Ngành & cạnh tranh',
   'policy-exception': 'Chính sách & ngoại lệ',
   consolidation: 'Tổng hợp tờ trình',
+  'document-product': 'Chứng từ & sản phẩm',
+  'credit-analysis': 'Thẩm định chuyên môn',
 }
 export const agentLabel = (id: string) => AGENT_LABEL[id] ?? id
 

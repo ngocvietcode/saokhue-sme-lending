@@ -16,6 +16,12 @@ from .service import LendingService
 from .verify import customer_promises
 
 
+def _home_of(data_root: Path) -> Path:
+    """The Sao Khue data home above <home>/apps/<app>/data[/sales]; the data root's parent otherwise."""
+    root = Path(data_root).resolve()
+    return next((p.parent for p in root.parents if p.name == "apps"), root.parent)
+
+
 class SalesService(LendingService):
     def __init__(
         self,
@@ -26,7 +32,7 @@ class SalesService(LendingService):
     ):
         super().__init__(data_root, knowledge_root)
         self.store = DossierStore(data_root)
-        self.data_home = data_home or Path(data_root).resolve().parent.parent.parent
+        self.data_home = data_home or _home_of(data_root)
         self.lending_data_root = Path(lending_data_root) if lending_data_root else None
 
     def _today(self) -> str:

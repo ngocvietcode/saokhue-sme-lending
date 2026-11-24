@@ -575,7 +575,7 @@ export function AuditTab({ detail }: { detail: CaseDetail }) {
       case 'evidence_add': return `${who} thêm ${(a.ids ?? []).join(', ')}`
       case 'review_add': return `${who} thêm ${a.id} (${REASON[a.reason_code]?.label ?? a.reason_code})`
       case 'review_decide': return `${a.actor} ${REVIEW_STATUS[a.status]?.label.toLowerCase() ?? a.status} ${a.id}`
-      case 'case_handover_received': return `Nhận từ ${a.from_app ?? 'sme-sales'} bởi ${a.by ?? ''}, ${a.documents ?? 0} chứng từ (${a.files_copied ?? 0} file)`
+      case 'case_handover_received': return `Nhận từ ${['sale', 'sme-sales'].includes(a.from_app ?? 'sale') ? 'bước Hoàn thiện hồ sơ' : a.from_app} bởi ${a.by ?? ''}, ${a.documents ?? 0} chứng từ (${a.files_copied ?? 0} file)`
       case 'case_create': return `Luồng ${a.flow}, ${a.documents} chứng từ`
       default: return who
     }

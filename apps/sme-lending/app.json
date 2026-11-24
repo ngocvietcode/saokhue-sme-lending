@@ -1,20 +1,25 @@
 {
   "name": "sme-lending",
-  "version": "0.4.0",
-  "displayName": "Thẩm định tín dụng SME",
-  "description": "Hệ thống Agent hỗ trợ thẩm định hồ sơ vay SME: chứng từ, tài chính, chính sách, rủi ro, TSBĐ, ngành và tổng hợp tờ trình, có kiểm chứng bằng chứng và cán bộ rà soát.",
+  "version": "0.5.0",
+  "displayName": "Tín dụng SME",
+  "description": "Một app cho cả hai bước của hồ sơ vay SME: Sale hoàn thiện hồ sơ (checklist A-I, đối chiếu R1-R7, thư xin bổ sung, bàn giao) và Thẩm định chạy 3 agent chuyên môn có kiểm chứng bằng chứng, cán bộ rà soát.",
   "author": "Sao Khue",
   "license": "Proprietary",
-  "tags": ["lending", "sme", "credit", "banking"],
+  "tags": [
+    "lending",
+    "sme",
+    "credit",
+    "banking"
+  ],
   "highlights": [
-    "Workflow điều phối 9 Agent chuyên môn trên một hồ sơ, chạy song song khi không phụ thuộc nhau",
-    "Phép tính chỉ số tài chính, DSCR, LTV và kiểm tra điều kiện chính sách chạy bằng tool tất định, không do AI tự tính",
-    "Mọi kết luận gắn mã bằng chứng; kết quả không đạt kiểm chứng bị chặn và đưa vào hàng đợi cán bộ"
+    "Hồ sơ đi liền một mạch trong một app: Sale hoàn thiện, bàn giao, Thẩm định chạy và rà soát",
+    "Chỉ 4 agent: Trợ lý chat, Chứng từ & sản phẩm, Thẩm định chuyên môn, Tổng hợp; tiến độ từng phần hiện ngay trên trang",
+    "Chỉ số tài chính, DSCR, LTV, checklist và điều kiện chính sách tính bằng tool tất định; mọi kết luận gắn mã bằng chứng"
   ],
   "useCases": [
-    "Khi nhận hồ sơ SME mới, nhờ agent sme-assistant chạy workflow sme-credit-assessment để có gói đánh giá hợp nhất kèm Evidence Map",
-    "Khi cần xem lại riêng phần tài chính, gọi agent financial-analysis theo skill sme-financial-analysis trên hồ sơ đã có",
-    "Khi một kết quả bị Verification chặn, mở hàng đợi rà soát của hồ sơ để xác nhận hoặc yêu cầu bổ sung chứng từ"
+    "Sale kể về khách và đính kèm chứng từ trong chat; trợ lý dựng hồ sơ, chỉ chỗ thiếu và soạn thư xin bổ sung",
+    "Khi hồ sơ đủ, Sale bấm Bàn giao; cán bộ bấm Chạy thẩm định để có gói đánh giá hợp nhất kèm bằng chứng",
+    "Khi một phần kết quả bị kiểm chứng chặn, cán bộ mở hàng đợi rà soát để xác nhận hoặc yêu cầu bổ sung"
   ],
   "configuration": [
     "Thay các file mẫu trong knowledge/ bằng danh mục sản phẩm, checklist và chính sách có hiệu lực",
@@ -22,32 +27,29 @@
   ],
   "agents": [
     "agents/sme-assistant.json",
-    "agents/document-evidence.json",
-    "agents/product-match.json",
-    "agents/financial-analysis.json",
-    "agents/policy-exception.json",
-    "agents/risk-compliance.json",
-    "agents/collateral.json",
-    "agents/industry.json",
-    "agents/consolidation.json",
-    "agents/verifier.json"
+    "agents/document-product.json",
+    "agents/credit-analysis.json",
+    "agents/consolidation.json"
   ],
   "skills": [
+    "skills/sme-dossier-coach",
+    "skills/sme-customer-request",
     "skills/sme-assessment-run",
     "skills/sme-document-evidence",
     "skills/sme-product-match",
     "skills/sme-financial-analysis",
-    "skills/sme-policy-exception",
     "skills/sme-risk-compliance",
     "skills/sme-collateral",
     "skills/sme-industry",
-    "skills/sme-consolidation",
-    "skills/sme-verification"
+    "skills/sme-policy-exception",
+    "skills/sme-consolidation"
   ],
   "mcpServers": {
     "lending": {
       "command": "python",
-      "args": ["server/server.py"]
+      "args": [
+        "server/server.py"
+      ]
     }
   },
   "backend": {
@@ -62,21 +64,34 @@
     "pages": [
       {
         "route": "/apps/sme-lending",
-        "label": "Thẩm định SME",
+        "label": "Tín dụng SME",
         "icon": "FileSearch"
       }
     ],
-    "loading": { "layout": "page" }
+    "loading": {
+      "layout": "page"
+    }
   },
   "platform": {
-    "os": ["macos", "linux", "windows"]
+    "os": [
+      "macos",
+      "linux",
+      "windows"
+    ]
   },
   "permissions": {
-    "api": ["/api/workflows", "/apps/sme-lending/api", "/api/chat", "/api/upload/file"],
+    "api": [
+      "/api/workflows",
+      "/apps/sme-lending/api",
+      "/api/chat",
+      "/api/upload/file"
+    ],
     "chatLaunch": {
       "keyPrefix": "sme-lending-chat-",
-      "agents": ["sme-assistant"],
-      "folder": "Thẩm định SME"
+      "agents": [
+        "sme-assistant"
+      ],
+      "folder": "Tín dụng SME"
     }
   }
 }

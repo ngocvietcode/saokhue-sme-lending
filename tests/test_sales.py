@@ -191,7 +191,7 @@ class ChatIntakeTest(unittest.TestCase):
             (home / "uploads" / "dkkd.pdf").write_bytes(b"%PDF-1.4")
             (home / "secret.pdf").write_bytes(b"%PDF")
             (home / "uploads" / "run.exe").write_bytes(b"MZ")
-            svc = SalesService(home / "apps" / "sme-sales" / "data", ROOT / "core" / "knowledge", data_home=home)
+            svc = SalesService(home / "apps" / "sme-lending" / "data" / "sales", ROOT / "core" / "knowledge", data_home=home)
             cid = svc.case_create({}, {"product_code": "SME-WC"}, [], "A")["case_id"]
             roots = svc.import_roots()
             doc = svc.store.import_file(cid, str(home / "uploads" / "dkkd.pdf"), roots=roots, doc_type="dkkd",
@@ -316,7 +316,7 @@ class ValidationAndLifecycleTest(unittest.TestCase):
             home = Path(tmp)
             (home / "uploads").mkdir()
             (home / "uploads" / "a.pdf").write_bytes(b"%PDF")
-            svc = SalesService(home / "apps" / "sme-sales" / "data", ROOT / "core" / "knowledge", data_home=home)
+            svc = SalesService(home / "apps" / "sme-lending" / "data" / "sales", ROOT / "core" / "knowledge", data_home=home)
             svc.store.clock = lambda: TODAY + "T08:00:00+00:00"
 
             with self.assertRaises(ValueError):

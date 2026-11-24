@@ -85,6 +85,8 @@ const CSS = `
 .sme-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 14px; overflow-x: auto; }
 .sme-tab { border: 0; background: none; color: var(--muted); font-size: 13px; padding: 8px 12px; cursor: pointer; border-bottom: 2px solid transparent;
   margin-bottom: -1px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.sme-modebar { margin: 0; padding: 0 16px; flex-shrink: 0; }
+.sme-modebar .sme-tab { display: inline-flex; align-items: center; gap: 6px; }
 .sme-tab:hover { color: var(--text); }
 .sme-tab.on { color: var(--text-strong, var(--text)); border-bottom-color: var(--accent); font-weight: 600; }
 .sme-count { font-size: 11px; padding: 0 6px; border-radius: 999px; background: color-mix(in srgb, var(--muted) 18%, transparent); color: var(--muted); }

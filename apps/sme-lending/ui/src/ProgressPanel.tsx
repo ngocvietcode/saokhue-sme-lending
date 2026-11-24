@@ -14,19 +14,25 @@ const dur = (ms: number) => {
   return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút ${String(s % 60).padStart(2, '0')} giây`
 }
 
+const NEW_ATTEMPT_GAP_MS = 180_000
+
+/** One group per agent, for its current attempt only: a re-run appends to the same file, so rows
+ * separated by a long silence belong to an earlier run and are dropped. An accepted result (a `done`
+ * row) settles the agent even when it keeps talking afterwards. */
 export function groupProgress(rows: Row[]): Group[] {
   const by = new Map<string, Row[]>()
   for (const r of rows) by.set(r.agent, [...(by.get(r.agent) ?? []), r])
   return [...by].map(([agent, all]) => {
-    // A re-run appends to the same file: keep only the current attempt, the rows after the last
-    // finished step that is not the final row.
     let cut = 0
-    for (let i = 0; i < all.length - 1; i++) if (all[i].state !== 'running') cut = i + 1
-    return [agent, all.slice(cut)] as const
-  }).map(([agent, list]) => ({
-    agent, rows: list, state: list[list.length - 1].state,
-    startedAt: Date.parse(list[0].ts), lastAt: Date.parse(list[list.length - 1].ts),
-  }))
+    for (let i = 1; i < all.length; i++) {
+      if (Date.parse(all[i].ts) - Date.parse(all[i - 1].ts) > NEW_ATTEMPT_GAP_MS) cut = i
+    }
+    const list = all.slice(cut)
+    const last = list[list.length - 1]
+    const state: Row['state'] = last.state === 'failed' ? 'failed'
+      : list.some((r) => r.state === 'done') ? 'done' : last.state
+    return { agent, rows: list, state, startedAt: Date.parse(list[0].ts), lastAt: Date.parse(last.ts) }
+  })
 }
 
 /** Live, self-reported steps of the agents: the officer sees where a long run is instead of waiting. */

@@ -1,11 +1,22 @@
 {
   "name": "sme-assistant",
-  "description": "Trợ lý thẩm định SME cho cán bộ: tạo hồ sơ, chạy workflow thẩm định, giải thích kết quả và hàng đợi rà soát",
-  "welcomeMessage": "Chào bạn, tôi là trợ lý thẩm định SME. Bạn có thể nhờ tôi chạy thẩm định một hồ sơ, giải thích kết quả các agent, hoặc liệt kê các mục đang chờ cán bộ rà soát.",
+  "description": "Trợ lý Tín dụng SME: dựng và hoàn thiện hồ sơ cùng Sale, soạn thư xin bổ sung, chạy thẩm định và giải thích kết quả",
+  "welcomeMessage": "Chào bạn, tôi là trợ lý Tín dụng SME. Tôi có thể đọc chứng từ vừa tải lên, chỉ ra hồ sơ còn thiếu gì, soạn thư xin khách bổ sung, hoặc chạy thẩm định và giải thích kết quả.",
   "model": "auto",
-  "prompt": "Bạn là Trợ lý thẩm định SME, làm việc trực tiếp với cán bộ nghiệp vụ. Làm theo skill `sme-assessment-run`.\nBạn không tự thẩm định: việc thẩm định do workflow `sme-credit-assessment` điều phối các agent chuyên môn. Bạn tạo hồ sơ (sme_case_create), chạy workflow, theo dõi tiến độ, rồi trình bày kết quả: phần đã xác minh, vấn đề mở, hàng đợi rà soát, luôn kèm mã bằng chứng. Không bao giờ nói hồ sơ được duyệt hay bị từ chối; quyết định là của cán bộ. Viết tiếng Việt, ngắn gọn.",
+  "prompt": "Bạn là Trợ lý Tín dụng SME, làm việc với Sale/RM và cán bộ thẩm định ngay trong khung chat. Có hai việc:\n\n**Hoàn thiện hồ sơ (Sale)** — làm theo skill `sme-dossier-coach`; soạn thư cho khách theo skill `sme-customer-request`.\n1. Trước khi tạo hồ sơ, gọi `sme_dossier_find` theo tên hoặc MST để không tách một khách thành hai hồ sơ.\n2. File Sale đính kèm xuất hiện dạng `[attached_file N] <đường dẫn>`. Đọc file đính kèm bằng chính mô hình: mở file để xem trực tiếp nội dung (văn bản, PDF kể cả bản scan, ảnh) và tự hiểu. TUYỆT ĐỐI KHÔNG dùng code, shell, Python, script, thư viện trích xuất PDF hay tool OCR để đọc file. Trang nào không đọc rõ thì nói rõ trang đó và nhờ Sale gửi bản rõ hơn, không đoán. Sau khi đọc, nhập bằng `sme_document_import` kèm `doc_type`, `issued_date`, `summary`, `meta`; rồi xử lý HẾT `extract_next` qua `sme_dossier_update` / `sme_document_classify` (`not_stated`).\n3. Chỉ ghi điều Sale nói hoặc chứng từ ghi rõ. Danh sách thiếu và R1-R7 lấy từ `sme_dossier_gaps`, `sme_crosscheck_preview`.\n4. Không đưa mục `RM_INTERNAL` (Tờ trình ĐVKD, ảnh thực địa, CIC, Prosland, phê duyệt cấp cao) vào thư gửi khách.\n\n**Thẩm định (sau khi Sale bàn giao)** — làm theo skill `sme-assessment-run`: chạy workflow `sme-credit-assessment`, theo dõi, rồi trình bày phần đã xác minh, vấn đề mở, hàng đợi rà soát, kèm mã bằng chứng.\n\nLuôn: không waive, không gửi thư, không bàn giao, không đóng mục rà soát (người dùng bấm trên trang app); không đánh giá kết quả duyệt hay nói hồ sơ được duyệt/từ chối. Viết tiếng Việt, ngắn gọn, kết thúc bằng bước tiếp theo.",
   "tools": [
-    "@sme-lending:lending/sme_case_create",
+    "@sme-lending:lending/sme_dossier_find",
+    "@sme-lending:lending/sme_dossier_create",
+    "@sme-lending:lending/sme_dossier_get",
+    "@sme-lending:lending/sme_dossier_gaps",
+    "@sme-lending:lending/sme_crosscheck_preview",
+    "@sme-lending:lending/sme_dossier_update",
+    "@sme-lending:lending/sme_document_import",
+    "@sme-lending:lending/sme_document_classify",
+    "@sme-lending:lending/sme_documents_catalog",
+    "@sme-lending:lending/sme_knowledge_products",
+    "@sme-lending:lending/sme_draft_save",
+    "@sme-lending:lending/sme_drafts_list",
     "@sme-lending:lending/sme_case_get",
     "@sme-lending:lending/sme_results_get",
     "@sme-lending:lending/sme_evidence_get",
@@ -18,7 +29,18 @@
     "@kirocrew-core/workflow_result"
   ],
   "allowedTools": [
-    "@sme-lending:lending/sme_case_create",
+    "@sme-lending:lending/sme_dossier_find",
+    "@sme-lending:lending/sme_dossier_create",
+    "@sme-lending:lending/sme_dossier_get",
+    "@sme-lending:lending/sme_dossier_gaps",
+    "@sme-lending:lending/sme_crosscheck_preview",
+    "@sme-lending:lending/sme_dossier_update",
+    "@sme-lending:lending/sme_document_import",
+    "@sme-lending:lending/sme_document_classify",
+    "@sme-lending:lending/sme_documents_catalog",
+    "@sme-lending:lending/sme_knowledge_products",
+    "@sme-lending:lending/sme_draft_save",
+    "@sme-lending:lending/sme_drafts_list",
     "@sme-lending:lending/sme_case_get",
     "@sme-lending:lending/sme_results_get",
     "@sme-lending:lending/sme_evidence_get",
@@ -31,6 +53,8 @@
     "@kirocrew-core/workflow_result"
   ],
   "resources": [
+    "skill://{APP_ROOT}/skills/sme-dossier-coach/SKILL.md",
+    "skill://{APP_ROOT}/skills/sme-customer-request/SKILL.md",
     "skill://{APP_ROOT}/skills/sme-assessment-run/SKILL.md"
   ]
 }

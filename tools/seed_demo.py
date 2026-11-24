@@ -7,7 +7,7 @@ COMPLETE master checklist with all seven cross-checks run; it also carries a
 customer letter, a requested item and its follow-up, so every tab has content.
 With --submit it is handed over to sme-lending, ready for "Chạy thẩm định".
 
-    python tools/seed_demo.py --sales-data <sme-sales/data> [--lending-data <sme-lending/data>] [--submit]
+    python tools/seed_demo.py [--sales-data <sme-lending/data/sales>] [--lending-data <sme-lending/data>] [--submit]
 
 Without --sales-data the installed apps under $KIROCREW_HOME (default
 ~/.vpbank/saokhue) are used. Run it while Sao Khuê is closed or idle.
@@ -273,11 +273,12 @@ def report(svc: SalesService, case_id: str) -> dict[str, Any]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     home = Path(os.environ.get("KIROCREW_HOME") or Path.home() / ".vpbank" / "saokhue")
-    ap.add_argument("--sales-data", type=Path, default=home / "apps" / "sme-sales" / "data")
+    ap.add_argument("--sales-data", type=Path, default=home / "apps" / "sme-lending" / "data" / "sales")
     ap.add_argument("--lending-data", type=Path, default=None)
-    ap.add_argument("--submit", action="store_true", help="hand the dossier over to sme-lending")
+    ap.add_argument("--submit", action="store_true", help="hand the dossier over to the assessment")
     args = ap.parse_args()
-    svc = SalesService(args.sales_data, ROOT / "core" / "knowledge", lending_data_root=args.lending_data)
+    lending = args.lending_data or args.sales_data.parent
+    svc = SalesService(args.sales_data, ROOT / "core" / "knowledge", lending_data_root=lending)
     case_id = build(svc)
     out = report(svc, case_id)
     if args.submit:

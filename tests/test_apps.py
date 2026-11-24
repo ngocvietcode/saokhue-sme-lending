@@ -1,4 +1,4 @@
-"""Packaging checks for every app, the core-sync check, and the Sales backend routes."""
+"""Packaging checks for the app, the core-sync check, and the dossier (Sale) backend routes."""
 
 from __future__ import annotations
 
@@ -18,9 +18,9 @@ sys.path.insert(0, str(ROOT / "core"))
 
 from sme_core.sales import SalesService  # noqa: E402
 
-_spec = importlib.util.spec_from_file_location("sales_backend", APPS / "sme-sales" / "backend" / "server.py")
-sales_backend = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(sales_backend)
+_spec = importlib.util.spec_from_file_location("app_backend", APPS / "sme-lending" / "backend" / "server.py")
+app_backend = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(app_backend)
 
 OWNER = {"kind": "owner-session", "ownerId": "sale-1"}
 AGENT = {"kind": "agent-tool", "ownerId": ""}
@@ -67,21 +67,41 @@ class PackagingTest(unittest.TestCase):
                 if launch:
                     self.assertTrue(launch["keyPrefix"].startswith(manifest["name"] + "-"))
                     self.assertTrue(set(launch["agents"]) <= names, "chatLaunch names an agent's spec name")
-                if app.name in ("sme-sales", "sme-lending"):
-                    expected = {f"/apps/{app.name}/api", "/api/chat", "/api/upload/file"}
-                    if app.name == "sme-lending":
-                        expected.add("/api/workflows")
+                if app.name == "sme-lending":
+                    expected = {f"/apps/{app.name}/api", "/api/chat", "/api/upload/file", "/api/workflows"}
                     self.assertLessEqual(
                         expected,
                         set(manifest.get("permissions", {}).get("api", [])),
                     )
 
-    def test_no_agent_can_waive_send_or_submit(self):
-        tree = ast.parse((APPS / "sme-sales" / "server" / "server.py").read_text(encoding="utf-8"))
+    def test_no_agent_can_waive_send_submit_or_decide(self):
+        tree = ast.parse((APPS / "sme-lending" / "server" / "server.py").read_text(encoding="utf-8"))
         src = ast.unparse(tree)
-        for forbidden in ("set_requirement", "mark_draft_sent", "mark_submitted", "add_document",
-                          "remove_document", "reopen_case"):
+        for forbidden in ("set_requirement", "mark_draft_sent", "mark_submitted", "submit_dossier", "add_document",
+                          "remove_document", "reopen_case", "resolve_review"):
             self.assertNotIn(forbidden, src)
+
+    def test_the_assistant_reads_attachments_with_the_model_not_ocr(self):
+        app = APPS / "sme-lending"
+        spec = json.loads((app / "agents" / "sme-assistant.json").read_text(encoding="utf-8"))
+        self.assertFalse([t for t in spec["tools"] + spec["allowedTools"] if "ocr" in t.rsplit("/", 1)[-1].lower()])
+        self.assertIn("KHÔNG dùng code", spec["prompt"])
+        skill = (app / "skills" / "sme-dossier-coach" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("**Không** dùng code", skill)
+        tree = ast.parse((app / "server" / "server.py").read_text(encoding="utf-8"))
+        dossier_tools = {n.name for n in tree.body if isinstance(n, ast.FunctionDef)
+                         and n.name.startswith(("sme_dossier_", "sme_document_import", "sme_document_classify"))}
+        self.assertFalse([t for t in dossier_tools if "ocr" in t])
+
+    def test_four_agents_and_every_result_section_has_a_producer(self):
+        app = APPS / "sme-lending"
+        manifest = json.loads((app / "app.json").read_text(encoding="utf-8"))
+        names = {json.loads((app / rel).read_text(encoding="utf-8"))["name"] for rel in manifest["agents"]}
+        self.assertEqual(names, {"sme-assistant", "document-product", "credit-analysis", "consolidation"})
+        from sme_core.store import AGENTS
+        workflow = (app / "workflows" / "sme_credit_assessment.py").read_text(encoding="utf-8")
+        for section in AGENTS:
+            self.assertIn(f'"{section}"', workflow, section)
 
 
 class SalesBackendTest(unittest.TestCase):
@@ -89,7 +109,7 @@ class SalesBackendTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.svc = SalesService(Path(self.tmp.name), ROOT / "core" / "knowledge")
         self.svc.store.clock = lambda: "2026-11-21T08:00:00+00:00"
-        self.api = sales_backend.Api(self.svc)
+        self.api = app_backend.SalesApi(self.svc)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -100,10 +120,12 @@ class SalesBackendTest(unittest.TestCase):
         return cid
 
     def test_the_page_takes_no_data_entry(self):
-        names = {r[2] for r in sales_backend.ROUTES}
+        names = {r[2][len("sales_"):] for r in app_backend.ROUTES if r[2].startswith("sales_")}
         self.assertEqual(names, {"catalog", "list_cases", "get_case", "document_file",
                                  "set_requirement", "remove_document", "draft_sent",
                                  "mark_submitted", "reopen_case"})
+        for _method, pattern, name, _limit in app_backend.ROUTES:
+            self.assertEqual(name.startswith("sales_"), pattern.pattern.startswith("^/api/sales/"), name)
 
     def test_decisions_need_the_signed_in_user(self):
         cid = self._create()

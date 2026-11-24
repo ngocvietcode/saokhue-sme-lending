@@ -1,21 +1,19 @@
 ---
-description: "Cách trợ lý SME tạo hồ sơ, chạy workflow sme-credit-assessment và trình bày kết quả cho cán bộ"
+description: "Cách trợ lý SME chạy workflow sme-credit-assessment cho hồ sơ đã bàn giao và trình bày kết quả cho cán bộ"
 always: false
 ---
 
 # sme-assessment-run
 
-## Tạo hồ sơ
-1. Hỏi cán bộ: CIF/MST, tên khách hàng, ngành, nhu cầu (số tiền, mục đích, kỳ hạn), đề xuất ĐVKD, luồng (A hoặc B), danh sách file đã tải lên.
-2. Gọi `sme_case_create`. Ghi lại `case_id`.
+## Hồ sơ cần thẩm định
+1. Hồ sơ thẩm định do Sale bàn giao trên trang app (cùng mã `SME-...`). Đọc bằng `sme_case_get`; chưa có thì nói Sale cần hoàn thiện và bàn giao trước.
 
 ## Chạy thẩm định
-3. Gọi `workflow_run` với `workflow` = `sme-credit-assessment` và `args` = `{"case_id": "<id>", "flow": "A"}`.
-   Thư viện chưa có workflow này: gọi `sme_workflow_source`, rồi gọi `workflow_run` với `source` = nguyên văn trường `source` nhận được (không sửa, không rút gọn), `name` = `sme-credit-assessment` và cùng `args`. Không cần hỏi cán bộ.
-4. Theo dõi bằng `workflow_status`; xong thì đọc `workflow_result`.
+2. **Mỗi lần chạy**, gọi `sme_workflow_source` ngay trước đó, rồi gọi `workflow_run` với `source` = nguyên văn trường `source` vừa nhận (không sửa, không rút gọn), `name` = `sme-credit-assessment` và `args` = `{"case_id": "<id>", "flow": "A"}`. Không dùng lại source từ một lượt trước hay từ thư viện Workflows: app có thể đã cập nhật, và source cũ gọi các agent không còn tồn tại. Không cần hỏi cán bộ.
+3. Theo dõi bằng `workflow_status`; xong thì đọc `workflow_result`. Workflow có 3 agent: Chứng từ & sản phẩm, Thẩm định chuyên môn, Tổng hợp. Cán bộ xem tiến độ từng phần ngay trên trang.
 
 ## Trình bày kết quả
-5. Gọi `sme_checklist_evaluate` và `sme_crosscheck_evaluate` để nêu rõ trạng thái Master Checklist A-I (`COMPLETE/INCOMPLETE`), 7 rule đối chiếu chéo (`R1-R7`) và các mục ĐVKD xin miễn (nếu nhận từ `sme-sales`).
-6. Tách 3 phần: **Đã xác minh**, **Vấn đề mở và ngoại lệ**, **Hàng đợi rà soát** (`sme_review_list`). Mỗi nhận định kèm mã bằng chứng E###.
-7. Kết quả bị Verification chặn: nói rõ agent nào, lỗi gì, cán bộ cần làm gì.
-8. Không bao giờ nói hồ sơ "được duyệt" hay "bị từ chối". Quyết định là của cán bộ.
+4. Gọi `sme_checklist_evaluate` và `sme_crosscheck_evaluate` để nêu rõ trạng thái Master Checklist A-I (`COMPLETE/INCOMPLETE`), 7 rule đối chiếu chéo (`R1-R7`) và các mục ĐVKD xin miễn (trong `sales_handover`).
+5. Tách 3 phần: **Đã xác minh**, **Vấn đề mở và ngoại lệ**, **Hàng đợi rà soát** (`sme_review_list`). Mỗi nhận định kèm mã bằng chứng E###.
+6. Phần kết quả bị kiểm chứng chặn (`blocked` trong kết quả workflow): nói rõ phần nào, lỗi gì, cán bộ cần làm gì.
+7. Không bao giờ nói hồ sơ "được duyệt" hay "bị từ chối". Quyết định là của cán bộ.

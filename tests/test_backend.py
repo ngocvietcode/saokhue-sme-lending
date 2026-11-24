@@ -20,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "core"))
 
+from sme_core.sales import SalesService  # noqa: E402
 from sme_core.service import LendingService  # noqa: E402
 
 # Loaded by path: `server` alone is also the MCP server module under server/.
@@ -54,7 +55,7 @@ class BackendTest(unittest.TestCase):
         self.svc.store.clock = lambda: "2026-11-21T08:00:00+00:00"
         self.case_id = self.svc.case_create({"name": "Cong ty A"}, {"amount": 5e9}, [], "A")["case_id"]
         self.svc.review_add(self.case_id, "data_conflict", "Doanh thu lệch", "financial-analysis")
-        handler = backend.make_handler(backend.Api(self.svc), SECRET, backend.ReplayCache(), clock=lambda: NOW)
+        handler = backend.make_handler(backend.Api(self.svc, SalesService(Path(self.tmp.name) / "sales", ROOT / "core" / "knowledge")), SECRET, backend.ReplayCache(), clock=lambda: NOW)
         self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), handler)
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
         self.thread.start()
@@ -94,6 +95,13 @@ class BackendTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(data["review"][0]["id"], "R001")
         self.assertEqual([a["action"] for a in data["audit"]], ["case_create", "review_add"])
+
+    def test_dossier_routes_reach_the_sale_store_not_the_assessment(self):
+        status, data = self._call("GET", "/api/sales/cases")
+        self.assertEqual(status, 200)
+        self.assertEqual(data["cases"], [], "the assessment case is not a Sale dossier")
+        self.assertIn("types", self._call("GET", "/api/sales/catalog")[1]["documents"])
+        self.assertEqual(self._call("GET", f"/api/sales/cases/{self.case_id}")[0], 404)
 
     def test_unknown_case_is_404(self):
         self.assertEqual(self._call("GET", "/api/cases/SME-20260101-00000000")[0], 404)

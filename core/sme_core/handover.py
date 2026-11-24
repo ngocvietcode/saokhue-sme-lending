@@ -144,13 +144,13 @@ class LocalLendingHandoverAdapter:
                 target_store._audit(
                     target_case_dir,
                     "case_create",
-                    {"flow": package["flow"], "documents": len(package["documents"]), "source": "sme-sales"},
+                    {"flow": package["flow"], "documents": len(package["documents"]), "source": "sale"},
                 )
             target_store._audit(
                 target_case_dir,
                 "case_handover_received",
                 {
-                    "from_app": "sme-sales",
+                    "from_app": "sale",
                     "by": package["sales_handover"]["submitted_by"],
                     "documents": len(package["documents"]),
                     "files_copied": files_copied,
@@ -227,11 +227,6 @@ def resolve_lending_data_root(
         installed = Path(data_home) / "apps" / "sme-lending"
         if (installed / "app.json").is_file() or (installed / "data").is_dir():
             return installed / "data"
-    resolved = Path(data_root).resolve()
-    if resolved.parent.name == "sme-sales":
-        sibling = resolved.parent.parent / "sme-lending"
-        if (sibling / "app.json").is_file() or (sibling / "data").is_dir():
-            return sibling / "data"
     return None
 
 

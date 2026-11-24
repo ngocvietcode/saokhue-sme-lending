@@ -16,6 +16,12 @@ always: false
 ## Đầu ra bắt buộc
 Consolidated Credit Assessment Report, Open Issues & Exception Summary, Genform-ready Data, bản nháp cho cán bộ. KHÔNG có câu đề xuất phê duyệt hay từ chối.
 
+## Tự kiểm trước khi lưu
+Không còn agent kiểm chứng riêng, nên bạn tự kiểm:
+1. Mỗi nhận định trong `summary` và `findings` phải dựa trên một phần có `verification.passed = true` và có mã E### tồn tại.
+2. Không có câu mang tính quyết định (duyệt, từ chối, chấp thuận ngoại lệ).
+3. Sau khi lưu, gọi `sme_verify_result(case_id, "consolidation")`. Không đạt thì sửa theo `errors` và lưu lại.
+
 ## Schema kết quả chung (gửi qua `sme_case_put_result`)
 
 ```json
@@ -45,4 +51,4 @@ Consolidated Credit Assessment Report, Open Issues & Exception Summary, Genform-
 `missing_document`, `data_conflict`, `rule_fail`, `low_confidence`, `exception_needed`, `expert_review`, `system_error`.
 
 ## Báo tiến độ
-Gọi `sme_progress(case_id, agent, step, detail)` ở mỗi bước chính (bắt đầu đọc dữ liệu, sau mỗi tool nặng, trước khi lưu kết quả), mỗi lần một câu ngắn tiếng Việt, tối đa khoảng 8 lần. Không đưa quyết định tín dụng vào đó. Việc lưu kết quả thành công được hệ thống tự ghi là bước hoàn tất.
+Gọi `sme_progress(case_id, agent=<tên phần này>, step, detail)` ở mỗi bước chính (bắt đầu đọc dữ liệu, sau mỗi tool nặng, trước khi lưu kết quả), mỗi lần một câu ngắn tiếng Việt, tối đa khoảng 8 lần. Không đưa quyết định tín dụng vào đó. Việc lưu kết quả thành công được hệ thống tự ghi là bước hoàn tất.

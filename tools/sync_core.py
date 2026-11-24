@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-APPS = ("sme-lending", "sme-sales", "sme-connect")
+APPS = ("sme-lending",)
 PAIRS = (("core/sme_core", "server/sme_core"), ("core/knowledge", "knowledge"))
 IGNORE = shutil.ignore_patterns("__pycache__", "*.pyc")
 MARKER = "GENERATED.txt"

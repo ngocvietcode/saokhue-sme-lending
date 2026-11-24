@@ -58,7 +58,7 @@ function CaseCard({ c, onOpen }: { c: CaseSummary; onOpen: () => void }) {
 }
 
 export default function CaseList({
-  onOpen, assistantOpen, syncTick, onToggleAssistant, onAskAssistant, onCreatedCase,
+  onOpen, assistantOpen, syncTick, onToggleAssistant, onAskAssistant, onCreatedCase, onNewDossier,
 }: {
   onOpen: (id: string) => void
   assistantOpen: boolean
@@ -66,6 +66,7 @@ export default function CaseList({
   onToggleAssistant: () => void
   onAskAssistant: (prompt: string, mode?: AssistantIntent['mode']) => void
   onCreatedCase: (created: CreatedCaseBanner) => void
+  onNewDossier: () => void
 }) {
   const api = useAppApi()
   const [cases, setCases] = useState<CaseSummary[] | null>(null)
@@ -138,7 +139,8 @@ export default function CaseList({
     })
   }, [cases, q, filter])
 
-  const newCase = () => onAskAssistant('Tạo hồ sơ thẩm định SME mới: ', 'new_intake')
+  // A dossier starts on the Sale's side; the assessment copy arrives with the handover.
+  const newCase = onNewDossier
 
   return (
     <>
