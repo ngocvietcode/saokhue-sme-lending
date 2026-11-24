@@ -18,6 +18,16 @@ CALC_KINDS = (
     "genform", "checklist_eval", "crosscheck_eval",
 )
 REL_TOL = 1e-6
+CALC_SHAPE_HINT = ('calculations must be a LIST of objects like {"kind": "repayment_capacity", "inputs": {...}, '
+                   '"outputs": {...}}, not an object keyed by kind')
+
+# A section whose conclusion rests on a number must carry the deterministic calculation behind it, so
+# the verifier can recompute it and the page can show it. Without this an agent can store prose alone.
+REQUIRED_CALCULATIONS = {
+    "financial-analysis": "repayment_capacity",
+    "collateral": "collateral_ltv",
+    "policy-exception": "policy_check",
+}
 
 # A result states facts and flags; it never carries a credit decision.
 PROHIBITED_PHRASES = (
@@ -92,13 +102,17 @@ def validate_result(payload: Any, *, agent: str, case_id: str, known_evidence: s
 
     calcs = payload.get("calculations", [])
     if not isinstance(calcs, list):
-        errors.append("calculations must be a list")
+        errors.append(CALC_SHAPE_HINT)
     else:
         for i, c in enumerate(calcs):
             if not isinstance(c, dict) or c.get("kind") not in CALC_KINDS:
                 errors.append(f"calculations[{i}].kind must be one of {CALC_KINDS}")
             elif not isinstance(c.get("inputs"), dict) or not isinstance(c.get("outputs"), dict):
                 errors.append(f"calculations[{i}] needs object inputs and outputs")
+        need = REQUIRED_CALCULATIONS.get(agent)
+        if need and not any(isinstance(c, dict) and c.get("kind") == need for c in calcs):
+            errors.append(f"calculations must include a '{need}' entry copied from the {need} tool output "
+                          f"(kind, inputs, outputs); call the tool and add it")
 
     text = _norm(" ".join(_texts(payload)))
     for phrase in PROHIBITED_PHRASES:
@@ -145,7 +159,13 @@ def _diff(expected: Any, actual: Any, path: str, out: list[str]) -> None:
 def recompute(payload: dict[str, Any], calculators: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]) -> list[str]:
     """Re-run each calculation through `calculators[kind]` and diff outputs."""
     errors: list[str] = []
-    for i, c in enumerate(payload.get("calculations") or []):
+    calcs = payload.get("calculations") or []
+    if not isinstance(calcs, list):
+        return [CALC_SHAPE_HINT]
+    for i, c in enumerate(calcs):
+        if not isinstance(c, dict):
+            errors.append(f"calculations[{i}] must be an object {{kind, inputs, outputs}}, got {type(c).__name__}")
+            continue
         kind = c.get("kind")
         fn = calculators.get(kind)
         if fn is None:

@@ -126,6 +126,30 @@ class StoreAndVerifyTest(unittest.TestCase):
                                       _result("consolidation", cid, [eid], summary="Đề xuất phê duyệt khoản vay."))
         self.assertFalse(res["accepted"])
 
+    def test_sections_that_rest_on_a_number_must_carry_its_calculation(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _service(tmp)
+            cid = _case(svc)
+            eid = svc.evidence_add(cid, [{"source": "D1 p1", "value": 1}], "document-evidence")["ids"][0]
+            for agent, kind in (("financial-analysis", "repayment_capacity"), ("collateral", "collateral_ltv"),
+                                ("policy-exception", "policy_check")):
+                res = svc.case_put_result(cid, agent, _result(agent, cid, [eid]))
+                self.assertFalse(res["accepted"], agent)
+                self.assertTrue(any(kind in e for e in res["errors"]), res["errors"])
+            # Sections without a number behind them are unaffected.
+            self.assertTrue(svc.case_put_result(cid, "consolidation", _result("consolidation", cid, [eid]))["accepted"])
+
+    def test_a_malformed_calculations_field_is_refused_with_a_hint_not_a_crash(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            svc = _service(tmp)
+            cid = _case(svc)
+            eid = svc.evidence_add(cid, [{"source": "D1 p1", "value": 1}], "document-evidence")["ids"][0]
+            for bad in ({"repayment_capacity": {"dscr": 1.6}}, ["repayment_capacity"], "x"):
+                res = svc.case_put_result(cid, "consolidation", _result("consolidation", cid, [eid], calculations=bad))
+                self.assertFalse(res["accepted"], bad)
+                self.assertTrue(res["errors"], bad)
+            self.assertEqual(svc.case_get(cid)["results"].get("consolidation"), None)
+
     def test_verify_catches_a_wrong_number(self):
         with tempfile.TemporaryDirectory() as tmp:
             svc = _service(tmp)
@@ -133,15 +157,18 @@ class StoreAndVerifyTest(unittest.TestCase):
             eid = svc.evidence_add(cid, [{"source": "D1 p1", "value": 100}], "document-evidence")["ids"][0]
             inputs = {"periods": [{"period": "2025", "revenue": 100, "net_income": 10}]}
             outputs = fin_ratios(inputs["periods"])
+            rc_in = {"cash_available_annual": 30.0, "existing_debt_service_annual": 5.0, "loan_amount": 100.0,
+                     "annual_rate_pct": 9.0, "term_months": 12}
+            rc = {"kind": "repayment_capacity", "inputs": rc_in, "outputs": repayment_capacity(**rc_in)}
             good = _result("financial-analysis", cid, [eid],
-                           calculations=[{"kind": "fin_ratios", "inputs": inputs, "outputs": outputs}])
+                           calculations=[{"kind": "fin_ratios", "inputs": inputs, "outputs": outputs}, rc])
             self.assertTrue(svc.case_put_result(cid, "financial-analysis", good)["accepted"])
             self.assertTrue(svc.verify_result(cid, "financial-analysis")["passed"])
 
             bad_outputs = json.loads(json.dumps(outputs))
             bad_outputs["periods"][0]["ratios"]["net_margin"] = 0.5
             bad = _result("financial-analysis", cid, [eid],
-                          calculations=[{"kind": "fin_ratios", "inputs": inputs, "outputs": bad_outputs}])
+                          calculations=[{"kind": "fin_ratios", "inputs": inputs, "outputs": bad_outputs}, rc])
             # A wrong number is refused at submit time, so the agent fixes it in the same turn.
             rejected = svc.case_put_result(cid, "financial-analysis", bad)
             self.assertFalse(rejected["accepted"])
@@ -250,8 +277,8 @@ class PackagingTest(unittest.TestCase):
         declared = {Path(a).stem for a in manifest["agents"]}
         src = (UW / "workflows" / "sme_credit_assessment.py").read_text(encoding="utf-8")
         self.assertTrue(src.isascii())
-        named = set(re.findall(r'run_verified\("([a-z-]+)"', src)) | {"verifier"}
-        named |= set(re.findall(r'"(financial-analysis|risk-compliance|collateral|industry)"', src))
+        named = set(re.findall(r'await run\("([a-z-]+)"', src))
+        self.assertEqual(named, {"document-product", "credit-analysis", "consolidation"})
         self.assertTrue(named <= declared, named - declared)
 
 
